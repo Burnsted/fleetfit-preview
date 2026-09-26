@@ -9,7 +9,9 @@ import {
   SCORE_BUILD,
 } from './replacementScore'
 
-export const BODY_MIX_BUILD = 'inventory-rank-20260926-1540'
+/** CLEARED inventory freshness + full option rank · Steve re-bar stamp */
+export const BODY_MIX_BUILD = 'inventory-rank-20260926-1628'
+export const CLEARED_SHIP = 'cleared-inv-rank-dial-20260926-1628'
 
 export function bodyClassOf(unit) {
   if (!unit) return null

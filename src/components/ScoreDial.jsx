@@ -1,6 +1,6 @@
 import { SCORE_BUILD } from '../lib/replacementScore'
 
-export const SCORE_UI_BUILD = 'score-ui-dial-20260926-1551'
+export const SCORE_UI_BUILD = 'score-ui-dial-20260926-1628'
 
 /**
  * CLEARED Score UI dial — glanceable speed-dial RIGHT of pricing.

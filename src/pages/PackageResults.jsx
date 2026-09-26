@@ -7,6 +7,7 @@ import { formatMoney } from '../lib/fit'
 import { fleetUnitKey, useFleetPick } from '../lib/fleetPick'
 import {
   BODY_MIX_BUILD,
+  CLEARED_SHIP,
   composeRecommendationSet,
 } from '../lib/recommendationSet'
 import { currentMilesForScore } from '../lib/replacementScore'
@@ -92,6 +93,7 @@ export default function PackageResults() {
     <div
       className="locked-page package-page is-stack"
       data-body-mix-build={BODY_MIX_BUILD}
+      data-cleared-ship={CLEARED_SHIP}
     >
       <nav className="locked-crumbs" aria-label="Breadcrumb">
         <Link to="/">Home</Link>
