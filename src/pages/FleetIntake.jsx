@@ -4,6 +4,8 @@ import PathChrome from '../components/PathChrome'
 import Wordmark from '../components/Wordmark'
 import { matchPackageIdFromIntake } from '../data/package'
 
+/* CLEARED-FOR-WOZ-R2 cache-bust deploy marker · 2026-09-26 ~8:33 ET */
+
 const TRADES = [
   'Electrical',
   'HVAC',
