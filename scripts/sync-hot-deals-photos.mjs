@@ -1,8 +1,11 @@
 /**
  * CLEARED listing-photos slice — map considered units to hot-deals FACT rows,
  * download thumbnail_url, regenerate listingPhotos.js. Stub if no photo.
+ *
+ * Silverado EV pack thumbs (ranks 73 / 104 / 107) are cloth or studio teasers —
+ * never assign as listing photos. Keep FACT listing metadata; force stub media.
  */
-import { mkdir, writeFile, copyFile, readFile } from 'node:fs/promises'
+import { mkdir, writeFile, copyFile, readFile, unlink } from 'node:fs/promises'
 import path from 'node:path'
 import { fileURLToPath } from 'node:url'
 
@@ -17,28 +20,33 @@ const outJs = path.join(root, 'src/data/listingPhotos.js')
 
 /**
  * FACT pack index → considered unit ids.
- * Rank 73 / index 21 Silverado WT thumb is red-cloth "Images Coming Soon" — NEVER assign.
- * Rank 104 / index 22 and rank 107 / index 23 are real dealer truck exteriors (verified).
- * unit-e2 + vnd-002 may share index 22 (same FACT listing).
+ * Value is either a pack index number, or { idx, stubPhoto: true }.
+ *
+ * Blocked photo ranks (cloth / studio teaser — never listing media):
+ *   73  → index 21 red-cloth "Images Coming Soon"
+ *   104 → index 22 gray studio/teaser (Steve re-bar FAIL)
+ *   107 → index 23 indoor studio booth (not outdoor/lot dealer exterior)
  */
 const ASSIGN = {
-  'unit-e1': 1, // 2023 E-Transit
-  'unit-e2': 22, // 2026 Silverado EV LT — rank 104 real truck (was 21 cloth)
-  'unit-e3': 15, // 2022 Lightning Pro (URL match)
-  'unit-e4': 6, // 2024 ProMaster EV (URL match)
-  'unit-l1': 23, // 2026 Silverado EV Trail Boss — rank 107 real truck
+  'unit-e1': 1, // 2023 E-Transit — outdoor/lot OK
+  'unit-e2': { idx: 21, stubPhoto: true }, // Silverado WT FACT; photo blocked rank 73
+  'unit-e3': 15, // 2022 Lightning Pro
+  'unit-e4': 6, // 2024 ProMaster EV
+  'unit-l1': { idx: 23, stubPhoto: true }, // Silverado Trail Boss FACT; photo blocked rank 107
   'unit-l2': 16, // 2023 Lightning XLT
   'vnd-001': 14, // 2022 Lightning Pro
-  'vnd-002': 22, // same FACT listing as unit-e2 (rank 104)
+  'vnd-002': { idx: 22, stubPhoto: true }, // Silverado LT FACT; photo blocked rank 104
   'vnd-003': 24, // 2026 Sierra EV
   'vnd-004': 25, // 2026 Sierra EV
   'vnd-005': 19, // 2022 R1T
-  'vnd-006': 31, // 2024 Cybertruck (URL match)
+  'vnd-006': 31, // 2024 Cybertruck
   'vnd-007': 27, // 2023 Hummer EV
   'vnd-008': 32, // 2025 Cybertruck
 }
 
-const BLOCKED_CLOTH_INDICES = new Set([21]) // rank 73 red-cloth teaser
+/** Pack indices whose thumbnail_url must never be used as listing media */
+const BLOCKED_PHOTO_INDICES = new Set([21, 22, 23]) // ranks 73, 104, 107
+const BLOCKED_PHOTO_RANKS = new Set([73, 104, 107])
 
 const ALIASES = {
   'strip-lightning': 'unit-e3',
@@ -61,14 +69,28 @@ function cleanTrim(trim, model) {
   return t.slice(0, 40)
 }
 
+function normalizeAssign(raw) {
+  if (raw != null && typeof raw === 'object') {
+    return { idx: raw.idx, stubPhoto: Boolean(raw.stubPhoto) }
+  }
+  return { idx: raw, stubPhoto: false }
+}
+
 await mkdir(outDir, { recursive: true })
 await mkdir(path.dirname(packPath), { recursive: true })
 
-const uploadPack = '/home/ubuntu/.cursor/projects/workspace/uploads/hot-deals-ship-pack_2ed0.json'
+const uploadPack = '/home/ubuntu/.cursor/projects/workspace/uploads/hot-deals-ship-pack_e51d.json'
 try {
   await copyFile(uploadPack, packPath)
 } catch {
-  /* pack may already exist */
+  try {
+    await copyFile(
+      '/home/ubuntu/.cursor/projects/workspace/uploads/hot-deals-ship-pack_2ed0.json',
+      packPath,
+    )
+  } catch {
+    /* pack may already exist */
+  }
 }
 
 const pack = JSON.parse(await readFile(packPath, 'utf8'))
@@ -78,16 +100,31 @@ const files = {}
 /** cache downloaded buffers by pack index so shared assignments reuse one fetch */
 const bufByIdx = new Map()
 
-for (const [id, idx] of Object.entries(ASSIGN)) {
-  if (BLOCKED_CLOTH_INDICES.has(idx)) {
-    throw new Error(`Refusing cloth/teaser pack index ${idx} for ${id}`)
-  }
+for (const [id, raw] of Object.entries(ASSIGN)) {
+  const { idx, stubPhoto } = normalizeAssign(raw)
   const src = pack[idx]
   if (!src) throw new Error(`Missing pack row ${idx}`)
+
+  const rank = src.rank
+  const thumbBlocked =
+    stubPhoto ||
+    BLOCKED_PHOTO_INDICES.has(idx) ||
+    BLOCKED_PHOTO_RANKS.has(rank)
+
+  if (
+    !stubPhoto &&
+    (BLOCKED_PHOTO_INDICES.has(idx) || BLOCKED_PHOTO_RANKS.has(rank))
+  ) {
+    throw new Error(
+      `Refusing cloth/studio teaser pack index ${idx} rank ${rank} for ${id} — set stubPhoto: true`,
+    )
+  }
+
   const thumb = src.thumbnail_url
   let hasPhoto = false
   let ext = 'jpg'
-  if (thumb) {
+
+  if (thumb && !thumbBlocked) {
     try {
       let cached = bufByIdx.get(idx)
       if (!cached) {
@@ -108,11 +145,29 @@ for (const [id, idx] of Object.entries(ASSIGN)) {
       await writeFile(path.join(outDir, file), cached.buf)
       files[id] = file
       hasPhoto = true
-      console.log('OK', id, '←', idx, 'rank', src.rank, file, cached.buf.length)
+      console.log('OK', id, '←', idx, 'rank', rank, file, cached.buf.length)
     } catch (err) {
       console.warn('STUB', id, String(err.message || err))
       hasPhoto = false
     }
+  } else if (thumbBlocked) {
+    // Remove any prior downloaded teaser so Vite cannot re-bundle it
+    for (const e of ['jpg', 'jpeg', 'png', 'webp']) {
+      try {
+        await unlink(path.join(outDir, `${id}.${e}`))
+      } catch {
+        /* absent */
+      }
+    }
+    console.log(
+      'STUB',
+      id,
+      '←',
+      idx,
+      'rank',
+      rank,
+      '(blocked cloth/studio teaser — Photo pending)',
+    )
   }
 
   rows[id] = {
@@ -129,7 +184,8 @@ for (const [id, idx] of Object.entries(ASSIGN)) {
     listing_url: src.listing_url,
     source_site: src.source_site,
     drivetrain: src.drivetrain || '',
-    thumbnail_url: thumb || null,
+    // Do not expose blocked teaser URLs as usable listing thumbs
+    thumbnail_url: hasPhoto ? thumb || null : null,
     has_photo: hasPhoto,
   }
 }
@@ -157,6 +213,7 @@ const js = `/**
  * FACT Hot Deals listing photos for considered units.
  * Generated from hot-deals-ship-pack.json thumbnail_url rows.
  * Never invent VIN / price / miles / dealer. No OEM / lifestyle stock for considered.
+ * Silverado EV ranks 73/104/107 thumbs are cloth/studio teasers → stub (has_photo false).
  * CLEARED listing-photos · 2026-09-26
  */
 ${importLines}

@@ -4,7 +4,7 @@
  * Current (shop’s non-EV) column may use labeled stock — we do not have their truck.
  * CLEARED listing-photos · 2026-09-26
  */
-export const PHOTO_BUILD = 'listing-photos-20260926-1328'
+export const PHOTO_BUILD = 'listing-photos-20260926-1337'
 
 import currentTruck from '../assets/stock/current-truck.webp'
 import currentVan from '../assets/stock/current-van.webp'
