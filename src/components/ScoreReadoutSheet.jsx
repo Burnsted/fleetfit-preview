@@ -1,11 +1,12 @@
 import { useEffect } from 'react'
 import { createPortal } from 'react-dom'
 import ReplacementScore from './ReplacementScore'
+import UnitSpecsBlock from './UnitSpecsBlock'
 
 export const SCORE_DIAL_TAP_BUILD = 'score-dial-tap-20260926-1551'
 
 /**
- * CLEARED dial-tap surface — full Replacement Score readout for one unit.
+ * CLEARED dial-tap surface — full Replacement Score readout + quiet OEM Specs.
  * Portaled sheet/panel; Escape / backdrop / Close dismiss.
  */
 export default function ScoreReadoutSheet({
@@ -14,6 +15,7 @@ export default function ScoreReadoutSheet({
   score,
   rank = null,
   heading = null,
+  unit = null,
 }) {
   useEffect(() => {
     if (!open) return undefined
@@ -66,6 +68,7 @@ export default function ScoreReadoutSheet({
           full
           className="score-readout-body"
         />
+        {unit ? <UnitSpecsBlock unit={unit} className="score-readout-specs" /> : null}
       </div>
     </div>,
     document.body,

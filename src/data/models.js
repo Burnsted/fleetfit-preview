@@ -30,21 +30,21 @@ function workBlurb(make, model) {
   const key = `${make} ${model}`
   const blurbs = {
     'Ford F-150 Lightning':
-      'Familiar full-size work truck packaging with onboard power and a usable frunk for jobsite tools. Strong fit for trades that already run F-150s and need documented battery health.',
+      'Familiar full-size work truck packaging with onboard power and a usable frunk for jobsite tools. Strong fit for trades that already run F-150s and need a documented pack report.',
     'Chevrolet Silverado EV':
       'Work-trim electric pickup with large usable packs and fleet-friendly upfit paths. Built for routes that need range, payload, and a true service body — not lifestyle trim.',
     'GMC Sierra EV':
-      'Ultium-platform sibling to Silverado EV with Elevation-class comfort. Same capability class for crews that want GMC dealer support and documented battery health before the buy.',
+      'Ultium-platform sibling to Silverado EV with Elevation-class comfort. Same capability class for crews that want GMC dealer support and a documented pack report before the buy.',
     'Rivian R1T':
       'Adventure-oriented electric pickup with gear-tunnel storage. Useful for solar and field crews; confirm service coverage on your routes before fleet adoption.',
     'Tesla Cybertruck':
       'High-capability exoskeleton pickup with Supercharger access. Bed and body are atypical for traditional trades — verify vault upfits and hitch logistics for your work.',
     'GMC Hummer EV':
-      'Extreme off-road electric pickup. Listed for completeness: width, curb weight, and energy use limit classic fleet routes even when payload and battery health look fine on paper.',
+      'Extreme off-road electric pickup. Listed for completeness: width, curb weight, and energy use limit classic fleet routes even when payload and pack report look fine on paper.',
   }
   return (
     blurbs[key] ||
-    'Electric work truck in a FleetFit package. Review battery health, payload, warranty, and listing ask on each unit before you travel.'
+    'Electric work truck in a FleetFit package. Review usable pack kWh, payload, warranty, and listing ask on each unit before you travel.'
   )
 }
 
@@ -115,8 +115,8 @@ export function getModels() {
           value: sohs.length ? Math.round(sohs.reduce((a, b) => a + b, 0) / sohs.length) : null,
           best: sohs.length ? Math.max(...sohs) : null,
           missing: sohs.length < m.listings.length,
-          caption: 'Battery health — typical / best across listings',
-          footnote: 'From listing battery health readings. Units without a reading show Incomplete Data on the listing.',
+          caption: 'Usable pack — typical / best across listings',
+          footnote: 'From listing pack readings when present. Units without a reading show Incomplete Data on the listing.',
         },
         gvwrLb: {
           value: typical(gvwrs),

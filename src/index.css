@@ -3531,6 +3531,50 @@ img { max-width: 100%; display: block; }
   color: #F5A623;
   outline: none;
 }
+.unit-specs-block {
+  margin: 14px 16px 20px;
+  padding: 12px 14px;
+  border-radius: 12px;
+  background: rgba(0, 0, 0, 0.04);
+  border: 1px solid rgba(0, 0, 0, 0.06);
+}
+.unit-specs-block-title {
+  margin: 0 0 8px;
+  font-size: 0.72rem;
+  font-weight: 700;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: rgba(0, 0, 0, 0.45);
+}
+.unit-specs-block-list {
+  margin: 0;
+  display: grid;
+  gap: 6px;
+}
+.unit-specs-block-row {
+  display: grid;
+  grid-template-columns: 7.5rem 1fr;
+  gap: 8px;
+  font-size: 0.84rem;
+  line-height: 1.3;
+}
+.unit-specs-block-row dt {
+  margin: 0;
+  color: rgba(0, 0, 0, 0.48);
+  font-weight: 550;
+}
+.unit-specs-block-row dd {
+  margin: 0;
+  font-weight: 650;
+  color: rgba(0, 0, 0, 0.88);
+}
+.unit-specs-block-row dd.is-dash {
+  font-weight: 550;
+  color: rgba(0, 0, 0, 0.42);
+}
+.score-readout-specs {
+  margin-top: 4px;
+}
 .score-readout-body.replacement-score {
   border: 0;
   background: transparent;

@@ -1,7 +1,7 @@
 import { Link, useLocation, useParams } from 'react-router-dom'
 import StackCard from '../components/StackCard'
 import WorkCompare from '../components/WorkCompare'
-import { batteryUnknownCount, getPackage } from '../data/package'
+import { getPackage } from '../data/package'
 import { factKbbTradeIn, readBudget, spendEnvelope, unitsWithinEnvelope } from '../lib/budget'
 import { formatMoney } from '../lib/fit'
 import { fleetUnitKey, useFleetPick } from '../lib/fleetPick'
@@ -13,7 +13,12 @@ import {
   composeRecommendationSet,
 } from '../lib/recommendationSet'
 import { currentMilesForScore } from '../lib/replacementScore'
-import { currentWorkVehicle, displayWorkSpec } from '../lib/workSpec'
+import {
+  currentWorkVehicle,
+  displayWorkSpec,
+  NOT_PUBLISHED,
+  packageBatteryKwhFact,
+} from '../lib/workSpec'
 
 const DAY_NEED = {
   'under-60': 'Under 60 mi',
@@ -73,7 +78,7 @@ export default function PackageResults() {
   const selectedInPackage = visibleUnits.filter((unit) =>
     fleet.has(fleetUnitKey(pkg.id, unit.id)),
   ).length
-  const unknownBatt = batteryUnknownCount({ ...pkg, units: visibleUnits })
+  const batteryKwhFact = packageBatteryKwhFact(visibleUnits)
   const dayNeed = dayNeedLabel(pkg, intake)
   const truckCount = ranked.filter((r) => r.bodyClass === 'truck').length
   const vanCount = ranked.filter((r) => r.bodyClass === 'van').length
@@ -114,13 +119,13 @@ export default function PackageResults() {
           <span className="spec-chip is-known">Trade {pkg.trade}</span>
           <span className="spec-chip is-known">{pkg.unitCount} units</span>
           {dayNeed ? <span className="spec-chip is-known">Day {dayNeed}</span> : null}
-          <span className="spec-chip is-known">
-            Trade-in {pkg.tradeIn?.status || '—'}
+          <span className={`spec-chip ${pkg.tradeIn?.status ? 'is-known' : 'is-dash'}`}>
+            Trade-in {pkg.tradeIn?.status || NOT_PUBLISHED}
           </span>
-          <span className="spec-chip is-dash">
-            Battery {unknownBatt === pkg.unitCount ? '—' : `${pkg.unitCount - unknownBatt}/${pkg.unitCount}`}
+          <span className={`spec-chip ${batteryKwhFact.known ? 'is-known' : 'is-dash'}`}>
+            Battery {batteryKwhFact.text}
           </span>
-          <span className="spec-chip is-dash">Recalls —</span>
+          <span className="spec-chip is-dash">Recalls Not checked</span>
           <span className="spec-chip is-known">{fleetSizeChip(intake, pkg)}</span>
           {envelope != null ? (
             <span className="spec-chip is-known">Envelope {formatMoney(envelope)}</span>

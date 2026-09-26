@@ -2,7 +2,7 @@
  * CLEARED Replacement Score — Exact Ted pick · 2026-09-26 ~10:39
  * Transparent ~10 category grades → weighted total.
  * HF-2 mid-life similar-mile: soft Life Delta taper only — never hard hide.
- * No Worth it / SOH / FACT pills in public copy.
+ * No Worth it / FACT pills in public copy.
  */
 
 export const SCORE_BUILD = 'replacement-score-20260926-1540'
@@ -12,7 +12,7 @@ export const SOFT_WEIGHTS = {
   jobFit: 15,
   lifeDelta: 15,
   warranty: 12,
-  batteryHealth: 10, // internal only — never surface SOH in UI
+  batteryHealth: 10, // internal grade; public label is Usable pack
   range: 12,
   charging: 8,
   serviceability: 10,
@@ -25,7 +25,7 @@ export const SOFT_LABELS = {
   jobFit: 'Job Fit detail',
   lifeDelta: 'Life Delta',
   warranty: 'Warranty',
-  batteryHealth: 'Battery Health',
+  batteryHealth: 'Usable pack',
   range: 'Range',
   charging: 'Charging',
   serviceability: 'Serviceability',
@@ -154,16 +154,19 @@ function gradeWarranty(unit) {
   return { grade: 3, unknown: false, note: 'Older MY — less warranty time left' }
 }
 
-/** Internal only — grade may use SOH; public UI must not show SOH pills. */
+/** Internal grade may use pack report; public note is OEM usable kWh only. */
 function gradeBatteryInternal(unit) {
+  const kwh = num(unit?.usableKwh ?? unit?.battery?.usableKwh)
+  const kwhNote =
+    kwh != null ? `Battery ${kwh} kWh` : 'Usable pack size Not published'
   const soh = num(unit?.battery?.soh ?? unit?.soh)
   if (soh == null) {
-    return { grade: null, unknown: true, note: 'Pack health not on file' }
+    return { grade: null, unknown: true, note: kwhNote }
   }
-  if (soh >= 95) return { grade: 9, unknown: false, note: 'Pack health on file' }
-  if (soh >= 90) return { grade: 7, unknown: false, note: 'Pack health on file' }
-  if (soh >= 80) return { grade: 5, unknown: false, note: 'Pack health on file' }
-  return { grade: 2, unknown: false, note: 'Pack health on file — review before close' }
+  if (soh >= 95) return { grade: 9, unknown: false, note: kwhNote }
+  if (soh >= 90) return { grade: 7, unknown: false, note: kwhNote }
+  if (soh >= 80) return { grade: 5, unknown: false, note: kwhNote }
+  return { grade: 2, unknown: false, note: kwhNote }
 }
 
 function gradeRange(unit, intake) {
@@ -306,7 +309,7 @@ export function scoreReplacementUnit(unit, { currentMiles, intake } = {}) {
       unknown,
       note: c?.note || '',
       sidegrade: Boolean(c?.sidegrade),
-      // Battery never exposes SOH in public payload
+      // Usable pack category stays non-public in compact view
       public: key !== 'batteryHealth',
     }
   })

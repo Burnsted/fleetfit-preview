@@ -139,7 +139,7 @@ export default function FilterSidebar({ filters, setFilters, open, onClose }) {
       <div className="filter-section">
         <h3 className="filter-section-title">EV</h3>
         <div className="filter-group">
-          <label htmlFor="sohMin">Battery health min (%)</label>
+          <label htmlFor="sohMin">Pack report min (%)</label>
           <input id="sohMin" type="number" min="0" max="100" step="1" placeholder="e.g. 90"
             value={filters.sohMin} onChange={(e) => set('sohMin', e.target.value)} />
         </div>

@@ -148,8 +148,8 @@ export default function Model() {
             <StatBlock value={s.onboardKw.value} unit=" kW" caption={s.onboardKw.caption} />
           )}
           <p className="model-stats-footnote">
-            Figures use only values already on demo listings (range, payload, battery health, GVWR, charge rates).
-            Tow ratings are omitted — not present in seed data. Measuring notes: rated range is seller sticker/displayed class; battery health methods vary by listing.
+            Figures use only values already on demo listings (range, payload, usable pack kWh, GVWR, charge rates).
+            Tow ratings are omitted — not present in seed data. Measuring notes: rated range is seller sticker/displayed class; pack report methods vary by listing.
           </p>
         </section>
 

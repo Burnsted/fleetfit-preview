@@ -28,7 +28,7 @@ const ELECTRICAL_UNITS = [
       status: 'Not reported by dealer',
       soh: null,
       usableKwh: null,
-      note: 'Ask for a pack health printout before travel.',
+      note: 'OEM usable pack on file; confirm before travel.',
     },
     recall: {
       status: 'Unchecked — placeholder',
@@ -44,10 +44,10 @@ const ELECTRICAL_UNITS = [
     },
     fitScore: {
       band: 'open items',
-      reason: 'Dealer should supply battery health and open recalls clear before deposit.',
+      reason: 'Confirm open recalls and OEM usable pack size before deposit.',
     },
     openItems: [
-      'Battery health not on file',
+      'Battery 68 kWh',
       'Confirm remaining factory warranty transfer',
       'Verify ladder-rack mounting points on this body',
     ],
@@ -121,7 +121,7 @@ const ELECTRICAL_UNITS = [
       status: 'Not reported by dealer',
       soh: null,
       usableKwh: 98,
-      note: 'Usable pack size known from trim; battery health not reported.',
+      note: 'Usable pack size known from trim (OEM table).',
     },
     recall: {
       status: 'Unchecked — placeholder',
@@ -137,10 +137,10 @@ const ELECTRICAL_UNITS = [
     },
     fitScore: {
       band: 'open items',
-      reason: 'Battery health and mileage comps should clear after PPI.',
+      reason: 'Mileage comps should clear after PPI; OEM usable pack on file.',
     },
     openItems: [
-      'Battery health not reported by dealer',
+      'Battery 98 kWh',
       'Tire wear unknown',
       'Upfit not included',
     ],
@@ -168,7 +168,7 @@ const ELECTRICAL_UNITS = [
       status: 'Not reported by dealer',
       soh: null,
       usableKwh: null,
-      note: 'Dealer has not uploaded pack health.',
+      note: 'OEM usable pack on file.',
     },
     recall: {
       status: 'Unchecked — placeholder',
@@ -187,7 +187,7 @@ const ELECTRICAL_UNITS = [
       reason: 'Hold until battery report and depot charging capacity are confirmed.',
     },
     openItems: [
-      'Battery health missing',
+      'Battery 110 kWh',
       'Depot L2 circuit capacity unknown',
       'Shelving fit not verified',
     ],
@@ -215,7 +215,7 @@ const ELECTRICAL_UNITS = [
       status: 'Not reported by dealer',
       soh: null,
       usableKwh: null,
-      note: 'Newly used 2026 — ask for pack health before travel.',
+      note: 'Newly used 2026 — OEM usable pack on file.',
     },
     recall: {
       status: 'Unchecked — placeholder',
@@ -231,10 +231,10 @@ const ELECTRICAL_UNITS = [
     },
     fitScore: {
       band: 'open items',
-      reason: 'Newer MY surfaced for look-newer-first; confirm pack health and tow before close.',
+      reason: 'Newer MY surfaced for look-newer-first; confirm OEM pack kWh and tow before close.',
     },
     openItems: [
-      'Battery health not on file',
+      'Battery 120 kWh',
       'PPI recommended on newly used unit',
     ],
     upfitNote: 'Stock bed — commercial body not installed.',
@@ -261,7 +261,7 @@ const ELECTRICAL_UNITS = [
       status: 'Not reported by dealer',
       soh: null,
       usableKwh: null,
-      note: '2025 BrightDrop — request pack health printout.',
+      note: '2025 BrightDrop — OEM usable pack on file.',
     },
     recall: {
       status: 'Unchecked — placeholder',
@@ -280,7 +280,7 @@ const ELECTRICAL_UNITS = [
       reason: '2025 van option in the pool — confirm battery report and depot charging.',
     },
     openItems: [
-      'Battery health not on file',
+      'Battery 102.4 kWh',
       'Shelving fit not verified',
     ],
     upfitNote: 'Empty cargo — shelving TBD.',
@@ -326,11 +326,11 @@ const LANDSCAPE_UNITS = [
     },
     fitScore: {
       band: 'open items',
-      reason: 'Confirm tow rating for the enclosed trailer; battery health should land on file.',
+      reason: 'Confirm tow rating for the enclosed trailer; OEM usable pack on file.',
     },
     openItems: [
       'Tow rating for dual-axle enclosed cargo must be verified',
-      'Battery health not reported',
+      'OEM usable pack on file',
       'Replaces a current non-EV hauler — year of the outgoing truck is unconfirmed',
     ],
     replaceNote: 'Replaces hauler — current truck year unconfirmed (not title-checked).',
@@ -377,7 +377,7 @@ const LANDSCAPE_UNITS = [
       reason: 'Second truck only if the WT hauler’s tow rating clears.',
     },
     openItems: [
-      'Battery health not reported',
+      'Battery 98 kWh',
       'Pro Power output not verified on this unit',
       'PPI recommended before close',
     ],
@@ -409,10 +409,10 @@ export const PACKAGES = [
     packageFit: {
       band: 'Good package if…',
       detail:
-        'Battery unknown on three of four units · recalls unchecked per stock ID · ~4 vans stated',
+        'OEM pack kWh on file · recalls Not checked per stock ID · ~4 vans stated',
     },
     openOnPackage:
-      'Open on all four units: Battery health not reported by dealer on 3/4 units. Recalls unchecked per stock ID (no NHTSA lookup in this preview). Confirm before close.',
+      'OEM usable packs on this package: Battery 68 / 205 / 98 / 110 / 120 / 102.4 kWh. Recalls Not checked (no NHTSA lookup in this preview). Confirm before close.',
     units: ELECTRICAL_UNITS,
     newVsUsed: {
       usedLabel: 'This used package',
@@ -448,15 +448,15 @@ export const PACKAGES = [
     packageFit: {
       band: 'Good package if…',
       detail:
-        'Battery unknown on both · tow rating for dual-axle enclosed cargo must be verified · no fee $',
+        'OEM pack kWh on file · tow rating for dual-axle enclosed cargo must be verified · no fee $',
     },
     openOnPackage:
-      'Open on both units: Battery health not reported by dealer on either listing card. Trailer tow rating for dual-axle enclosed cargo must be verified on the Silverado EV WT before close. Recalls unchecked. Confirm before close.',
+      'OEM usable packs on this package: Battery 205 / 98 kWh. Trailer tow rating for dual-axle enclosed cargo must be verified on the Silverado EV WT before close. Recalls Not checked. Confirm before close.',
     units: LANDSCAPE_UNITS,
     fitShort: [
       { label: 'WT + XLT split', value: 'Matches two roles' },
-      { label: 'Tow (dual-axle enclosed)', value: '— lb · confirm' },
-      { label: 'Battery on cards', value: 'Not reported' },
+      { label: 'Tow (dual-axle enclosed)', value: 'Not published · confirm' },
+      { label: 'Battery (OEM)', value: '205 / 98 kWh' },
     ],
     fitShortNote:
       'Shop already runs battery-electric tools — pairing matches the trucks to the same work. No invented GVWR / fuel $.',

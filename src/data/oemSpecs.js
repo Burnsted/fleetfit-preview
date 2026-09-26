@@ -6,7 +6,7 @@
  * Key: year|make|model|trim (normalized). Aliases cover listing trim variants.
  */
 
-export const OEM_SPECS_BUILD = 'oem-cargo-kwh-20260926-1910'
+export const OEM_SPECS_BUILD = 'oem-bar2-20260926-1915'
 
 /** @typedef {{
  *  payloadLb: number|null,
@@ -562,14 +562,20 @@ export function mergeOemSpecs(vehicle) {
     tow: pick(vehicle.tow ?? vehicle.towingLb, s.towingLb),
     towingLb: pick(vehicle.towingLb ?? vehicle.tow, s.towingLb),
     ratedRange: pick(vehicle.ratedRange, s.epaRangeMi),
-    gvwr: pick(vehicle.gvwr, s.gvwrLb),
-    curb: pick(vehicle.curb, s.curbLb),
+    gvwr: pick(vehicle.gvwr ?? vehicle.gvwrLb, s.gvwrLb),
+    gvwrLb: pick(vehicle.gvwrLb ?? vehicle.gvwr, s.gvwrLb),
+    curb: pick(vehicle.curb ?? vehicle.curbLb, s.curbLb),
+    curbLb: pick(vehicle.curbLb ?? vehicle.curb, s.curbLb),
+    onboardAcKw: pick(vehicle.onboardAcKw ?? vehicle.onboardChargerKw, s.onboardAcKw),
     cab: pick(vehicle.cab, s.cab),
     bed: pick(vehicle.bed, s.bedLength),
     cargoCuFt: pick(vehicle.cargoCuFt ?? vehicle.cargoVolume ?? vehicle.cargo, s.cargoCuFt),
     cargoVolume: pick(vehicle.cargoVolume ?? vehicle.cargo ?? vehicle.cargoCuFt, s.cargoCuFt),
     drivetrain: pick(vehicle.drivetrain, s.drivetrain),
-    onboardChargerKw: pick(vehicle.onboardChargerKw, s.onboardAcKw),
+    onboardChargerKw: pick(
+      vehicle.onboardChargerKw ?? vehicle.onboardAcKw,
+      s.onboardAcKw,
+    ),
     dcFastMaxKw: pick(vehicle.dcFastMaxKw, s.dcFastMaxKw),
   }
 

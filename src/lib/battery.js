@@ -1,10 +1,13 @@
 /**
- * Buyer-facing battery confidence. Never say SOH. Never invent % or warranty.
+ * Buyer-facing battery confidence. Prefer OEM usable kWh; never invent %.
  */
-export function batteryConfidence({ soh, status, warrantyBatteryMonths } = {}) {
-  if (soh != null && soh !== '' && Number.isFinite(Number(soh))) {
+export function batteryConfidence({ soh, status, warrantyBatteryMonths, usableKwh } = {}) {
+  const kwh = usableKwh != null && usableKwh !== '' && Number.isFinite(Number(usableKwh))
+    ? Number(usableKwh)
+    : null
+  if (kwh != null) {
     return {
-      label: `Battery health ${Number(soh)}%`,
+      label: `Battery ${kwh} kWh`,
       known: true,
     }
   }
@@ -22,12 +25,18 @@ export function batteryConfidence({ soh, status, warrantyBatteryMonths } = {}) {
   const s = String(status || '')
   if (s && /reported/i.test(s) && !/not reported/i.test(s)) {
     return {
-      label: 'Battery health reported',
+      label: 'Pack report on file',
       known: false,
     }
   }
+  if (soh != null && soh !== '' && Number.isFinite(Number(soh))) {
+    return {
+      label: 'Pack report on file',
+      known: true,
+    }
+  }
   return {
-    label: 'Battery health not reported',
+    label: 'Usable pack size Not published',
     known: false,
   }
 }
@@ -38,6 +47,7 @@ export function batteryConfidenceFromUnit(unit) {
     status: unit?.battery?.status,
     warrantyBatteryMonths:
       unit?.battery?.warrantyBatteryMonths ?? unit?.warrantyBatteryMonths,
+    usableKwh: unit?.usableKwh ?? unit?.battery?.usableKwh,
   })
 }
 
@@ -46,5 +56,6 @@ export function batteryConfidenceFromListing(listing) {
     soh: listing?.soh,
     status: listing?.soh != null ? 'Reported' : listing?.sohMethod ? 'Reported' : '',
     warrantyBatteryMonths: listing?.warrantyBatteryMonths,
+    usableKwh: listing?.usableKwh,
   })
 }

@@ -154,6 +154,16 @@ export function displayWorkSpec(unit) {
     return `${text} cu ft`
   })
 
+  const gvwr = firstDefined(unit?.gvwrLb, unit?.gvwr, listing?.gvwrLb, listing?.gvwr)
+  const curb = firstDefined(unit?.curbLb, unit?.curb, listing?.curbLb, listing?.curb)
+  const acKw = firstDefined(
+    unit?.onboardAcKw,
+    unit?.onboardChargerKw,
+    listing?.onboardAcKw,
+    listing?.onboardChargerKw,
+  )
+  const dcKw = firstDefined(unit?.dcFastMaxKw, listing?.dcFastMaxKw)
+
   return {
     payload: factField(payload, formatLb),
     bed: factField(bed),
@@ -172,6 +182,10 @@ export function displayWorkSpec(unit) {
       if (!Number.isFinite(n)) return NOT_PUBLISHED
       return Number.isInteger(n) ? `${n} kWh` : `${n} kWh`
     }),
+    gvwr: factField(gvwr, formatLb),
+    curb: factField(curb, formatLb),
+    onboardAcKw: factField(acKw, (v) => `${Number(v)} kW`),
+    dcFastMaxKw: factField(dcKw, (v) => `${Number(v)} kW`),
     source: listing?.id || unit?.oemSpecKey || null,
   }
 }
@@ -224,9 +238,26 @@ export function currentWorkVehicle(intake, pkg) {
       cargo: empty,
       range: empty,
       usableKwh: empty,
+      gvwr: empty,
+      curb: empty,
+      onboardAcKw: empty,
+      dcFastMaxKw: empty,
       source: null,
     },
   }
+}
+
+/** Package Match Facts: OEM usable-kWh band across units, else Not published. */
+export function packageBatteryKwhFact(units = []) {
+  const vals = units
+    .map((u) => finiteNumber(u?.usableKwh ?? u?.battery?.usableKwh))
+    .filter((n) => n != null)
+  if (!vals.length) return { text: NOT_PUBLISHED, known: false }
+  const min = Math.min(...vals)
+  const max = Math.max(...vals)
+  const fmt = (n) => (Number.isInteger(n) ? String(n) : String(n))
+  if (min === max) return { text: `${fmt(min)} kWh`, known: true }
+  return { text: `${fmt(min)}–${fmt(max)} kWh`, known: true }
 }
 
 /** Package + unit cards: payload · bed/cab · tow */

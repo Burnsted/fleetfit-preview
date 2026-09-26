@@ -2,8 +2,8 @@ import { SCORE_BUILD } from '../lib/replacementScore'
 
 /**
  * Public Replacement Score UI — total + transparent cats + helps / watch-outs.
- * No Worth it · SOH · FACT pills.
- * `full` (dial-tap sheet): all ~10 cats incl. Battery Health grade/Unknown + notes.
+ * No Worth it · FACT pills.
+ * `full` (dial-tap sheet): all ~10 cats incl. Usable pack grade/Unknown + notes.
  */
 export default function ReplacementScore({
   score,

@@ -89,7 +89,7 @@ export default function Listing() {
               <div className={`stat-value ${sohMissing ? 'amber' : ''}`}>
                 {batteryConfidenceFromListing(listing).label}
               </div>
-              <div className="stat-hint">{sohMissing ? 'No health reading on file' : listing.sohMethod}</div>
+              <div className="stat-hint">{sohMissing ? 'Usable pack size Not published' : listing.sohMethod}</div>
             </div>
             <div className="stat-tile">
               <div className="stat-label">Payload</div>

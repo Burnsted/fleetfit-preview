@@ -5,8 +5,8 @@ import path from 'node:path'
 const BASE = process.env.SHOT_BASE || 'http://127.0.0.1:4173/fleetfit-preview/'
 const OUT = process.env.SHOT_OUT || '/opt/cursor/artifacts/screenshots'
 const PKG = 'pkg-tc-electrical-4'
-const OEM = 'oem-cargo-kwh-20260926-1910'
-const OUTBOUND = 'outbound-listing-20260926-1905'
+const OEM = 'oem-bar2-20260926-1915'
+const OUTBOUND = 'oem-bar2-20260926-1915'
 await mkdir(OUT, { recursive: true })
 await mkdir('/workspace/artifacts/screenshots', { recursive: true })
 

@@ -59,7 +59,7 @@ export const HERO_PLATE_PHOTO = listingPhotoRecord('hero').src
 /**
  * Overlay dealer listing YMMT / price / miles, then merge OEM specs.
  * Dealer-stated numeric specs would win — listing rows today only carry drivetrain.
- * Battery SOH stays dealer-reported only (never OEM-filled).
+ * Dealer pack report stays dealer-reported only (never OEM-filled).
  */
 /**
  * Cars.com overlay rows do not publish payload/range/kWh/cab/bed.
@@ -99,6 +99,7 @@ export function applyListingFactsToUnit(unit) {
   })
   if (row) {
     const outbound = LISTING_OUTBOUND[row.id] || {}
+    const live = outbound.listingStatus === 'live'
     base = {
       ...base,
       year: row.year,
@@ -112,7 +113,9 @@ export function applyListingFactsToUnit(unit) {
       sellerType: 'dealer',
       listingUrl: row.listing_url || null,
       dealerUrl: outbound.dealer_url || null,
-      listingLive: outbound.listing_live === true,
+      listingStatus: outbound.listingStatus || 'dead',
+      listingCheckedAt: outbound.checkedAt || null,
+      listingLive: live,
       sourceSite: row.source_site || null,
       drivetrain: row.drivetrain || null,
     }
@@ -120,6 +123,7 @@ export function applyListingFactsToUnit(unit) {
     base = {
       ...base,
       listingLive: false,
+      listingStatus: 'dead',
       dealerUrl: null,
     }
   }
@@ -137,6 +141,7 @@ export function applyListingFactsToListing(listing) {
   })
   if (row) {
     const outbound = LISTING_OUTBOUND[row.id] || {}
+    const live = outbound.listingStatus === 'live'
     base = {
       ...base,
       year: row.year,
@@ -150,7 +155,9 @@ export function applyListingFactsToListing(listing) {
       sellerType: 'dealer',
       listingUrl: row.listing_url || null,
       dealerUrl: outbound.dealer_url || null,
-      listingLive: outbound.listing_live === true,
+      listingStatus: outbound.listingStatus || 'dead',
+      listingCheckedAt: outbound.checkedAt || null,
+      listingLive: live,
       sourceSite: row.source_site || null,
       drivetrain: row.drivetrain || null,
     }
@@ -158,6 +165,7 @@ export function applyListingFactsToListing(listing) {
     base = {
       ...base,
       listingLive: false,
+      listingStatus: 'dead',
       dealerUrl: null,
     }
   }

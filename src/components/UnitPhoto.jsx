@@ -108,6 +108,7 @@ export default function UnitPhoto({
               rank={rank}
               size={size === 'hero' ? 'hero' : 'card'}
               heading={heading}
+              unit={unit}
             />
           ) : null}
         </div>

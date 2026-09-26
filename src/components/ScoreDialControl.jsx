@@ -2,12 +2,13 @@ import { useState } from 'react'
 import ScoreDial from './ScoreDial'
 import ScoreReadoutSheet from './ScoreReadoutSheet'
 
-/** Dial + tap-open full Replacement Score readout. */
+/** Dial + tap-open full Replacement Score readout (+ OEM Specs). */
 export default function ScoreDialControl({
   score,
   rank = null,
   size = 'card',
   heading = null,
+  unit = null,
   className = '',
 }) {
   const [open, setOpen] = useState(false)
@@ -28,6 +29,7 @@ export default function ScoreDialControl({
         score={score}
         rank={rank}
         heading={heading}
+        unit={unit}
       />
     </>
   )

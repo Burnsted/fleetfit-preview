@@ -83,7 +83,7 @@ export default function FullCompare() {
   const columns = 1 + candidates.length
 
   function renderCurrent(row) {
-    if (row.key === 'score') return '—'
+    if (row.key === 'score') return 'Not scored'
     if (row.key === 'ymm') return current.heading
     if (row.key === 'role') return current.role
     if (row.key === 'payload') return cellText(current.spec.payload)
@@ -95,7 +95,7 @@ export default function FullCompare() {
     if (row.key === 'cab') return cellText(current.spec.cab)
     if (row.key === 'tow') return cellText(current.spec.tow)
     if (row.key === 'energy') return cellText(current.spec.energy)
-    if (row.key === 'listing') return '—'
+    if (row.key === 'listing') return 'Not a listing'
     if (row.key === 'select') return 'Your truck'
     if (row.key === 'remove') return ''
     return 'Not published'
@@ -109,6 +109,7 @@ export default function FullCompare() {
           rank={col.rank}
           size="compare"
           heading={col.ymm}
+          unit={col.unit}
         />
       )
     }
