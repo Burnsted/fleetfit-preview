@@ -1,11 +1,25 @@
 import { MAKES, UPFT_TAGS, SELLER_TYPES, CAB_BED_OPTIONS } from '../data/listings'
 
+/** Multi-year options — not a thin single-year set (CLEARED search) */
+export const YEAR_OPTIONS = [2020, 2021, 2022, 2023, 2024, 2025, 2026]
+
+export const YEAR_RANGES = [
+  { id: 'any', label: 'Any years', min: '', max: '' },
+  { id: '2020-2026', label: '2020–2026', min: '2020', max: '2026' },
+  { id: '2021-2025', label: '2021–2025', min: '2021', max: '2025' },
+  { id: '2022-2025', label: '2022–2025', min: '2022', max: '2025' },
+  { id: '2023-2025', label: '2023–2025', min: '2023', max: '2025' },
+  { id: '2024-2026', label: '2024–2026', min: '2024', max: '2026' },
+]
+
 const DEFAULTS = {
   priceMax: '',
   make: '',
   model: '',
   yearMin: '',
   yearMax: '',
+  years: [],
+  yearRangeId: 'any',
   mileageMax: '',
   rangeMin: '',
   sohMin: '',
@@ -32,6 +46,30 @@ export default function FilterSidebar({ filters, setFilters, open, onClose }) {
       return {
         ...f,
         upfitTags: has ? f.upfitTags.filter((t) => t !== tag) : [...f.upfitTags, tag],
+      }
+    })
+  }
+
+  function applyYearRange(range) {
+    setFilters((f) => ({
+      ...f,
+      yearRangeId: range.id,
+      yearMin: range.min,
+      yearMax: range.max,
+      years: [],
+    }))
+  }
+
+  function toggleYear(year) {
+    setFilters((f) => {
+      const has = f.years.includes(year)
+      const years = has ? f.years.filter((y) => y !== year) : [...f.years, year].sort()
+      return {
+        ...f,
+        years,
+        yearRangeId: years.length ? 'multi' : 'any',
+        yearMin: '',
+        yearMax: '',
       }
     })
   }
@@ -162,13 +200,36 @@ export default function FilterSidebar({ filters, setFilters, open, onClose }) {
             value={filters.model} onChange={(e) => set('model', e.target.value)} />
         </div>
         <div className="filter-group">
-          <label>Year</label>
-          <div style={{ display: 'flex', gap: 6 }}>
-            <input type="number" placeholder="Min" value={filters.yearMin}
-              onChange={(e) => set('yearMin', e.target.value)} aria-label="Year min" />
-            <input type="number" placeholder="Max" value={filters.yearMax}
-              onChange={(e) => set('yearMax', e.target.value)} aria-label="Year max" />
+          <label>Year range</label>
+          <div className="filter-chips year-range-chips" role="group" aria-label="Year range">
+            {YEAR_RANGES.map((range) => (
+              <button
+                key={range.id}
+                type="button"
+                className={`chip ${filters.yearRangeId === range.id ? 'active' : ''}`}
+                onClick={() => applyYearRange(range)}
+              >
+                {range.label}
+              </button>
+            ))}
           </div>
+        </div>
+        <div className="filter-group">
+          <label>Years (multi)</label>
+          <div className="filter-chips year-multi-chips" role="group" aria-label="Years multi-select">
+            {YEAR_OPTIONS.map((year) => (
+              <button
+                key={year}
+                type="button"
+                className={`chip ${filters.years.includes(year) ? 'active' : ''}`}
+                aria-pressed={filters.years.includes(year)}
+                onClick={() => toggleYear(year)}
+              >
+                {year}
+              </button>
+            ))}
+          </div>
+          <span className="filter-hint">Pick several years, or a range above.</span>
         </div>
       </div>
 

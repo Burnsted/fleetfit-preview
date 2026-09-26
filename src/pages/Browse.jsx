@@ -3,6 +3,7 @@ import { useSearchParams } from 'react-router-dom'
 import { LISTINGS, distanceFromHome } from '../data/listings'
 import FilterSidebar, { DEFAULTS } from '../components/FilterSidebar'
 import ListingCard from '../components/ListingCard'
+import ShopSearch from '../components/ShopSearch'
 
 const SORTS = [
   { id: 'newest', label: 'Recommended' },
@@ -43,10 +44,14 @@ function applyFilters(listings, filters, q) {
       if (!`${l.model} ${l.trim}`.toLowerCase().includes(m)) return false
     }
 
-    const yearMin = num(filters.yearMin)
-    const yearMax = num(filters.yearMax)
-    if (yearMin != null && l.year < yearMin) return false
-    if (yearMax != null && l.year > yearMax) return false
+    if (filters.years?.length) {
+      if (!filters.years.includes(l.year)) return false
+    } else {
+      const yearMin = num(filters.yearMin)
+      const yearMax = num(filters.yearMax)
+      if (yearMin != null && l.year < yearMin) return false
+      if (yearMax != null && l.year > yearMax) return false
+    }
 
     const mileageMax = num(filters.mileageMax)
     if (mileageMax != null && l.mileage > mileageMax) return false
@@ -144,6 +149,8 @@ export default function Browse() {
         <h1>Used EV fleet packages.</h1>
         <p className="browse-sub">Used EV fleet packages that fit the work day · asking · fee at checkout TBD. <a href="#/" style={{color:'var(--cyan)'}}>Home</a></p>
       </div>
+
+      <ShopSearch />
 
       <div className="browse-chrome">
         <button

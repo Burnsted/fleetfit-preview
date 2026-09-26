@@ -224,13 +224,62 @@ img { max-width: 100%; display: block; }
   color: var(--text-muted);
 }
 .browse-chrome {
-  display: flex; gap: 12px; margin: 20px 0 24px;
+  display: flex; gap: 12px; margin: 12px 0 24px;
   flex-wrap: wrap;
 }
 .browse-chrome .btn-pill {
   display: inline-flex; align-items: center; justify-content: center; gap: 8px;
 }
 .browse-chrome .pill-icon { font-size: 1rem; opacity: 0.7; }
+
+/* CLEARED search — typable pill + Search button (visible on mobile too) */
+.shop-search-pill {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin: 16px 0 4px;
+  padding: 6px 6px 6px 12px;
+  background: #fff;
+  border: 1px solid var(--border);
+  border-radius: 999px;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.04);
+  max-width: 520px;
+}
+.shop-search-pill:focus-within {
+  border-color: var(--cyan);
+}
+.shop-search-icon {
+  color: var(--text-dim);
+  font-size: 0.95rem;
+  flex-shrink: 0;
+}
+.shop-search-input {
+  flex: 1;
+  min-width: 0;
+  border: 0;
+  outline: 0;
+  background: transparent;
+  font-size: 0.9rem;
+  font-weight: 400;
+  padding: 6px 0;
+}
+.shop-search-input::placeholder { color: var(--text-dim); }
+.shop-search-btn {
+  flex-shrink: 0;
+  border-radius: 999px;
+  padding: 7px 14px;
+}
+.filter-hint {
+  display: block;
+  margin-top: 6px;
+  font-size: 0.72rem;
+  color: var(--text-dim);
+}
+.year-range-chips .chip,
+.year-multi-chips .chip {
+  font-size: 0.74rem;
+  padding: 5px 10px;
+}
 
 .filters-drawer-toggle { display: none; }
 
