@@ -1,6 +1,5 @@
 import { Link, useNavigate, useSearchParams, useLocation } from 'react-router-dom'
 import { useState, useEffect } from 'react'
-import PathBack, { shouldShowPathBack } from './PathBack'
 import Wordmark from './Wordmark'
 
 export default function Header() {
@@ -22,8 +21,6 @@ export default function Header() {
   }
 
   const onBrowse = location.pathname === '/shop'
-  // CLEARED PATH ← Back — upper-right chrome on later PATH steps (hide on Intake)
-  const showPathBack = shouldShowPathBack(location.pathname)
 
   return (
     <header className="site-header">
@@ -60,9 +57,6 @@ export default function Header() {
         </Link>
 
         <nav className="header-nav" aria-label="Primary">
-          {showPathBack ? (
-            <PathBack className="header-path-back" />
-          ) : null}
           <Link className="header-text-link" to="/intake">
             Fleet intake
           </Link>

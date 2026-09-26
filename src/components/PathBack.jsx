@@ -2,7 +2,7 @@ import { useLocation, useNavigate } from 'react-router-dom'
 import { DEFAULT_PACKAGE_ID } from '../data/package'
 import { PATH_STEPS } from '../lib/pathSteps'
 
-export const PATH_BACK_BUILD = 'path-back-20260926-1602'
+export const PATH_BACK_BUILD = 'path-back-20260926-1613'
 
 /** Resolve PATH step name for a pathname. */
 export function pathStepName(pathname) {
