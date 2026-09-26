@@ -2,13 +2,19 @@ import { useEffect } from 'react'
 import { Link, useLocation, useNavigate, useParams } from 'react-router-dom'
 import AddToFleetButton from '../components/AddToFleetButton'
 import UnitPhoto from '../components/UnitPhoto'
+import ReplacementScore from '../components/ReplacementScore'
 import { getPackage, getUnit } from '../data/package'
 import { batteryConfidenceFromUnit } from '../lib/battery'
 import { useCompareSet } from '../lib/compareSet'
 import { fleetUnitKey } from '../lib/fleetPick'
+import {
+  currentMilesForScore,
+  rankUnitsByReplacementScore,
+} from '../lib/replacementScore'
 import { currentWorkVehicle, displayWorkSpec } from '../lib/workSpec'
 
 const ROWS = [
+  { key: 'score', label: 'Replacement Score' },
   { key: 'ymm', label: 'Year / model' },
   { key: 'role', label: 'Package role' },
   { key: 'payload', label: 'Payload' },
@@ -60,8 +66,14 @@ export default function FullCompare() {
   }
 
   const current = currentWorkVehicle(intake, pkg)
-  const candidates = units.map((unit) => ({
+  const ranked = rankUnitsByReplacementScore(units, {
+    currentMiles: currentMilesForScore(intake, pkg),
+    intake,
+  })
+  const candidates = ranked.map(({ unit, score }, index) => ({
     unit,
+    score,
+    rank: index + 1,
     spec: displayWorkSpec(unit),
     pickId: fleetUnitKey(pkg.id, unit.id),
     diligence: batteryConfidenceFromUnit(unit).label,
@@ -71,6 +83,7 @@ export default function FullCompare() {
   const columns = 1 + candidates.length
 
   function renderCurrent(row) {
+    if (row.key === 'score') return '—'
     if (row.key === 'ymm') return current.heading
     if (row.key === 'role') return current.role
     if (row.key === 'payload') return cellText(current.spec.payload)
@@ -85,6 +98,9 @@ export default function FullCompare() {
   }
 
   function renderCandidate(col, row) {
+    if (row.key === 'score') {
+      return <ReplacementScore score={col.score} compact rank={col.rank} />
+    }
     if (row.key === 'ymm') return col.ymm
     if (row.key === 'role') return col.role
     if (row.key === 'payload') return cellText(col.spec.payload)

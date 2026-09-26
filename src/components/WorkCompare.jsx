@@ -17,6 +17,7 @@ export default function WorkCompare({ current, candidates, title, packageId }) {
             heading={current.heading}
             role={current.role}
             spec={current.spec}
+            mileage={current.mileage}
             current
             bodyType={current.bodyType}
             showCompare={false}
@@ -34,6 +35,8 @@ export default function WorkCompare({ current, candidates, title, packageId }) {
               pickId={col.pickId}
               mileage={col.mileage ?? col.unit?.mileage}
               showCompare={Boolean(packageId || col.packageId)}
+              score={col.score}
+              rank={col.rank}
             />
           </div>
         ))}

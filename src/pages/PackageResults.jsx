@@ -5,6 +5,10 @@ import { batteryUnknownCount, getPackage } from '../data/package'
 import { factKbbTradeIn, readBudget, spendEnvelope, unitsWithinEnvelope } from '../lib/budget'
 import { formatMoney } from '../lib/fit'
 import { fleetUnitKey, useFleetPick } from '../lib/fleetPick'
+import {
+  currentMilesForScore,
+  rankUnitsByReplacementScore,
+} from '../lib/replacementScore'
 import { currentWorkVehicle, displayWorkSpec } from '../lib/workSpec'
 
 const DAY_NEED = {
@@ -54,10 +58,15 @@ export default function PackageResults() {
   const current = currentWorkVehicle(intake, pkg)
   const envelope = spendEnvelope(readBudget().maxSpend, factKbbTradeIn(intake, pkg))
   const visibleUnits = unitsWithinEnvelope(pkg.units, envelope)
+  const scoreCtx = {
+    currentMiles: currentMilesForScore(intake, pkg),
+    intake,
+  }
+  const ranked = rankUnitsByReplacementScore(visibleUnits, scoreCtx)
   const selectedInPackage = visibleUnits.filter((unit) => fleet.has(fleetUnitKey(pkg.id, unit.id))).length
   const unknownBatt = batteryUnknownCount({ ...pkg, units: visibleUnits })
   const dayNeed = dayNeedLabel(pkg, intake)
-  const compareCandidates = visibleUnits.map((unit) => ({
+  const compareCandidates = ranked.map(({ unit, score }, index) => ({
     id: unit.id,
     unit,
     pickId: fleetUnitKey(pkg.id, unit.id),
@@ -66,6 +75,8 @@ export default function PackageResults() {
     role: unit.role,
     spec: displayWorkSpec(unit),
     mileage: unit.mileage,
+    score,
+    rank: index + 1,
   }))
 
   return (
@@ -108,14 +119,17 @@ export default function PackageResults() {
 
       <section aria-labelledby="units-title">
         <h2 id="units-title" className="package-units-title">Units</h2>
-        {visibleUnits.length === 0 ? (
+        <p className="package-score-note">
+          Ranked by Replacement Score vs your current work vehicle. Similar-mile sidegrades stay listed — they sort lower.
+        </p>
+        {ranked.length === 0 ? (
           <p className="locked-muted">
             No units in this demo fit that spend.{' '}
             <Link to="/budget">Adjust spend</Link>
           </p>
         ) : null}
         <ul className="package-unit-stack">
-          {visibleUnits.map((unit) => {
+          {ranked.map(({ unit, score }, index) => {
             const spec = displayWorkSpec(unit)
             return (
               <li key={unit.id}>
@@ -127,6 +141,8 @@ export default function PackageResults() {
                   pickId={fleetUnitKey(pkg.id, unit.id)}
                   spec={spec}
                   mileage={unit.mileage}
+                  score={score}
+                  rank={index + 1}
                 />
               </li>
             )

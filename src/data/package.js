@@ -43,8 +43,8 @@ const ELECTRICAL_UNITS = [
       detail: 'Medium-roof cargo volume suits ladder + wire stock; payload in the right band for electrical service.',
     },
     fitScore: {
-      band: 'worth it if…',
-      reason: 'Worth it if dealer supplies battery health and open recalls clear before deposit.',
+      band: 'open items',
+      reason: 'Dealer should supply battery health and open recalls clear before deposit.',
     },
     openItems: [
       'Battery health not on file',
@@ -90,7 +90,7 @@ const ELECTRICAL_UNITS = [
       detail: 'Crew cab WT with payload headroom for toolboxes and wire reels.',
     },
     fitScore: {
-      band: 'worth it',
+      band: 'strong match',
       reason: 'Strong match for longer coastal runs and heavier stock days.',
     },
     openItems: [
@@ -136,8 +136,8 @@ const ELECTRICAL_UNITS = [
       detail: 'Pro Power Onboard helps jobsite tools; bed needs rack + boxes.',
     },
     fitScore: {
-      band: 'worth it if…',
-      reason: 'Worth it if battery health clears 90%+ and mileage comps hold after PPI.',
+      band: 'open items',
+      reason: 'Battery health and mileage comps should clear after PPI.',
     },
     openItems: [
       'Battery health not reported by dealer',
@@ -233,8 +233,8 @@ const LANDSCAPE_UNITS = [
       detail: 'Crew WT payload is in the right band; dual-axle enclosed tow rating must be verified on this truck.',
     },
     fitScore: {
-      band: 'worth it if…',
-      reason: 'Worth it if tow rating for the enclosed trailer is confirmed and battery health lands on file.',
+      band: 'open items',
+      reason: 'Confirm tow rating for the enclosed trailer; battery health should land on file.',
     },
     openItems: [
       'Tow rating for dual-axle enclosed cargo must be verified',
@@ -281,8 +281,8 @@ const LANDSCAPE_UNITS = [
       detail: 'Shorter day, tools and Pro Power before claiming range for a loaded trailer.',
     },
     fitScore: {
-      band: 'worth it if…',
-      reason: 'Worth it as the second truck if the WT hauler’s tow rating clears.',
+      band: 'open items',
+      reason: 'Second truck only if the WT hauler’s tow rating clears.',
     },
     openItems: [
       'Battery health not reported',
@@ -306,6 +306,8 @@ export const PACKAGES = [
       'Composite example for a small trade fleet (~4 vans) that needs matched used EVs for typical coastal service routes. Not a real shop.',
     region: 'Treasure Coast, FL',
     trade: 'Electrical',
+    /** Demo FACT scaffold for Life Delta vs current non-EV work vehicle */
+    currentMileage: 48000,
     unitCount: 4,
     statedCountNote: '~4 vans stated',
     workDayNote:
@@ -344,6 +346,7 @@ export const PACKAGES = [
       'Composite example for a two-truck landscape day: one candidate hauler and one lighter lead truck. Not a real shop.',
     region: 'Treasure Coast, FL',
     trade: 'Landscaping / lawn',
+    currentMileage: 52000,
     unitCount: 2,
     statedCountNote: '~2 trucks stated',
     workDayNote:
@@ -418,9 +421,10 @@ export const DEMO_PACKAGE = PACKAGES[0]
 /** @deprecated use getPackage(...).units */
 export const PACKAGE_UNITS = ELECTRICAL_UNITS
 
+/** @deprecated Replacement Score supersedes Worth-it bands (CLEARED · no public Worth it) */
 export const FIT_SCORE_BANDS = [
-  'worth it',
-  'worth it if…',
+  'strong match',
+  'open items',
   'pass',
   'not enough data',
 ]

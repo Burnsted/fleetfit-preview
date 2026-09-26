@@ -1,11 +1,16 @@
 import { Link, useLocation, useParams } from 'react-router-dom'
 import AddToFleetButton from '../components/AddToFleetButton'
+import ReplacementScore from '../components/ReplacementScore'
 import UnitPhoto from '../components/UnitPhoto'
 import WorkCompare from '../components/WorkCompare'
 import { getPackage, getUnit } from '../data/package'
 import { batteryConfidenceFromUnit } from '../lib/battery'
 import { fleetUnitKey } from '../lib/fleetPick'
 import { formatMoney } from '../lib/fit'
+import {
+  currentMilesForScore,
+  scoreReplacementUnit,
+} from '../lib/replacementScore'
 import { displayAnnualSavings } from '../lib/savings'
 import { currentWorkVehicle, displayWorkSpec, DASH } from '../lib/workSpec'
 
@@ -41,6 +46,10 @@ export default function PackageUnit() {
   const savings = displayAnnualSavings(unit)
   const bodyLabel = unit.bodyType === 'van' ? 'Van' : unit.bodyType === 'truck' ? 'Pickup' : null
   const current = currentWorkVehicle(intake, pkg)
+  const score = scoreReplacementUnit(unit, {
+    currentMiles: currentMilesForScore(intake, pkg),
+    intake,
+  })
   const candidate = {
     id: unit.id,
     unit,
@@ -50,6 +59,7 @@ export default function PackageUnit() {
     role: unit.role,
     spec,
     mileage: unit.mileage,
+    score,
   }
 
   return (
@@ -121,6 +131,8 @@ export default function PackageUnit() {
           </Link>
         </div>
       </div>
+
+      <ReplacementScore score={score} />
 
       <WorkCompare
         current={current}

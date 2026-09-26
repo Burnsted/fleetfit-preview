@@ -1,5 +1,6 @@
 import { Link } from 'react-router-dom'
 import AddToFleetButton from './AddToFleetButton'
+import ReplacementScore from './ReplacementScore'
 import UnitPhoto from './UnitPhoto'
 import { batteryConfidenceFromUnit } from '../lib/battery'
 import { DASH } from '../lib/workSpec'
@@ -24,6 +25,8 @@ export default function StackCard({
   current = false,
   bodyType,
   showCompare = true,
+  score = null,
+  rank = null,
 }) {
   const battery = unit ? batteryConfidenceFromUnit(unit) : null
   const body = bodyType || unit?.bodyType
@@ -34,7 +37,8 @@ export default function StackCard({
 
   return (
     <article
-      className={`stack-card ${current ? 'is-current' : 'is-candidate'} is-dense`}
+      className={`stack-card ${current ? 'is-current' : 'is-candidate'} is-dense${score?.sidegrade ? ' is-sidegrade' : ''}`}
+      data-sidegrade={score?.sidegrade ? 'true' : undefined}
     >
       <UnitPhoto
         unit={unit}
@@ -53,6 +57,9 @@ export default function StackCard({
         <p className="stack-card-stats">
           {mileage != null ? <span>{Number(mileage).toLocaleString()} mi</span> : null}
         </p>
+        {!current && score ? (
+          <ReplacementScore score={score} compact rank={rank} />
+        ) : null}
         <div className="stack-card-chips" aria-label="Unit chips">
           {role ? faceChip(role) : null}
           {bodyLabel ? faceChip(bodyLabel) : null}

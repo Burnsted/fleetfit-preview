@@ -155,11 +155,18 @@ export function currentWorkVehicle(intake, pkg) {
     tankGallons: intake?.tankGallons ?? pkg?.currentTankGallons,
   })
   const kbb = factField(intake?.kbbTradeIn ?? pkg?.currentKbbTradeIn)
+  const milesRaw = intake?.currentMileage ?? intake?.currentMiles ?? pkg?.currentMileage
+  const milesN = milesRaw == null || milesRaw === '' ? null : Number(milesRaw)
+  const mileage =
+    milesN != null && Number.isFinite(milesN)
+      ? { text: `${milesN.toLocaleString()} mi`, known: true, value: milesN }
+      : { text: DASH, known: false, value: null }
   return {
     heading: 'Your current work vehicle',
     role,
     kind: 'Your current',
     bodyType: /van/i.test(role) ? 'van' : 'truck',
+    mileage: mileage.value,
     spec: {
       payload: empty,
       bed: empty,
