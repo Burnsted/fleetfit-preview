@@ -32,8 +32,14 @@ const FLEET_SIZE_OPTIONS = [
 const BODY_OPTS = ['Van', 'Pickup', 'Either']
 const PAYLOAD_OPTS = ['Light', 'Medium', 'Heavy', 'Not sure']
 const CAB_OPTS = ['Regular', 'Extended', 'Crew', 'Either']
-const TOW_OPTS = ['None', 'Light', 'Hauls trailer', 'Not sure']
-const UPFIT_OPTS = ['Ladder rack', 'Toolbox', 'Cargo rails', 'Spray liner', 'Other']
+const HAUL_OPTS = [
+  'None',
+  'Open trailer',
+  'Enclosed trailer',
+  'Gooseneck',
+  'Not sure',
+]
+const UPFIT_OPTS = ['Ladder rack', 'Toolbox', 'Cargo rails', 'Other']
 const UNITS_OPTS = [
   { value: '', label: '—' },
   { value: '1-2', label: '1–2' },
@@ -41,7 +47,12 @@ const UNITS_OPTS = [
   { value: '6-10', label: '6–10' },
   { value: 'not-sure', label: 'Not sure' },
 ]
-const TRADE_IN_OPTS = ['Yes', 'No', 'Not sure']
+const TRADE_IN_OPTS = [
+  { value: '', label: '—' },
+  { value: 'Yes', label: 'Yes' },
+  { value: 'No', label: 'No' },
+  { value: 'Not sure', label: 'Not sure' },
+]
 
 const INITIAL = {
   trade: 'Electrical',
@@ -52,10 +63,11 @@ const INITIAL = {
   body: '',
   payload: '',
   cab: '',
-  tow: '',
+  haul: '',
   upfits: [],
   unitsToReplace: '',
   tradeIn: '',
+  tradeInModel: '',
   notes: '',
 }
 
@@ -96,9 +108,18 @@ export default function FleetIntake() {
   const [params] = useSearchParams()
   const adjusting = params.get('adjust') === '1'
   const [form, setForm] = useState(INITIAL)
+  const showTradeInModel = form.tradeIn === 'Yes'
 
   function setField(key, value) {
     setForm((prev) => ({ ...prev, [key]: value }))
+  }
+
+  function onTradeInChange(value) {
+    setForm((prev) => ({
+      ...prev,
+      tradeIn: value,
+      tradeInModel: value === 'Yes' ? prev.tradeInModel : '',
+    }))
   }
 
   function onClear() {
@@ -116,10 +137,11 @@ export default function FleetIntake() {
       body: form.body,
       payload: form.payload,
       cab: form.cab,
-      tow: form.tow,
+      haul: form.haul,
       upfits: form.upfits,
       unitsToReplace: form.unitsToReplace,
       tradeIn: form.tradeIn,
+      tradeInModel: form.tradeIn === 'Yes' ? form.tradeInModel : '',
       notes: form.notes,
     }
     navigate(`/package/${matchPackageIdFromIntake(intake)}`, { state: { intake } })
@@ -210,56 +232,87 @@ export default function FleetIntake() {
         </fieldset>
 
         <fieldset className="intake-fieldset intake-customize">
-          <legend>What the trucks need to do</legend>
-          <ChipRow
-            label="Body"
-            options={BODY_OPTS}
-            value={form.body}
-            onChange={(v) => setField('body', v)}
-          />
-          <ChipRow
-            label="Payload"
-            options={PAYLOAD_OPTS}
-            value={form.payload}
-            onChange={(v) => setField('payload', v)}
-          />
-          <ChipRow
-            label="Cab"
-            options={CAB_OPTS}
-            value={form.cab}
-            onChange={(v) => setField('cab', v)}
-          />
-          <ChipRow
-            label="Tow"
-            options={TOW_OPTS}
-            value={form.tow}
-            onChange={(v) => setField('tow', v)}
-          />
-          <ChipRow
-            label="Upfits"
-            options={UPFIT_OPTS}
-            value={form.upfits}
-            onChange={(v) => setField('upfits', v)}
-            multi
-          />
-          <label className="intake-field">
-            <span className="intake-label">Units to replace</span>
-            <select
-              value={form.unitsToReplace}
-              onChange={(e) => setField('unitsToReplace', e.target.value)}
-            >
-              {UNITS_OPTS.map((o) => (
-                <option key={o.label} value={o.value}>{o.label}</option>
-              ))}
-            </select>
-          </label>
-          <ChipRow
-            label="Trade-in"
-            options={TRADE_IN_OPTS}
-            value={form.tradeIn}
-            onChange={(v) => setField('tradeIn', v)}
-          />
+          <legend>Body & units</legend>
+          <div className="intake-body-units">
+            <ChipRow
+              label="Body"
+              options={BODY_OPTS}
+              value={form.body}
+              onChange={(v) => setField('body', v)}
+            />
+            <label className="intake-field">
+              <span className="intake-label">Units to replace</span>
+              <select
+                value={form.unitsToReplace}
+                onChange={(e) => setField('unitsToReplace', e.target.value)}
+              >
+                {UNITS_OPTS.map((o) => (
+                  <option key={o.label} value={o.value}>{o.label}</option>
+                ))}
+              </select>
+            </label>
+          </div>
         </fieldset>
+
+        <ChipRow
+          label="Payload"
+          options={PAYLOAD_OPTS}
+          value={form.payload}
+          onChange={(v) => setField('payload', v)}
+        />
+        <ChipRow
+          label="Cab"
+          options={CAB_OPTS}
+          value={form.cab}
+          onChange={(v) => setField('cab', v)}
+        />
+
+        <label className="intake-field">
+          <span className="intake-label">Haul</span>
+          <select
+            value={form.haul}
+            onChange={(e) => setField('haul', e.target.value)}
+          >
+            <option value="">—</option>
+            {HAUL_OPTS.map((opt) => (
+              <option key={opt} value={opt}>{opt}</option>
+            ))}
+          </select>
+          <span className="intake-hint">Trailer type only — not a full build.</span>
+        </label>
+
+        <ChipRow
+          label="Upfits"
+          options={UPFIT_OPTS}
+          value={form.upfits}
+          onChange={(v) => setField('upfits', v)}
+          multi
+        />
+
+        <label className="intake-field">
+          <span className="intake-label">Trade-in</span>
+          <select
+            value={form.tradeIn}
+            onChange={(e) => onTradeInChange(e.target.value)}
+          >
+            {TRADE_IN_OPTS.map((o) => (
+              <option key={o.label} value={o.value}>{o.label}</option>
+            ))}
+          </select>
+        </label>
+
+        {showTradeInModel && (
+          <label className="intake-field">
+            <span className="intake-label">Trade-in model</span>
+            <input
+              type="text"
+              value={form.tradeInModel}
+              onChange={(e) => setField('tradeInModel', e.target.value)}
+              placeholder="Year make model…"
+              autoComplete="off"
+            />
+          </label>
+        )}
 
         <label className="intake-field">
           <span className="intake-label">Notes (optional)</span>

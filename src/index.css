@@ -1851,6 +1851,16 @@ img { max-width: 100%; display: block; }
 .intake-customize {
   gap: 16px;
 }
+.intake-body-units {
+  display: grid;
+  gap: 14px;
+}
+@media (min-width: 480px) {
+  .intake-body-units {
+    grid-template-columns: 1.4fr 1fr;
+    align-items: start;
+  }
+}
 
 .intake-echo {
   background: var(--bg-elev);
