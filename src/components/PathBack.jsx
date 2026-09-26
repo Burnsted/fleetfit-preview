@@ -2,12 +2,23 @@ import { useLocation, useNavigate } from 'react-router-dom'
 import { DEFAULT_PACKAGE_ID } from '../data/package'
 import { PATH_STEPS } from '../lib/pathSteps'
 
-export const PATH_BACK_BUILD = 'path-back-20260926-1545'
+export const PATH_BACK_BUILD = 'path-back-20260926-1602'
+
+/** Resolve PATH step name for a pathname. */
+export function pathStepName(pathname) {
+  return PATH_STEPS.find((s) => s.match(pathname))?.name || null
+}
 
 /** First PATH step = Intake — Back is hidden (not disabled). */
 export function isPathFirstStep(pathname) {
-  const step = PATH_STEPS.find((s) => s.match(pathname))
-  return !step || step.name === 'intake'
+  const step = pathStepName(pathname)
+  return !step || step === 'intake'
+}
+
+/** Show Back on later PATH steps only (Add to fleet · Budget · package surfaces). */
+export function shouldShowPathBack(pathname, active = null) {
+  const step = active || pathStepName(pathname)
+  return Boolean(step && step !== 'intake')
 }
 
 /** In-flow Back target — never orphan-exit the app. */
@@ -37,11 +48,13 @@ export function pathBackTarget(pathname, state) {
  * CLEARED PATH ← Back — upper right, quiet chrome, hide on Intake.
  * Label exactly: ← Back
  */
-export default function PathBack({ className = '' }) {
+export default function PathBack({ className = '', active = null }) {
   const navigate = useNavigate()
   const location = useLocation()
-  const target = pathBackTarget(location.pathname, location.state)
 
+  if (!shouldShowPathBack(location.pathname, active)) return null
+
+  const target = pathBackTarget(location.pathname, location.state)
   if (!target) return null
 
   return (

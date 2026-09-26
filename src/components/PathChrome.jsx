@@ -1,6 +1,6 @@
 import { Link, useLocation } from 'react-router-dom'
 import { PATH_STEPS } from '../lib/pathSteps'
-import PathBack, { isPathFirstStep } from './PathBack'
+import PathBack, { shouldShowPathBack } from './PathBack'
 
 const AMBER = '#F5A623'
 
@@ -41,13 +41,14 @@ export default function PathChrome({ active, className = '' }) {
     active ||
     PATH_STEPS.find((step) => step.match(pathname))?.name ||
     null
-  const showBack = !isPathFirstStep(pathname) && current !== 'intake'
+  const showBack = shouldShowPathBack(pathname, active)
 
   return (
     <section className={`path-chrome ${className}`.trim()} aria-label="Path">
       <div className="path-chrome-band">
         <p className="home-path-label">Path</p>
-        {showBack ? <PathBack /> : null}
+        {/* CLEARED: ← Back upper-right of PATH band (also mirrored in site Header) */}
+        {showBack ? <PathBack active={active} className="path-chrome-back" /> : null}
       </div>
       <ul className="home-path-icons path-chrome-icons">
         {PATH_STEPS.map((step) => {

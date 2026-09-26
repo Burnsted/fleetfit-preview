@@ -1653,6 +1653,16 @@ img { max-width: 100%; display: block; }
 .path-back:focus-visible {
   box-shadow: 0 0 0 2px rgba(245, 166, 35, 0.35);
 }
+/* Site header upper-right — Franz bar zone on later PATH steps */
+.header-nav .header-path-back {
+  margin-right: 4px;
+  color: var(--text-dim, #8a8f98);
+}
+.header-nav .header-path-back:hover,
+.header-nav .header-path-back:focus-visible,
+.header-nav .header-path-back:active {
+  color: #F5A623;
+}
 .path-chrome-intake .home-path-card {
   min-height: 96px;
   padding: 12px 6px 12px;
