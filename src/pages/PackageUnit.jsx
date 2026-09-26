@@ -4,7 +4,6 @@ import ReplacementScore from '../components/ReplacementScore'
 import UnitPhoto from '../components/UnitPhoto'
 import WorkCompare from '../components/WorkCompare'
 import { getPackage, getUnit } from '../data/package'
-import { batteryConfidenceFromUnit } from '../lib/battery'
 import { fleetUnitKey } from '../lib/fleetPick'
 import { formatMoney } from '../lib/fit'
 import {
@@ -42,9 +41,9 @@ export default function PackageUnit() {
   }
 
   const spec = displayWorkSpec(unit)
-  const battery = batteryConfidenceFromUnit(unit)
   const savings = displayAnnualSavings(unit)
   const bodyLabel = unit.bodyType === 'van' ? 'Van' : unit.bodyType === 'truck' ? 'Pickup' : null
+  const isVan = unit.bodyType === 'van'
   const current = currentWorkVehicle(intake, pkg)
   const score = scoreReplacementUnit(unit, {
     currentMiles: currentMilesForScore(intake, pkg),
@@ -100,8 +99,10 @@ export default function PackageUnit() {
             !!spec.payload?.known,
           )}
           {chip(
-            `Bed ${spec.bed?.known ? spec.bed.text : NOT_PUBLISHED}`,
-            !!spec.bed?.known,
+            isVan
+              ? `Cargo ${spec.cargo?.known ? spec.cargo.text : NOT_PUBLISHED}`
+              : `Bed ${spec.bed?.known ? spec.bed.text : NOT_PUBLISHED}`,
+            isVan ? !!spec.cargo?.known : !!spec.bed?.known,
           )}
           {chip(
             `Cab ${spec.cab?.known ? spec.cab.text : NOT_PUBLISHED}`,
@@ -112,8 +113,8 @@ export default function PackageUnit() {
             !!spec.tow?.known,
           )}
           {chip(
-            battery.known ? battery.label : `Battery ${NOT_PUBLISHED}`,
-            battery.known,
+            `Battery ${spec.usableKwh?.known ? spec.usableKwh.text : NOT_PUBLISHED}`,
+            !!spec.usableKwh?.known,
           )}
           {chip('Recalls Not published', false)}
           {chip('Charging Not published', false)}

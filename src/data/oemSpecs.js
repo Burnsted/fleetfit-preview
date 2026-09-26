@@ -1,12 +1,12 @@
 /**
- * CLEARED OEM specs · oem-specs-20260926-1850
+ * CLEARED OEM specs · oem-cargo-kwh-20260926-1910
  * Real OEM / EPA published values only. Never invent.
  * Sources live here for Steve spot-check — not shown in UI.
  *
  * Key: year|make|model|trim (normalized). Aliases cover listing trim variants.
  */
 
-export const OEM_SPECS_BUILD = 'oem-specs-20260926-1850'
+export const OEM_SPECS_BUILD = 'oem-cargo-kwh-20260926-1910'
 
 /** @typedef {{
  *  payloadLb: number|null,
@@ -27,7 +27,7 @@ export const OEM_SPECS_BUILD = 'oem-specs-20260926-1850'
 
 /** @type {Record<string, OemSpec>} */
 const BY_KEY = {
-  // 2023 Ford E-Transit Cargo / Base (listing trim "Base")
+  // 2023 Ford E-Transit Cargo / Base — listed unit is Medium Roof 130" WB (Zeigler VDP)
   '2023|ford|e-transit|base': {
     payloadLb: 3880,
     towingLb: null, // Ford 2023 RV & Trailer Towing Guide: E-Transit not recommended for trailer towing
@@ -35,19 +35,20 @@ const BY_KEY = {
     usableKwh: 68,
     drivetrain: 'RWD',
     bedLength: null,
-    cargoCuFt: null, // varies by roof/WB — leave null unless exact config known
+    cargoCuFt: 358.7, // Regular / Medium Roof max cargo (Ford config chart)
     gvwrLb: null,
     curbLb: null,
     cab: 'Cargo van',
     onboardAcKw: 11.3,
     dcFastMaxKw: 115,
-    note: 'Max cargo-van payload 3,880 lb (Ford media). Tow rating unpublished — Ford guide lists E-Transit as not recommended for trailer towing.',
+    note: 'Listed Zeigler unit is Medium Roof 130" WB → Ford Regular/Medium max cargo 358.7 cu ft (315.2 behind first row). Tow unpublished — Ford guide not recommended for trailer towing.',
     sources: {
       payloadLb: 'https://media.ford.com/content/fordmedia/fna/us/en/products/evs/e-transit/2022-ford-e-transit.html',
       usableKwh: 'https://media.ford.com/content/fordmedia/fna/us/en/products/evs/e-transit/2022-ford-e-transit.html',
       epaRangeMi: 'https://media.ford.com/content/fordmedia/fna/us/en/products/evs/e-transit/2022-ford-e-transit.html',
       towingLb: 'https://www.ford.com/content/dam/brand_ford/en_us/brand/towing/pdf/2023-Ford-RV-and-Trailer-Towing-Guide.pdf',
       onboardAcKw: 'https://media.ford.com/content/fordmedia/fna/us/en/products/evs/e-transit/2022-ford-e-transit.html',
+      cargoCuFt: 'https://www.imlaycityfordsales.com/research-ford-etransit.html',
     },
   },
   '2023|ford|e-transit|cargo 250': {
@@ -58,18 +59,19 @@ const BY_KEY = {
     usableKwh: 68,
     drivetrain: 'RWD',
     bedLength: null,
-    cargoCuFt: null,
+    cargoCuFt: 358.7,
     gvwrLb: null,
     curbLb: null,
     cab: 'Cargo van',
     onboardAcKw: 11.3,
     dcFastMaxKw: 115,
-    note: 'Mapped from Cargo 250 listing trim to Ford E-Transit cargo-van published figures.',
+    note: 'Mapped from Cargo 250 listing trim to Ford E-Transit Medium Roof 130" WB cargo figures.',
     sources: {
       payloadLb: 'https://media.ford.com/content/fordmedia/fna/us/en/products/evs/e-transit/2022-ford-e-transit.html',
       usableKwh: 'https://media.ford.com/content/fordmedia/fna/us/en/products/evs/e-transit/2022-ford-e-transit.html',
       epaRangeMi: 'https://media.ford.com/content/fordmedia/fna/us/en/products/evs/e-transit/2022-ford-e-transit.html',
       towingLb: 'https://www.ford.com/content/dam/brand_ford/en_us/brand/towing/pdf/2023-Ford-RV-and-Trailer-Towing-Guide.pdf',
+      cargoCuFt: 'https://www.imlaycityfordsales.com/research-ford-etransit.html',
     },
   },
 
@@ -219,17 +221,18 @@ const BY_KEY = {
     usableKwh: 110,
     drivetrain: 'FWD',
     bedLength: null,
-    cargoCuFt: null,
+    cargoCuFt: 524, // Stellantis press: ProMaster EV offers 524 cu ft (cargo volume unchanged vs ICE max)
     gvwrLb: null,
     curbLb: null,
     cab: 'Cargo van',
     onboardAcKw: 11,
     dcFastMaxKw: 150,
-    note: 'Stellantis press: cargo config up to 3,020 lb payload; 110 kWh; city range up to 162 mi.',
+    note: 'Stellantis press: cargo config up to 3,020 lb payload; 110 kWh; city range up to 162 mi; 524 cu ft cargo.',
     sources: {
       payloadLb: 'https://media.stellantisnorthamerica.com/newsrelease.do?id=25617&mid=1548',
       usableKwh: 'https://media.stellantisnorthamerica.com/newsrelease.do?id=25617&mid=1548',
       epaRangeMi: 'https://media.stellantisnorthamerica.com/newsrelease.do?id=25617&mid=1548',
+      cargoCuFt: 'https://media.stellantisnorthamerica.com/newsrelease.do?id=25617&mid=1548',
     },
   },
 
@@ -563,7 +566,8 @@ export function mergeOemSpecs(vehicle) {
     curb: pick(vehicle.curb, s.curbLb),
     cab: pick(vehicle.cab, s.cab),
     bed: pick(vehicle.bed, s.bedLength),
-    cargoVolume: pick(vehicle.cargoVolume ?? vehicle.cargo, s.cargoCuFt),
+    cargoCuFt: pick(vehicle.cargoCuFt ?? vehicle.cargoVolume ?? vehicle.cargo, s.cargoCuFt),
+    cargoVolume: pick(vehicle.cargoVolume ?? vehicle.cargo ?? vehicle.cargoCuFt, s.cargoCuFt),
     drivetrain: pick(vehicle.drivetrain, s.drivetrain),
     onboardChargerKw: pick(vehicle.onboardChargerKw, s.onboardAcKw),
     dcFastMaxKw: pick(vehicle.dcFastMaxKw, s.dcFastMaxKw),

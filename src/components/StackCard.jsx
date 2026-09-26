@@ -1,7 +1,6 @@
 import AddToFleetButton from './AddToFleetButton'
 import OutboundListingLink, { OutboundListingLabel } from './OutboundListingLink'
 import UnitPhoto from './UnitPhoto'
-import { batteryConfidenceFromUnit } from '../lib/battery'
 import { NOT_PUBLISHED } from '../lib/workSpec'
 
 function faceChip(label, known = true) {
@@ -28,13 +27,26 @@ export default function StackCard({
   rank = null,
   bodyClass = null,
 }) {
-  const battery = unit ? batteryConfidenceFromUnit(unit) : null
   const body = bodyType || unit?.bodyType
   const bodyLabel = body === 'van' ? 'Van' : body === 'truck' ? 'Pickup' : null
+  const isVan = body === 'van'
   const mixClass = bodyClass || (body === 'van' ? 'van' : body === 'truck' ? 'truck' : null)
   const ymm = unit
     ? `${unit.year} ${unit.make} ${unit.model}${unit.trim ? ` ${unit.trim}` : ''}`
     : heading
+  const bedOrCargoChip = isVan
+    ? faceChip(
+        `Cargo ${spec?.cargo?.known ? spec.cargo.text : NOT_PUBLISHED}`,
+        !!spec?.cargo?.known,
+      )
+    : faceChip(
+        `Bed ${spec?.bed?.known ? spec.bed.text : NOT_PUBLISHED}`,
+        !!spec?.bed?.known,
+      )
+  const batteryKwhChip = faceChip(
+    `Battery ${spec?.usableKwh?.known ? spec.usableKwh.text : NOT_PUBLISHED}`,
+    !!spec?.usableKwh?.known,
+  )
 
   return (
     <article
@@ -95,10 +107,7 @@ export default function StackCard({
             `Payload ${spec?.payload?.known ? spec.payload.text : NOT_PUBLISHED}`,
             !!spec?.payload?.known,
           )}
-          {faceChip(
-            `Bed ${spec?.bed?.known ? spec.bed.text : NOT_PUBLISHED}`,
-            !!spec?.bed?.known,
-          )}
+          {bedOrCargoChip}
           {faceChip(
             `Cab ${spec?.cab?.known ? spec.cab.text : NOT_PUBLISHED}`,
             !!spec?.cab?.known,
@@ -107,12 +116,7 @@ export default function StackCard({
             `Tow ${spec?.tow?.known ? spec.tow.text : NOT_PUBLISHED}`,
             !!spec?.tow?.known,
           )}
-          {battery
-            ? faceChip(
-                battery.known ? battery.label : `Battery ${NOT_PUBLISHED}`,
-                battery.known,
-              )
-            : null}
+          {!current ? batteryKwhChip : null}
         </div>
         {current || !pickId ? null : (
           <AddToFleetButton pickId={pickId} size="btn-block" />

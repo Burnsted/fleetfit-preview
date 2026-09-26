@@ -2,8 +2,8 @@ import AddToFleetButton from './AddToFleetButton'
 import OutboundListingLink, { OutboundListingLabel } from './OutboundListingLink'
 import ListingPhoto from './ListingPhoto'
 import { distanceFromHome } from '../data/listings'
-import { batteryConfidenceFromListing } from '../lib/battery'
 import { fleetListingKey } from '../lib/fleetPick'
+import { displayWorkSpec, NOT_PUBLISHED } from '../lib/workSpec'
 
 /** Listing-card chrome · outbound seller · Ted 2026-09-26 */
 const CARD_BUILD = 'listing-card-20260926-1905'
@@ -26,8 +26,9 @@ function valuePillClass(band) {
 export default function ListingCard({ listing }) {
   const price = formatPrice(listing)
   const miles = distanceFromHome(listing)
-  const battery = batteryConfidenceFromListing(listing)
+  const spec = displayWorkSpec(listing)
   const ymm = `${listing.year} ${listing.make} ${listing.model}${listing.trim ? ` ${listing.trim}` : ''}`
+  const isVan = /van/i.test(String(listing.bodyType || listing.model || ''))
 
   return (
     <article className="listing-card" data-card-build={CARD_BUILD} data-listing-live={String(listing.listingLive === true)}>
@@ -64,16 +65,24 @@ export default function ListingCard({ listing }) {
 
         <div className="card-chip-row">
           <span className="meta-chip ev-chip">
-            {battery.label}
+            Battery<strong>{spec.usableKwh?.known ? spec.usableKwh.text : NOT_PUBLISHED}</strong>
           </span>
           <span className="meta-chip ev-chip">
-            Range<strong>{listing.ratedRange != null ? `${listing.ratedRange} mi` : 'Not published'}</strong>
+            Range<strong>{spec.range?.known ? spec.range.text : NOT_PUBLISHED}</strong>
           </span>
           <span className="meta-chip">
-            Payload<strong>{listing.payload != null ? `${listing.payload.toLocaleString()} lb` : 'Not published'}</strong>
+            Payload<strong>{spec.payload?.known ? spec.payload.text : NOT_PUBLISHED}</strong>
           </span>
           <span className="meta-chip">
-            Tow<strong>{(listing.tow ?? listing.towingLb) != null ? `${Number(listing.tow ?? listing.towingLb).toLocaleString()} lb` : 'Not published'}</strong>
+            Tow<strong>{spec.tow?.known ? spec.tow.text : NOT_PUBLISHED}</strong>
+          </span>
+          <span className="meta-chip">
+            {isVan ? 'Cargo' : 'Bed'}
+            <strong>
+              {isVan
+                ? (spec.cargo?.known ? spec.cargo.text : NOT_PUBLISHED)
+                : (spec.bed?.known ? spec.bed.text : NOT_PUBLISHED)}
+            </strong>
           </span>
         </div>
 

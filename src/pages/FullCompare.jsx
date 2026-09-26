@@ -18,7 +18,7 @@ const ROWS = [
   { key: 'ymm', label: 'Year / model' },
   { key: 'role', label: 'Package role' },
   { key: 'payload', label: 'Payload' },
-  { key: 'bed', label: 'Bed / capacity' },
+  { key: 'bed', label: 'Bed / cargo' },
   { key: 'cab', label: 'Cab' },
   { key: 'tow', label: 'Tow / pull' },
   { key: 'energy', label: 'Energy' },
@@ -87,7 +87,11 @@ export default function FullCompare() {
     if (row.key === 'ymm') return current.heading
     if (row.key === 'role') return current.role
     if (row.key === 'payload') return cellText(current.spec.payload)
-    if (row.key === 'bed') return cellText(current.spec.bed)
+    if (row.key === 'bed') {
+      return current.bodyType === 'van'
+        ? cellText(current.spec.cargo)
+        : cellText(current.spec.bed)
+    }
     if (row.key === 'cab') return cellText(current.spec.cab)
     if (row.key === 'tow') return cellText(current.spec.tow)
     if (row.key === 'energy') return cellText(current.spec.energy)
@@ -111,7 +115,11 @@ export default function FullCompare() {
     if (row.key === 'ymm') return col.ymm
     if (row.key === 'role') return col.role
     if (row.key === 'payload') return cellText(col.spec.payload)
-    if (row.key === 'bed') return cellText(col.spec.bed)
+    if (row.key === 'bed') {
+      return col.unit?.bodyType === 'van'
+        ? cellText(col.spec.cargo)
+        : cellText(col.spec.bed)
+    }
     if (row.key === 'cab') return cellText(col.spec.cab)
     if (row.key === 'tow') return cellText(col.spec.tow)
     if (row.key === 'energy') return cellText(col.spec.energy)

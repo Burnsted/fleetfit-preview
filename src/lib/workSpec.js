@@ -138,11 +138,21 @@ export function displayWorkSpec(unit) {
   )
   const drivetrain = firstDefined(unit?.drivetrain, listing?.drivetrain)
   const cargo = firstDefined(
+    unit?.cargoCuFt,
     unit?.cargoVolume,
     unit?.cargo,
+    listing?.cargoCuFt,
     listing?.cargoVolume,
     listing?.cargo,
   )
+
+  const cargoField = factField(cargo, (v) => {
+    const n = Number(v)
+    if (!Number.isFinite(n)) return String(v)
+    // Keep one decimal when OEM publishes tenths (e.g. 358.7, 614.7)
+    const text = Number.isInteger(n) ? String(n) : String(n)
+    return `${text} cu ft`
+  })
 
   return {
     payload: factField(payload, formatLb),
@@ -155,11 +165,13 @@ export function displayWorkSpec(unit) {
     mpg: { text: NOT_PUBLISHED, known: false },
     kbbTradeIn: { text: NOT_PUBLISHED, known: false },
     drivetrain: factField(drivetrain),
-    cargo: factField(cargo, (v) =>
-      Number.isFinite(Number(v)) ? `${Number(v)} cu ft` : String(v),
-    ),
+    cargo: cargoField,
     range: factField(range, (v) => `${Number(v).toLocaleString()} mi`),
-    usableKwh: factField(kwh, (v) => `${Number(v)} kWh`),
+    usableKwh: factField(kwh, (v) => {
+      const n = Number(v)
+      if (!Number.isFinite(n)) return NOT_PUBLISHED
+      return Number.isInteger(n) ? `${n} kWh` : `${n} kWh`
+    }),
     source: listing?.id || unit?.oemSpecKey || null,
   }
 }
