@@ -3211,3 +3211,71 @@ img { max-width: 100%; display: block; }
   color: #f5a623;
 }
 .replacement-score-flag.is-reject { color: #ff8a80; }
+
+/* CLEARED Recommendation body mix · 2026-09-26 */
+.recommendation-mix {
+  margin: 0 0 18px;
+  padding: 14px 16px;
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  background: var(--bg-elev);
+}
+.recommendation-mix-title {
+  margin: 0 0 6px;
+  font-size: 1.05rem;
+}
+.recommendation-mix-lead {
+  margin: 0 0 10px;
+  font-size: 0.84rem;
+  color: var(--text-dim);
+  max-width: 40rem;
+}
+.recommendation-mix-chips {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+.recommendation-mix-chip {
+  display: inline-flex;
+  align-items: center;
+  padding: 7px 12px;
+  border-radius: 999px;
+  font-size: 0.8rem;
+  font-weight: 700;
+  border: 1px solid var(--border);
+  background: rgba(255, 255, 255, 0.04);
+}
+.recommendation-mix-chip.is-truck {
+  border-color: rgba(61, 214, 198, 0.45);
+  color: var(--accent, #3dd6c6);
+}
+.recommendation-mix-chip.is-van {
+  border-color: rgba(120, 170, 255, 0.5);
+  color: #9ec1ff;
+}
+.recommendation-mix-chip.is-missing {
+  color: var(--text-dim);
+  font-weight: 600;
+}
+.recommendation-mix-missing {
+  margin: 10px 0 0;
+  font-size: 0.82rem;
+  color: var(--text-dim);
+}
+.stack-card-seat {
+  margin: 0 0 4px;
+  font-size: 0.72rem;
+  font-weight: 700;
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
+  color: var(--accent, #3dd6c6);
+}
+.stack-card[data-body-class="van"] .stack-card-seat {
+  color: #9ec1ff;
+}
+.stack-card-body-tag {
+  color: var(--text-dim);
+}
+.stack-card.is-best-of-body {
+  box-shadow: inset 0 0 0 1px rgba(61, 214, 198, 0.22);
+}

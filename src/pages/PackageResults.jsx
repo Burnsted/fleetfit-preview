@@ -6,9 +6,11 @@ import { factKbbTradeIn, readBudget, spendEnvelope, unitsWithinEnvelope } from '
 import { formatMoney } from '../lib/fit'
 import { fleetUnitKey, useFleetPick } from '../lib/fleetPick'
 import {
-  currentMilesForScore,
-  rankUnitsByReplacementScore,
-} from '../lib/replacementScore'
+  BODY_MIX_BUILD,
+  bodyClassLabel,
+  composeRecommendationSet,
+} from '../lib/recommendationSet'
+import { currentMilesForScore } from '../lib/replacementScore'
 import { currentWorkVehicle, displayWorkSpec } from '../lib/workSpec'
 
 const DAY_NEED = {
@@ -62,25 +64,35 @@ export default function PackageResults() {
     currentMiles: currentMilesForScore(intake, pkg),
     intake,
   }
-  const ranked = rankUnitsByReplacementScore(visibleUnits, scoreCtx)
-  const selectedInPackage = visibleUnits.filter((unit) => fleet.has(fleetUnitKey(pkg.id, unit.id))).length
+  const reco = composeRecommendationSet(visibleUnits, scoreCtx, {
+    maxSlots: Math.max(visibleUnits.length, pkg.unitCount || 0),
+  })
+  const ranked = reco.items
+  const selectedInPackage = visibleUnits.filter((unit) =>
+    fleet.has(fleetUnitKey(pkg.id, unit.id)),
+  ).length
   const unknownBatt = batteryUnknownCount({ ...pkg, units: visibleUnits })
   const dayNeed = dayNeedLabel(pkg, intake)
-  const compareCandidates = ranked.map(({ unit, score }, index) => ({
-    id: unit.id,
-    unit,
-    pickId: fleetUnitKey(pkg.id, unit.id),
+  const compareCandidates = ranked.map((row) => ({
+    id: row.unit.id,
+    unit: row.unit,
+    pickId: fleetUnitKey(pkg.id, row.unit.id),
     kicker: 'Candidate EV',
-    heading: `${unit.year} ${unit.model}`,
-    role: unit.role,
-    spec: displayWorkSpec(unit),
-    mileage: unit.mileage,
-    score,
-    rank: index + 1,
+    heading: `${row.unit.year} ${row.unit.model}`,
+    role: row.unit.role,
+    spec: displayWorkSpec(row.unit),
+    mileage: row.unit.mileage,
+    score: row.score,
+    rank: row.rank,
+    seatLabel: row.seatLabel,
+    bodyClass: row.bodyClass,
   }))
 
   return (
-    <div className="locked-page package-page is-stack">
+    <div
+      className="locked-page package-page is-stack"
+      data-body-mix-build={BODY_MIX_BUILD}
+    >
       <nav className="locked-crumbs" aria-label="Breadcrumb">
         <Link to="/">Home</Link>
         <span aria-hidden="true"> / </span>
@@ -110,6 +122,40 @@ export default function PackageResults() {
         </div>
       </header>
 
+      <section
+        className="recommendation-mix"
+        aria-labelledby="reco-mix-title"
+        data-body-mix-build={BODY_MIX_BUILD}
+        data-has-truck={reco.hasTruck ? 'true' : 'false'}
+        data-has-van={reco.hasVan ? 'true' : 'false'}
+      >
+        <h2 id="reco-mix-title" className="recommendation-mix-title">
+          Recommendation set
+        </h2>
+        <p className="recommendation-mix-lead">
+          Best Truck and Best Van by Replacement Score when both bodies are in the pool — not a mono-body shortlist.
+        </p>
+        <div className="recommendation-mix-chips" aria-label="Body mix">
+          {reco.bestTruck ? (
+            <span className="recommendation-mix-chip is-truck" data-body-class="truck">
+              Best Truck · {reco.bestTruck.unit.year} {reco.bestTruck.unit.model}
+            </span>
+          ) : (
+            <span className="recommendation-mix-chip is-missing">Truck not in this set</span>
+          )}
+          {reco.bestVan ? (
+            <span className="recommendation-mix-chip is-van" data-body-class="van">
+              Best Van · {reco.bestVan.unit.year} {reco.bestVan.unit.model}
+            </span>
+          ) : (
+            <span className="recommendation-mix-chip is-missing">Van not in this set</span>
+          )}
+        </div>
+        {reco.missingBodyNote ? (
+          <p className="recommendation-mix-missing">{reco.missingBodyNote}</p>
+        ) : null}
+      </section>
+
       <WorkCompare
         current={current}
         candidates={compareCandidates}
@@ -120,7 +166,7 @@ export default function PackageResults() {
       <section aria-labelledby="units-title">
         <h2 id="units-title" className="package-units-title">Units</h2>
         <p className="package-score-note">
-          Ranked by Replacement Score vs your current work vehicle. Similar-mile sidegrades stay listed — they sort lower.
+          Ranked by Replacement Score vs your current work vehicle. Similar-mile sidegrades stay listed — they sort lower. Body mix keeps Best {bodyClassLabel('truck')} and Best {bodyClassLabel('van')} when both exist.
         </p>
         {ranked.length === 0 ? (
           <p className="locked-muted">
@@ -129,20 +175,22 @@ export default function PackageResults() {
           </p>
         ) : null}
         <ul className="package-unit-stack">
-          {ranked.map(({ unit, score }, index) => {
-            const spec = displayWorkSpec(unit)
+          {ranked.map((row) => {
+            const spec = displayWorkSpec(row.unit)
             return (
-              <li key={unit.id}>
+              <li key={row.unit.id}>
                 <StackCard
-                  heading={`${unit.year} ${unit.model}`}
-                  role={unit.role}
-                  unit={unit}
+                  heading={`${row.unit.year} ${row.unit.model}`}
+                  role={row.unit.role}
+                  unit={row.unit}
                   packageId={pkg.id}
-                  pickId={fleetUnitKey(pkg.id, unit.id)}
+                  pickId={fleetUnitKey(pkg.id, row.unit.id)}
                   spec={spec}
-                  mileage={unit.mileage}
-                  score={score}
-                  rank={index + 1}
+                  mileage={row.unit.mileage}
+                  score={row.score}
+                  rank={row.rank}
+                  seatLabel={row.seatLabel}
+                  bodyClass={row.bodyClass}
                 />
               </li>
             )
