@@ -1522,10 +1522,34 @@ img { max-width: 100%; display: block; }
   text-align: center;
 }
 .home-path-card:hover { text-decoration: none; color: #111; }
+.home-path-card.is-active {
+  border: 1.5px solid #F5A623;
+  box-shadow: 0 1px 4px rgba(245, 166, 35, 0.18);
+}
 .home-path-icon {
   width: 36px;
   height: 36px;
   display: block;
+}
+/* PATH product bar — reuse oversized tiles on intake / inner pages */
+.path-chrome {
+  margin: 0 0 20px;
+  max-width: 520px;
+}
+.path-chrome .home-path-label {
+  margin: 0 0 8px;
+  font-size: 0.72rem;
+  font-weight: 600;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: var(--text-dim, #888);
+}
+.path-chrome-icons {
+  grid-template-columns: repeat(3, 1fr);
+}
+.path-chrome-intake .home-path-card {
+  min-height: 96px;
+  padding: 12px 6px 12px;
 }
 .home-ex {
   padding-top: 18px;

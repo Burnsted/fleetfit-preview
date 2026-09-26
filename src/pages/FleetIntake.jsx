@@ -1,5 +1,6 @@
 import { useState } from 'react'
-import { Link, useNavigate, useSearchParams } from 'react-router-dom'
+import { useNavigate, useSearchParams } from 'react-router-dom'
+import PathChrome from '../components/PathChrome'
 import Wordmark from '../components/Wordmark'
 import { matchPackageIdFromIntake } from '../data/package'
 
@@ -126,11 +127,7 @@ export default function FleetIntake() {
 
   return (
     <div className="locked-page">
-      <nav className="locked-crumbs" aria-label="Breadcrumb">
-        <Link to="/">Home</Link>
-        <span aria-hidden="true"> / </span>
-        <span>Fleet intake</span>
-      </nav>
+      <PathChrome active="intake" className="path-chrome-intake" />
 
       <header className="locked-page-header">
         <p className="locked-eyebrow locked-eyebrow-mark">

@@ -1,41 +1,10 @@
 import { Link } from 'react-router-dom'
 import { DEFAULT_PACKAGE_ID } from '../data/package'
 import ListingPhoto from '../components/ListingPhoto'
+import PathChrome from '../components/PathChrome'
 import Wordmark from '../components/Wordmark'
 
 const EXAMPLE = `/package/${DEFAULT_PACKAGE_ID}`
-const AMBER = '#F5A623'
-
-function PathIcon({ name }) {
-  if (name === 'intake') {
-    return (
-      <svg className="home-path-icon" viewBox="0 0 48 48" aria-hidden="true">
-        <rect x="12" y="8" width="24" height="32" rx="3" fill="none" stroke={AMBER} strokeWidth="2.4" />
-        <path d="M18 16h12M18 23h12M18 30h8" fill="none" stroke={AMBER} strokeWidth="2.4" strokeLinecap="round" />
-      </svg>
-    )
-  }
-  if (name === 'add') {
-    return (
-      <svg className="home-path-icon" viewBox="0 0 48 48" aria-hidden="true">
-        <path d="M24 12 V36 M12 24 H36" fill="none" stroke={AMBER} strokeWidth="2.8" strokeLinecap="round" />
-      </svg>
-    )
-  }
-  return (
-    <svg className="home-path-icon" viewBox="0 0 48 48" aria-hidden="true">
-      <circle cx="24" cy="24" r="14" fill="none" stroke={AMBER} strokeWidth="2.4" />
-      <path d="M24 16 V25 L30 28" fill="none" stroke={AMBER} strokeWidth="2.4" strokeLinecap="round" />
-    </svg>
-  )
-}
-
-/* CLEARED PATH: Intake · Add to fleet · Budget (Package chip retired) */
-const PATH = [
-  { name: 'intake', label: 'Intake', to: '/intake' },
-  { name: 'add', label: 'Add to fleet', to: EXAMPLE },
-  { name: 'budget', label: 'Budget', to: '/budget' },
-]
 
 const EXAMPLES = [
   { kind: 'lightning', label: 'Lightning', to: '/model/ford-f-150-lightning' },
@@ -79,19 +48,9 @@ export default function Home() {
         </div>
       </header>
 
-      <section className="locked-section home-dense" aria-label="Path">
-        <p className="home-path-label">Path</p>
-        <ul className="home-path-icons">
-          {PATH.map((step) => (
-            <li key={step.name}>
-              <Link to={step.to} className="home-path-card">
-                <PathIcon name={step.name} />
-                <span>{step.label}</span>
-              </Link>
-            </li>
-          ))}
-        </ul>
-      </section>
+      <div className="locked-section home-dense">
+        <PathChrome />
+      </div>
 
       <section className="locked-section home-ex" aria-label="Example packages">
         <p className="home-path-label">Example packages</p>
