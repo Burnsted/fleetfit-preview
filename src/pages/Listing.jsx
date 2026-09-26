@@ -81,7 +81,7 @@ export default function Listing() {
             </div>
             <div className="stat-tile">
               <div className="stat-label">Rated range</div>
-              <div className="stat-value">{listing.ratedRange != null ? `${listing.ratedRange} mi` : '—'}</div>
+              <div className="stat-value">{listing.ratedRange != null ? `${listing.ratedRange} mi` : 'Not published'}</div>
               <div className="stat-hint">Displayed / sticker class</div>
             </div>
             <div className="stat-tile">
@@ -93,11 +93,11 @@ export default function Listing() {
             </div>
             <div className="stat-tile">
               <div className="stat-label">Payload</div>
-              <div className="stat-value">{listing.payload != null ? `${listing.payload.toLocaleString()} lb` : '—'}</div>
+              <div className="stat-value">{listing.payload != null ? `${listing.payload.toLocaleString()} lb` : 'Not published'}</div>
               <div className="stat-hint">
                 {listing.gvwr != null || listing.curb != null
-                  ? `GVWR ${listing.gvwr != null ? listing.gvwr.toLocaleString() : '—'} · curb ${listing.curb != null ? listing.curb.toLocaleString() : '—'}`
-                  : 'Not on this listing card'}
+                  ? `GVWR ${listing.gvwr != null ? listing.gvwr.toLocaleString() : 'Not published'} · curb ${listing.curb != null ? listing.curb.toLocaleString() : 'Not published'}`
+                  : 'Not published'}
               </div>
             </div>
           </div>
@@ -124,14 +124,15 @@ export default function Listing() {
         <section className="module module-facts">
           <h2 className="module-title"><span className="num">3</span> Work &amp; EV facts</h2>
           <dl className="facts-strip">
-            <div className="fact"><dt>Usable pack</dt><dd>{listing.usableKwh ? `${listing.usableKwh} kWh` : '—'}</dd></div>
-            <div className="fact"><dt>Onboard charger</dt><dd>{listing.onboardChargerKw != null ? `${listing.onboardChargerKw} kW` : '—'}</dd></div>
-            <div className="fact"><dt>DC fast max</dt><dd>{listing.dcFastMaxKw != null ? `${listing.dcFastMaxKw} kW` : '—'}</dd></div>
-            <div className="fact"><dt>Cab / bed</dt><dd>{listing.cab || listing.bed ? `${listing.cab || '—'} / ${listing.bed || '—'}` : '—'}</dd></div>
-            <div className="fact"><dt>Drivetrain</dt><dd>{listing.drivetrain || '—'}</dd></div>
-            <div className="fact"><dt>Payload</dt><dd>{listing.payload != null ? `${listing.payload.toLocaleString()} lb` : '—'}</dd></div>
-            <div className="fact"><dt>GVWR</dt><dd>{listing.gvwr != null ? `${listing.gvwr.toLocaleString()} lb` : '—'}</dd></div>
-            <div className="fact"><dt>Curb</dt><dd>{listing.curb != null ? `${listing.curb.toLocaleString()} lb` : '—'}</dd></div>
+            <div className="fact"><dt>Usable pack</dt><dd>{listing.usableKwh ? `${listing.usableKwh} kWh` : 'Not published'}</dd></div>
+            <div className="fact"><dt>Onboard charger</dt><dd>{listing.onboardChargerKw != null ? `${listing.onboardChargerKw} kW` : 'Not published'}</dd></div>
+            <div className="fact"><dt>DC fast max</dt><dd>{listing.dcFastMaxKw != null ? `${listing.dcFastMaxKw} kW` : 'Not published'}</dd></div>
+            <div className="fact"><dt>Cab / bed</dt><dd>{listing.cab || listing.bed ? `${listing.cab || 'Not published'} / ${listing.bed || 'Not published'}` : 'Not published'}</dd></div>
+            <div className="fact"><dt>Drivetrain</dt><dd>{listing.drivetrain || 'Not published'}</dd></div>
+            <div className="fact"><dt>Payload</dt><dd>{listing.payload != null ? `${listing.payload.toLocaleString()} lb` : 'Not published'}</dd></div>
+            <div className="fact"><dt>Tow</dt><dd>{(listing.tow ?? listing.towingLb) != null ? `${Number(listing.tow ?? listing.towingLb).toLocaleString()} lb` : 'Not published'}</dd></div>
+            <div className="fact"><dt>GVWR</dt><dd>{listing.gvwr != null ? `${listing.gvwr.toLocaleString()} lb` : 'Not published'}</dd></div>
+            <div className="fact"><dt>Curb</dt><dd>{listing.curb != null ? `${listing.curb.toLocaleString()} lb` : 'Not published'}</dd></div>
           </dl>
           <p style={{ marginTop: 12, color: 'var(--text-muted)', fontSize: '0.9rem' }}>{listing.description}</p>
         </section>

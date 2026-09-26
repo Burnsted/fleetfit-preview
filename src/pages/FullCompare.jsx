@@ -28,7 +28,7 @@ const ROWS = [
 ]
 
 function cellText(field) {
-  return field?.text || '—'
+  return field?.text || 'Not published'
 }
 
 export default function FullCompare() {

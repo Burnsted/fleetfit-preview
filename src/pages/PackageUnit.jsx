@@ -12,7 +12,7 @@ import {
   scoreReplacementUnit,
 } from '../lib/replacementScore'
 import { displayAnnualSavings } from '../lib/savings'
-import { currentWorkVehicle, displayWorkSpec, DASH } from '../lib/workSpec'
+import { currentWorkVehicle, displayWorkSpec, NOT_PUBLISHED } from '../lib/workSpec'
 
 /** CLEARED density remnant · PackageUnit only · 2026-09-26 */
 const DENSITY_BUILD = 'package-unit-density-20260926-0923'
@@ -89,34 +89,34 @@ export default function PackageUnit() {
           {unit.trim ? ` ${unit.trim}` : ''}
         </h1>
         <p className="unit-dense-meta">
-          {unit.mileage != null ? `${Number(unit.mileage).toLocaleString()} mi` : DASH}
+          {unit.mileage != null ? `${Number(unit.mileage).toLocaleString()} mi` : NOT_PUBLISHED}
           {unit.location?.city ? ` · ${unit.location.city}, ${unit.location.state}` : ''}
         </p>
         <div className="spec-chips unit-dense-chips" aria-label="Unit facts">
           {unit.role ? chip(unit.role) : null}
           {bodyLabel ? chip(bodyLabel) : null}
           {chip(
-            `Payload ${spec.payload?.known ? spec.payload.text : DASH}`,
+            `Payload ${spec.payload?.known ? spec.payload.text : NOT_PUBLISHED}`,
             !!spec.payload?.known,
           )}
           {chip(
-            `Bed ${spec.bed?.known ? spec.bed.text : DASH}`,
+            `Bed ${spec.bed?.known ? spec.bed.text : NOT_PUBLISHED}`,
             !!spec.bed?.known,
           )}
           {chip(
-            `Cab ${spec.cab?.known ? spec.cab.text : DASH}`,
+            `Cab ${spec.cab?.known ? spec.cab.text : NOT_PUBLISHED}`,
             !!spec.cab?.known,
           )}
           {chip(
-            `Tow ${spec.tow?.known ? spec.tow.text : DASH}`,
+            `Tow ${spec.tow?.known ? spec.tow.text : NOT_PUBLISHED}`,
             !!spec.tow?.known,
           )}
           {chip(
-            battery.known ? battery.label : `Battery ${DASH}`,
+            battery.known ? battery.label : `Battery ${NOT_PUBLISHED}`,
             battery.known,
           )}
-          {chip('Recalls —', false)}
-          {chip('Charging —', false)}
+          {chip('Recalls Not published', false)}
+          {chip('Charging Not published', false)}
           {savings.known ? chip(`Savings ${savings.text}`, true) : null}
         </div>
       </header>

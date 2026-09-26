@@ -3,11 +3,13 @@
  * No listing photo → pending stub — never OEM/lifestyle stock for considered.
  * Current (shop’s non-EV) column may use labeled stock — we do not have their truck.
  * CLEARED listing-photos · 2026-09-26
+ * CLEARED OEM specs · merge real OEM by year/make/model/trim (never null wipe).
  */
 export const PHOTO_BUILD = 'listing-photos-20260926-1337'
 
 import currentTruck from '../assets/stock/current-truck.webp'
 import currentVan from '../assets/stock/current-van.webp'
+import { mergeOemSpecs } from '../data/oemSpecs'
 import {
   LISTING_ALIASES,
   LISTING_PHOTO_FILES,
@@ -53,57 +55,90 @@ export function exampleStripPhoto(kind) {
 
 export const HERO_PLATE_PHOTO = listingPhotoRecord('hero').src
 
-export function applyListingFactsToUnit(unit) {
-  const row = listingRowFor(unit)
-  if (!unit || !row) return unit
+/**
+ * Overlay dealer listing YMMT / price / miles, then merge OEM specs.
+ * Dealer-stated numeric specs would win — listing rows today only carry drivetrain.
+ * Battery SOH stays dealer-reported only (never OEM-filled).
+ */
+/**
+ * Cars.com overlay rows do not publish payload/range/kWh/cab/bed.
+ * Clear demo-seed capability fields, keep drivetrain when listing states it,
+ * then fill from OEM table. Dealer-stated values would win only if present on row.
+ */
+function capabilityCleared(base) {
   return {
-    ...unit,
-    year: row.year,
-    make: row.make,
-    model: row.model,
-    trim: row.trim,
-    askPrice: row.price_usd,
-    mileage: row.mileage,
-    location: { city: row.city, state: row.state },
-    sellerLabel: row.dealer,
-    sellerType: 'dealer',
-    listingUrl: row.listing_url,
-    battery: {
-      ...unit.battery,
-      soh: null,
-      usableKwh: null,
-      status: 'Not reported by dealer',
-    },
-  }
-}
-
-export function applyListingFactsToListing(listing) {
-  const row = listingRowFor(listing)
-  if (!listing || !row) return listing
-  return {
-    ...listing,
-    year: row.year,
-    make: row.make,
-    model: row.model,
-    trim: row.trim,
-    allInPrice: row.price_usd,
-    mileage: row.mileage,
-    location: { city: row.city, state: row.state },
-    sellerName: row.dealer,
-    sellerType: 'dealer',
-    listingUrl: row.listing_url,
-    soh: null,
-    sohMethod: null,
+    ...base,
     payload: null,
+    tow: null,
+    towingLb: null,
     ratedRange: null,
     usableKwh: null,
     gvwr: null,
     curb: null,
     cab: null,
     bed: null,
-    drivetrain: row.drivetrain || null,
+    cargo: null,
+    cargoVolume: null,
     onboardChargerKw: null,
     dcFastMaxKw: null,
-    workValue: 'Incomplete Data',
   }
+}
+
+export function applyListingFactsToUnit(unit) {
+  const row = listingRowFor(unit)
+  if (!unit) return unit
+  let base = capabilityCleared({
+    ...unit,
+    battery: {
+      ...unit.battery,
+      usableKwh: null,
+      soh: null,
+      status: 'Not reported by dealer',
+    },
+  })
+  if (row) {
+    base = {
+      ...base,
+      year: row.year,
+      make: row.make,
+      model: row.model,
+      trim: row.trim,
+      askPrice: row.price_usd,
+      mileage: row.mileage,
+      location: { city: row.city, state: row.state },
+      sellerLabel: row.dealer,
+      sellerType: 'dealer',
+      listingUrl: row.listing_url,
+      drivetrain: row.drivetrain || null,
+    }
+  }
+  return mergeOemSpecs(base)
+}
+
+export function applyListingFactsToListing(listing) {
+  const row = listingRowFor(listing)
+  if (!listing) return listing
+  let base = capabilityCleared({
+    ...listing,
+    soh: null,
+    sohMethod: null,
+    workValue: listing.workValue || 'Incomplete Data',
+  })
+  if (row) {
+    base = {
+      ...base,
+      year: row.year,
+      make: row.make,
+      model: row.model,
+      trim: row.trim,
+      allInPrice: row.price_usd,
+      mileage: row.mileage,
+      location: { city: row.city, state: row.state },
+      sellerName: row.dealer,
+      sellerType: 'dealer',
+      listingUrl: row.listing_url,
+      drivetrain: row.drivetrain || null,
+    }
+  }
+  return mergeOemSpecs(base)
 }

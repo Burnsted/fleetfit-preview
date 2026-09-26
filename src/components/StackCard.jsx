@@ -2,7 +2,7 @@ import { Link } from 'react-router-dom'
 import AddToFleetButton from './AddToFleetButton'
 import UnitPhoto from './UnitPhoto'
 import { batteryConfidenceFromUnit } from '../lib/battery'
-import { DASH } from '../lib/workSpec'
+import { NOT_PUBLISHED } from '../lib/workSpec'
 
 function faceChip(label, known = true) {
   return (
@@ -72,24 +72,24 @@ export default function StackCard({
           {role ? faceChip(role) : null}
           {bodyLabel ? faceChip(bodyLabel) : null}
           {faceChip(
-            `Payload ${spec?.payload?.known ? spec.payload.text : DASH}`,
+            `Payload ${spec?.payload?.known ? spec.payload.text : NOT_PUBLISHED}`,
             !!spec?.payload?.known,
           )}
           {faceChip(
-            `Bed ${spec?.bed?.known ? spec.bed.text : DASH}`,
+            `Bed ${spec?.bed?.known ? spec.bed.text : NOT_PUBLISHED}`,
             !!spec?.bed?.known,
           )}
           {faceChip(
-            `Cab ${spec?.cab?.known ? spec.cab.text : DASH}`,
+            `Cab ${spec?.cab?.known ? spec.cab.text : NOT_PUBLISHED}`,
             !!spec?.cab?.known,
           )}
           {faceChip(
-            `Tow ${spec?.tow?.known ? spec.tow.text : DASH}`,
+            `Tow ${spec?.tow?.known ? spec.tow.text : NOT_PUBLISHED}`,
             !!spec?.tow?.known,
           )}
           {battery
             ? faceChip(
-                battery.known ? battery.label : `Battery ${DASH}`,
+                battery.known ? battery.label : `Battery ${NOT_PUBLISHED}`,
                 battery.known,
               )
             : null}

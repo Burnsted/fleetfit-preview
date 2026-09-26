@@ -1,7 +1,9 @@
 import { LISTINGS } from '../data/listings'
 
-/** Em dash for unknown work specs. Never invent payload / cab / bed / tow. */
-export const DASH = '—'
+/** CLEARED OEM specs: unknown = plain "Not published", never em dash. */
+export const NOT_PUBLISHED = 'Not published'
+/** @deprecated use NOT_PUBLISHED for vehicle specs */
+export const DASH = NOT_PUBLISHED
 
 function norm(value) {
   return String(value ?? '').trim().toLowerCase()
@@ -26,7 +28,7 @@ export function findExactListingMatch(unit) {
 
 export function formatLb(value) {
   const n = Number(value)
-  if (!Number.isFinite(n)) return DASH
+  if (!Number.isFinite(n)) return NOT_PUBLISHED
   return `${n.toLocaleString()} lb`
 }
 
@@ -36,15 +38,15 @@ export function formatCabBed(cab, bed) {
   if (c && b) return `${c} / ${b}`
   if (c) return c
   if (b) return b
-  return DASH
+  return NOT_PUBLISHED
 }
 
 function factField(raw, format) {
   if (raw == null || raw === '') {
-    return { text: DASH, known: false }
+    return { text: NOT_PUBLISHED, known: false }
   }
   const text = format ? format(raw) : String(raw)
-  if (!text || text === DASH) return { text: DASH, known: false }
+  if (!text || text === NOT_PUBLISHED) return { text: NOT_PUBLISHED, known: false }
   return { text, known: true }
 }
 
@@ -61,9 +63,9 @@ export function formatEnergy(rangeMi, kwh) {
     return { text: `${Number(rangeMi).toLocaleString()} mi`, known: true }
   }
   if (kwhKnown) {
-    return { text: `${DASH} (${Number(kwh)} kWh)`, known: true }
+    return { text: `${NOT_PUBLISHED} (${Number(kwh)} kWh)`, known: true }
   }
-  return { text: DASH, known: false }
+  return { text: NOT_PUBLISHED, known: false }
 }
 
 function finiteNumber(value) {
@@ -75,7 +77,6 @@ function finiteNumber(value) {
 /**
  * Current-column Energy: tank range mi (MPG), parallel to EV range mi (kWh).
  * Tank miles = gallons × MPG only when both FACT. Never invent gallons, MPG, or tank range.
- * Bare MPG is not allowed — missing tank miles stay a dash: `— (18 MPG)`.
  */
 export function formatTankEnergy({ tankRangeMi, mpg, tankGallons } = {}) {
   const mpgN = finiteNumber(mpg)
@@ -95,9 +96,9 @@ export function formatTankEnergy({ tankRangeMi, mpg, tankGallons } = {}) {
     return { text: `${rangeN.toLocaleString()} mi`, known: true }
   }
   if (mpgN != null) {
-    return { text: `${DASH} (${mpgN} MPG)`, known: true }
+    return { text: `${NOT_PUBLISHED} (${mpgN} MPG)`, known: true }
   }
-  return { text: DASH, known: false }
+  return { text: NOT_PUBLISHED, known: false }
 }
 
 export function formatMpg(value) {
@@ -106,30 +107,60 @@ export function formatMpg(value) {
 
 export function formatAsk(value) {
   const n = Number(value)
-  if (!Number.isFinite(n)) return { text: DASH, known: false }
+  if (!Number.isFinite(n)) return { text: NOT_PUBLISHED, known: false }
   return { text: `$${n.toLocaleString()}`, known: true }
 }
 
-/** Work specs from an exact listing match, or em dashes. */
+function firstDefined(...vals) {
+  for (const v of vals) {
+    if (v != null && v !== '') return v
+  }
+  return null
+}
+
+/**
+ * Work specs from unit (OEM-merged) with optional listing overlay.
+ * Truly unknown → "Not published" (never em dash). Never invent.
+ */
 export function displayWorkSpec(unit) {
+  // Prefer unit (OEM-merged via getPackage / listing overlay). Listing seed is fallback only.
   const listing = findExactListingMatch(unit)
-  const range = listing?.ratedRange ?? unit?.ratedRange
-  const kwh = listing?.usableKwh ?? unit?.battery?.usableKwh
-  const empty = { text: DASH, known: false }
+  const payload = firstDefined(unit?.payload, listing?.payload)
+  const bed = firstDefined(unit?.bed, listing?.bed)
+  const cab = firstDefined(unit?.cab, listing?.cab)
+  const tow = firstDefined(unit?.tow, unit?.towingLb, listing?.tow, listing?.towingLb)
+  const range = firstDefined(unit?.ratedRange, listing?.ratedRange)
+  const kwh = firstDefined(
+    unit?.usableKwh,
+    unit?.battery?.usableKwh,
+    listing?.usableKwh,
+    listing?.battery?.usableKwh,
+  )
+  const drivetrain = firstDefined(unit?.drivetrain, listing?.drivetrain)
+  const cargo = firstDefined(
+    unit?.cargoVolume,
+    unit?.cargo,
+    listing?.cargoVolume,
+    listing?.cargo,
+  )
 
   return {
-    payload: listing ? factField(listing.payload, formatLb) : empty,
-    bed: listing ? factField(listing.bed) : empty,
-    cab: listing ? factField(listing.cab) : empty,
-    cabBed: listing ? factField(formatCabBed(listing.cab, listing.bed)) : empty,
-    tow: listing ? factField(listing.tow, formatLb) : empty,
+    payload: factField(payload, formatLb),
+    bed: factField(bed),
+    cab: factField(cab),
+    cabBed: factField(formatCabBed(cab, bed)),
+    tow: factField(tow, formatLb),
     energy: formatEnergy(range, kwh),
     ask: formatAsk(unit?.askPrice),
-    mpg: empty,
-    kbbTradeIn: empty,
-    drivetrain: listing ? factField(listing.drivetrain) : empty,
-    cargo: listing ? factField(listing.cargoVolume ?? listing.cargo) : empty,
-    source: listing?.id || null,
+    mpg: { text: NOT_PUBLISHED, known: false },
+    kbbTradeIn: { text: NOT_PUBLISHED, known: false },
+    drivetrain: factField(drivetrain),
+    cargo: factField(cargo, (v) =>
+      Number.isFinite(Number(v)) ? `${Number(v)} cu ft` : String(v),
+    ),
+    range: factField(range, (v) => `${Number(v).toLocaleString()} mi`),
+    usableKwh: factField(kwh, (v) => `${Number(v)} kWh`),
+    source: listing?.id || unit?.oemSpecKey || null,
   }
 }
 
@@ -148,7 +179,7 @@ export function currentWorkVehicle(intake, pkg) {
     role = 'Work truck'
   }
 
-  const empty = { text: DASH, known: false }
+  const empty = { text: NOT_PUBLISHED, known: false }
   const energy = formatTankEnergy({
     tankRangeMi: intake?.tankRangeMi ?? pkg?.currentTankRangeMi,
     mpg: intake?.mpg ?? pkg?.currentMpg,
@@ -160,7 +191,7 @@ export function currentWorkVehicle(intake, pkg) {
   const mileage =
     milesN != null && Number.isFinite(milesN)
       ? { text: `${milesN.toLocaleString()} mi`, known: true, value: milesN }
-      : { text: DASH, known: false, value: null }
+      : { text: NOT_PUBLISHED, known: false, value: null }
   return {
     heading: 'Your current work vehicle',
     role,
@@ -179,6 +210,8 @@ export function currentWorkVehicle(intake, pkg) {
       kbbTradeIn: kbb,
       drivetrain: empty,
       cargo: empty,
+      range: empty,
+      usableKwh: empty,
       source: null,
     },
   }

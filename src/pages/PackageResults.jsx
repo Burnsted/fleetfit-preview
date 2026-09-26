@@ -5,6 +5,7 @@ import { batteryUnknownCount, getPackage } from '../data/package'
 import { factKbbTradeIn, readBudget, spendEnvelope, unitsWithinEnvelope } from '../lib/budget'
 import { formatMoney } from '../lib/fit'
 import { fleetUnitKey, useFleetPick } from '../lib/fleetPick'
+import { OEM_SPECS_BUILD } from '../data/oemSpecs'
 import {
   BODY_MIX_BUILD,
   CLEARED_SHIP,
@@ -94,6 +95,7 @@ export default function PackageResults() {
       className="locked-page package-page is-stack"
       data-body-mix-build={BODY_MIX_BUILD}
       data-cleared-ship={CLEARED_SHIP}
+      data-oem-specs={OEM_SPECS_BUILD}
     >
       <nav className="locked-crumbs" aria-label="Breadcrumb">
         <Link to="/">Home</Link>

@@ -370,4 +370,4 @@ export const MAKES = [...new Set(LISTINGS.map((l) => l.make))].sort();
 export const MODELS = [...new Set(LISTINGS.map((l) => `${l.make}|${l.model}`))].sort();
 export const UPFT_TAGS = [...new Set(LISTINGS.flatMap((l) => l.upfitTags))].sort();
 export const SELLER_TYPES = ['private', 'dealer', 'fleet', 'upfitter'];
-export const CAB_BED_OPTIONS = [...new Set(LISTINGS.map((l) => `${l.cab || '—'} / ${l.bed || '—'}`))].sort();
+export const CAB_BED_OPTIONS = [...new Set(LISTINGS.map((l) => `${l.cab || 'Not published'} / ${l.bed || 'Not published'}`))].sort();

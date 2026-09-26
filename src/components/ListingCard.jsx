@@ -57,10 +57,13 @@ export default function ListingCard({ listing }) {
             {battery.label}
           </span>
           <span className="meta-chip ev-chip">
-            Range<strong>{listing.ratedRange != null ? `${listing.ratedRange} mi` : '—'}</strong>
+            Range<strong>{listing.ratedRange != null ? `${listing.ratedRange} mi` : 'Not published'}</strong>
           </span>
           <span className="meta-chip">
-            Payload<strong>{listing.payload != null ? `${listing.payload.toLocaleString()} lb` : '—'}</strong>
+            Payload<strong>{listing.payload != null ? `${listing.payload.toLocaleString()} lb` : 'Not published'}</strong>
+          </span>
+          <span className="meta-chip">
+            Tow<strong>{(listing.tow ?? listing.towingLb) != null ? `${Number(listing.tow ?? listing.towingLb).toLocaleString()} lb` : 'Not published'}</strong>
           </span>
         </div>
 
