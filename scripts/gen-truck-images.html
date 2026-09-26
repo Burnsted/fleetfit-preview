@@ -1,0 +1,256 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8"/>
+<style>
+  * { margin:0; padding:0; box-sizing:border-box; }
+  body { background:#111; }
+  .scene {
+    width: 1200px; height: 1600px;
+    position: relative; overflow: hidden;
+    margin-bottom: 40px;
+  }
+  .scene.wide { width: 1600px; height: 1000px; }
+  canvas { display:block; }
+</style>
+</head>
+<body>
+<canvas id="c0" width="1600" height="1000"></canvas>
+<canvas id="c1" width="1200" height="1600"></canvas>
+<canvas id="c2" width="1200" height="1600"></canvas>
+<canvas id="c3" width="1600" height="1000"></canvas>
+<canvas id="c4" width="1200" height="1600"></canvas>
+<canvas id="c5" width="1600" height="1000"></canvas>
+<script>
+function roundRect(ctx,x,y,w,h,r){
+  ctx.beginPath();
+  ctx.moveTo(x+r,y); ctx.arcTo(x+w,y,x+w,y+h,r);
+  ctx.arcTo(x+w,y+h,x,y+h,r); ctx.arcTo(x,y+h,x,y,r);
+  ctx.arcTo(x,y,x+w,y,r); ctx.closePath();
+}
+function sky(ctx,w,h,top,bot){
+  const g=ctx.createLinearGradient(0,0,0,h);
+  g.addColorStop(0,top); g.addColorStop(1,bot);
+  ctx.fillStyle=g; ctx.fillRect(0,0,w,h);
+}
+function palm(ctx,x,y,s,lean){
+  ctx.save(); ctx.translate(x,y); ctx.rotate(lean||0);
+  ctx.fillStyle='#1a3a28';
+  ctx.fillRect(-4*s,0,8*s,-180*s);
+  for(let i=0;i<7;i++){
+    const a=-Math.PI/2 + (i-3)*0.35;
+    ctx.beginPath();
+    ctx.moveTo(0,-170*s);
+    ctx.quadraticCurveTo(Math.cos(a)*90*s, -170*s+Math.sin(a)*40*s,
+      Math.cos(a)*140*s, -120*s+Math.sin(a)*80*s);
+    ctx.quadraticCurveTo(Math.cos(a)*60*s,-150*s,0,-170*s);
+    ctx.fillStyle=i%2?'#2d6a45':'#24553a';
+    ctx.fill();
+  }
+  ctx.restore();
+}
+function drawPickup(ctx,x,y,scale,color,opts={}){
+  ctx.save(); ctx.translate(x,y); ctx.scale(scale,scale);
+  // shadow
+  ctx.fillStyle='rgba(0,0,0,0.35)';
+  ctx.beginPath(); ctx.ellipse(210,118,200,18,0,0,Math.PI*2); ctx.fill();
+  // body lower
+  ctx.fillStyle=color;
+  roundRect(ctx,20,40,380,70,10); ctx.fill();
+  // cab
+  roundRect(ctx,40,0,170,55,12); ctx.fill();
+  // bed rails
+  ctx.fillStyle=opts.bed||color;
+  roundRect(ctx,220,28,170,50,6); ctx.fill();
+  // dark bed interior
+  ctx.fillStyle='#1a1a1e';
+  roundRect(ctx,230,36,150,34,4); ctx.fill();
+  // windows
+  const wg=ctx.createLinearGradient(50,-5,200,40);
+  wg.addColorStop(0,'#a8d4e8'); wg.addColorStop(1,'#3a5a70');
+  ctx.fillStyle=wg;
+  roundRect(ctx,55,8,70,32,6); ctx.fill();
+  roundRect(ctx,135,8,60,32,6); ctx.fill();
+  // wheels
+  function wheel(wx){
+    ctx.fillStyle='#111'; ctx.beginPath(); ctx.arc(wx,115,28,0,Math.PI*2); ctx.fill();
+    ctx.fillStyle='#333'; ctx.beginPath(); ctx.arc(wx,115,16,0,Math.PI*2); ctx.fill();
+    ctx.strokeStyle='#666'; ctx.lineWidth=2;
+    ctx.beginPath(); ctx.arc(wx,115,10,0,Math.PI*2); ctx.stroke();
+  }
+  wheel(95); wheel(320);
+  // headlights
+  ctx.fillStyle='#f5e6a8';
+  roundRect(ctx,18,55,14,18,3); ctx.fill();
+  // charge port hint (no logo)
+  if(opts.charge){
+    ctx.fillStyle='#00c8e0';
+    roundRect(ctx,200,48,10,14,2); ctx.fill();
+  }
+  // ladder rack
+  if(opts.rack){
+    ctx.strokeStyle='#555'; ctx.lineWidth=4;
+    ctx.beginPath(); ctx.moveTo(230,20); ctx.lineTo(230,-20); ctx.lineTo(380,-20); ctx.lineTo(380,20); ctx.stroke();
+  }
+  ctx.restore();
+}
+function vignette(ctx,w,h){
+  const g=ctx.createRadialGradient(w/2,h/2,h*0.2,w/2,h/2,h*0.85);
+  g.addColorStop(0,'rgba(0,0,0,0)'); g.addColorStop(1,'rgba(0,0,0,0.45)');
+  ctx.fillStyle=g; ctx.fillRect(0,0,w,h);
+}
+function bottomGrad(ctx,w,h){
+  const g=ctx.createLinearGradient(0,h*0.55,0,h);
+  g.addColorStop(0,'rgba(0,0,0,0)'); g.addColorStop(1,'rgba(0,0,0,0.72)');
+  ctx.fillStyle=g; ctx.fillRect(0,0,w,h);
+}
+
+// 0 — hero coastal road (wide)
+(() => {
+  const ctx=document.getElementById('c0').getContext('2d');
+  const w=1600,h=1000;
+  sky(ctx,w,h,'#1a3a55','#f0a060');
+  // sun
+  const sg=ctx.createRadialGradient(1200,280,20,1200,280,220);
+  sg.addColorStop(0,'#ffe0a0'); sg.addColorStop(1,'rgba(255,160,60,0)');
+  ctx.fillStyle=sg; ctx.beginPath(); ctx.arc(1200,280,220,0,Math.PI*2); ctx.fill();
+  // ocean
+  const og=ctx.createLinearGradient(0,520,0,720);
+  og.addColorStop(0,'#2a6a8a'); og.addColorStop(1,'#1a4058');
+  ctx.fillStyle=og; ctx.fillRect(0,520,w,200);
+  // road
+  ctx.fillStyle='#2a2a2e'; ctx.beginPath();
+  ctx.moveTo(0,720); ctx.lineTo(w,680); ctx.lineTo(w,h); ctx.lineTo(0,h); ctx.fill();
+  ctx.strokeStyle='#d4a017'; ctx.lineWidth=4; ctx.setLineDash([40,30]);
+  ctx.beginPath(); ctx.moveTo(0,860); ctx.lineTo(w,820); ctx.stroke(); ctx.setLineDash([]);
+  palm(ctx,180,720,1.4,-0.08); palm(ctx,320,740,1.1,0.05);
+  palm(ctx,1400,700,1.3,0.1);
+  drawPickup(ctx,480,620,1.35,'#c45c2a',{rack:true,charge:true});
+  vignette(ctx,w,h); bottomGrad(ctx,w,h);
+})();
+
+// 1 — depot charging tall
+(() => {
+  const ctx=document.getElementById('c1').getContext('2d');
+  const w=1200,h=1600;
+  sky(ctx,w,h,'#0e1520','#2a3548');
+  // asphalt
+  ctx.fillStyle='#1c1c22'; ctx.fillRect(0,900,w,700);
+  // charging posts
+  for(let i=0;i<3;i++){
+    const x=180+i*320;
+    ctx.fillStyle='#2a2a32'; roundRect(ctx,x,780,40,160,4); ctx.fill();
+    ctx.fillStyle='#00d4e8'; roundRect(ctx,x+8,800,24,40,3); ctx.fill();
+    ctx.strokeStyle='#555'; ctx.lineWidth=6;
+    ctx.beginPath(); ctx.moveTo(x+40,850); ctx.quadraticCurveTo(x+100,880,x+140,920); ctx.stroke();
+  }
+  // warehouse
+  ctx.fillStyle='#252830'; ctx.fillRect(0,400,w,500);
+  ctx.fillStyle='#1a1e26';
+  for(let i=0;i<5;i++){ roundRect(ctx,80+i*220,480,160,280,4); ctx.fill(); }
+  // lights glow
+  for(let i=0;i<5;i++){
+    const lg=ctx.createRadialGradient(160+i*220,470,5,160+i*220,470,80);
+    lg.addColorStop(0,'rgba(255,220,140,0.5)'); lg.addColorStop(1,'rgba(0,0,0,0)');
+    ctx.fillStyle=lg; ctx.beginPath(); ctx.arc(160+i*220,470,80,0,Math.PI*2); ctx.fill();
+  }
+  drawPickup(ctx,200,980,1.5,'#3a6ea5',{rack:true,charge:true});
+  drawPickup(ctx,620,1000,1.4,'#e8e8ec',{charge:true});
+  vignette(ctx,w,h); bottomGrad(ctx,w,h);
+})();
+
+// 2 — jobsite palms tall
+(() => {
+  const ctx=document.getElementById('c2').getContext('2d');
+  const w=1200,h=1600;
+  sky(ctx,w,h,'#87b8d8','#f5d9a8');
+  // ground
+  ctx.fillStyle='#c4a574'; ctx.fillRect(0,1000,w,600);
+  // scaffolding building
+  ctx.fillStyle='#8a9098'; ctx.fillRect(700,400,400,600);
+  ctx.strokeStyle='#555'; ctx.lineWidth=3;
+  for(let y=420;y<980;y+=60){ ctx.beginPath(); ctx.moveTo(700,y); ctx.lineTo(1100,y); ctx.stroke(); }
+  for(let x=720;x<1100;x+=60){ ctx.beginPath(); ctx.moveTo(x,400); ctx.lineTo(x,1000); ctx.stroke(); }
+  palm(ctx,140,1050,1.6,-0.05); palm(ctx,280,1080,1.2,0.08);
+  drawPickup(ctx,320,1050,1.6,'#2f4f3a',{rack:true,bed:'#1e2a22'});
+  // toolbox hint
+  ctx.fillStyle='#c47a00'; roundRect(ctx,520,1120,80,40,4); ctx.fill();
+  vignette(ctx,w,h); bottomGrad(ctx,w,h);
+})();
+
+// 3 — night coastal wide
+(() => {
+  const ctx=document.getElementById('c3').getContext('2d');
+  const w=1600,h=1000;
+  sky(ctx,w,h,'#060810','#1a2840');
+  // moon
+  ctx.fillStyle='#e8eef5'; ctx.beginPath(); ctx.arc(1280,160,40,0,Math.PI*2); ctx.fill();
+  // water reflection
+  const wg=ctx.createLinearGradient(0,600,0,h);
+  wg.addColorStop(0,'#0a1828'); wg.addColorStop(1,'#050810');
+  ctx.fillStyle=wg; ctx.fillRect(0,600,w,400);
+  // pier lights
+  for(let i=0;i<8;i++){
+    const x=100+i*180;
+    const lg=ctx.createRadialGradient(x,580,2,x,580,50);
+    lg.addColorStop(0,'rgba(255,200,100,0.8)'); lg.addColorStop(1,'rgba(0,0,0,0)');
+    ctx.fillStyle=lg; ctx.beginPath(); ctx.arc(x,580,50,0,Math.PI*2); ctx.fill();
+  }
+  // road
+  ctx.fillStyle='#1a1a20'; ctx.fillRect(0,700,w,300);
+  drawPickup(ctx,550,680,1.5,'#1a1a1e',{charge:true});
+  // headlight beams
+  const bg=ctx.createLinearGradient(550,750,200,850);
+  bg.addColorStop(0,'rgba(255,240,180,0.35)'); bg.addColorStop(1,'rgba(255,240,180,0)');
+  ctx.fillStyle=bg; ctx.beginPath(); ctx.moveTo(560,740); ctx.lineTo(100,700); ctx.lineTo(100,900); ctx.lineTo(560,780); ctx.fill();
+  vignette(ctx,w,h); bottomGrad(ctx,w,h);
+})();
+
+// 4 — stainless angular (cyber-ish generic) tall
+(() => {
+  const ctx=document.getElementById('c4').getContext('2d');
+  const w=1200,h=1600;
+  sky(ctx,w,h,'#d8e4ec','#9ab0c0');
+  // concrete lot
+  ctx.fillStyle='#6a7078'; ctx.fillRect(0,1000,w,600);
+  ctx.strokeStyle='#5a6068'; ctx.lineWidth=2;
+  for(let i=0;i<10;i++){ ctx.beginPath(); ctx.moveTo(0,1050+i*55); ctx.lineTo(w,1020+i*55); ctx.stroke(); }
+  // angular truck (no logo)
+  ctx.save(); ctx.translate(200,980); ctx.scale(1.7,1.7);
+  ctx.fillStyle='rgba(0,0,0,0.3)';
+  ctx.beginPath(); ctx.ellipse(200,130,210,16,0,0,Math.PI*2); ctx.fill();
+  const steel=ctx.createLinearGradient(0,0,400,100);
+  steel.addColorStop(0,'#c8ced4'); steel.addColorStop(0.5,'#e8ecef'); steel.addColorStop(1,'#9aa3ab');
+  ctx.fillStyle=steel;
+  ctx.beginPath();
+  ctx.moveTo(20,90); ctx.lineTo(60,20); ctx.lineTo(200,10); ctx.lineTo(280,40);
+  ctx.lineTo(400,50); ctx.lineTo(410,100); ctx.lineTo(20,110); ctx.closePath(); ctx.fill();
+  ctx.fillStyle='#1a1e22';
+  ctx.beginPath(); ctx.moveTo(70,30); ctx.lineTo(180,22); ctx.lineTo(190,55); ctx.lineTo(80,60); ctx.closePath(); ctx.fill();
+  ctx.fillStyle='#111';
+  ctx.beginPath(); ctx.arc(100,115,26,0,Math.PI*2); ctx.fill();
+  ctx.beginPath(); ctx.arc(320,115,26,0,Math.PI*2); ctx.fill();
+  ctx.restore();
+  palm(ctx,980,1050,1.1,0.05);
+  vignette(ctx,w,h); bottomGrad(ctx,w,h);
+})();
+
+// 5 — adventure dual cab wide
+(() => {
+  const ctx=document.getElementById('c5').getContext('2d');
+  const w=1600,h=1000;
+  sky(ctx,w,h,'#4a6a88','#e8c090');
+  // dunes / scrub
+  ctx.fillStyle='#b8956a'; 
+  ctx.beginPath(); ctx.moveTo(0,620); ctx.quadraticCurveTo(400,540,800,640); ctx.quadraticCurveTo(1200,560,1600,620); ctx.lineTo(1600,h); ctx.lineTo(0,h); ctx.fill();
+  ctx.fillStyle='#9a7a52';
+  ctx.beginPath(); ctx.moveTo(0,740); ctx.quadraticCurveTo(500,680,1000,760); ctx.lineTo(1600,720); ctx.lineTo(1600,h); ctx.lineTo(0,h); ctx.fill();
+  palm(ctx,200,700,1.0,-0.1); palm(ctx,1400,680,1.2,0.12);
+  drawPickup(ctx,520,620,1.55,'#5a6a58',{bed:'#3a4438',charge:true});
+  vignette(ctx,w,h); bottomGrad(ctx,w,h);
+})();
+
+document.title='READY';
+</script>
+</body>
+</html>
