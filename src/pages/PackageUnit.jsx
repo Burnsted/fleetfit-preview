@@ -74,7 +74,13 @@ export default function PackageUnit() {
         <span>{unit.year} {unit.model}</span>
       </nav>
 
-      <UnitPhoto unit={unit} packageId={pkg.id} size="hero" showAsk />
+      <UnitPhoto
+        unit={unit}
+        packageId={pkg.id}
+        size="hero"
+        showAsk
+        score={score}
+      />
 
       <header className="locked-page-header unit-dense-header">
         <p className="locked-eyebrow">{unit.role} · DEMO</p>

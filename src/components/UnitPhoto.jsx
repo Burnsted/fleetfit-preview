@@ -1,5 +1,6 @@
 import CompareControl from './CompareControl'
 import ListingPhoto, { PhotoPending } from './ListingPhoto'
+import ScoreDial from './ScoreDial'
 import { currentWorkPhoto, listingPhotoRecord, PHOTO_BUILD } from '../lib/vehiclePhoto'
 import { formatAsk } from '../lib/workSpec'
 import { unitWhisper } from '../lib/compareSet'
@@ -15,6 +16,8 @@ export default function UnitPhoto({
   bodyType,
   kbb,
   headline,
+  score = null,
+  rank = null,
 }) {
   const body = current
     ? (bodyType || 'truck')
@@ -28,12 +31,14 @@ export default function UnitPhoto({
       : 'EV TRUCK'
   const ask = showAsk && !current ? formatAsk(unit?.askPrice) : null
   const showKbb = current && kbb?.known
+  const showDial = !current && score
+  const showPriceBand = Boolean(ask?.known || showDial)
 
   const considered = !current ? listingPhotoRecord(unit) : null
 
   return (
     <div
-      className={`unit-photo is-${size} is-${body} ${considered?.src || current ? 'has-photo' : 'is-pending'} ${current ? 'is-current' : ''}`}
+      className={`unit-photo is-${size} is-${body} ${considered?.src || current ? 'has-photo' : 'is-pending'} ${current ? 'is-current' : ''}${showPriceBand ? ' has-price-band' : ''}`}
       data-photo-build={PHOTO_BUILD}
       data-photo-kind={current ? 'current-stock' : considered?.src ? 'listing' : 'stub'}
     >
@@ -54,7 +59,24 @@ export default function UnitPhoto({
         <span className="unit-photo-whisper">{unitWhisper(unit)}</span>
       ) : null}
       {headline ? <span className="unit-photo-headline">{headline}</span> : null}
-      {ask?.known ? <span className="unit-photo-ask">{ask.text}</span> : null}
+
+      {showPriceBand ? (
+        <div className="unit-photo-price-band" data-score-chrome="dial">
+          {ask?.known ? (
+            <span className="unit-photo-ask">{ask.text}</span>
+          ) : (
+            <span className="unit-photo-ask is-empty" aria-hidden="true" />
+          )}
+          {showDial ? (
+            <ScoreDial
+              score={score}
+              rank={rank}
+              size={size === 'hero' ? 'hero' : 'card'}
+            />
+          ) : null}
+        </div>
+      ) : null}
+
       {showKbb ? (
         <span className="unit-photo-kbb">KBB trade-in ~{kbb.text}</span>
       ) : null}

@@ -2,7 +2,7 @@ import { useEffect } from 'react'
 import { Link, useLocation, useNavigate, useParams } from 'react-router-dom'
 import AddToFleetButton from '../components/AddToFleetButton'
 import UnitPhoto from '../components/UnitPhoto'
-import ReplacementScore from '../components/ReplacementScore'
+import ScoreDial from '../components/ScoreDial'
 import { getPackage, getUnit } from '../data/package'
 import { batteryConfidenceFromUnit } from '../lib/battery'
 import { useCompareSet } from '../lib/compareSet'
@@ -99,7 +99,7 @@ export default function FullCompare() {
 
   function renderCandidate(col, row) {
     if (row.key === 'score') {
-      return <ReplacementScore score={col.score} compact rank={col.rank} />
+      return <ScoreDial score={col.score} rank={col.rank} size="compare" />
     }
     if (row.key === 'ymm') return col.ymm
     if (row.key === 'role') return col.role
@@ -172,6 +172,8 @@ export default function FullCompare() {
                   size="compare"
                   showAsk
                   showCompare={false}
+                  score={col.score}
+                  rank={col.rank}
                 />
                 <p className="full-compare-kicker">EV</p>
               </div>

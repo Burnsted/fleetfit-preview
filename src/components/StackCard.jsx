@@ -1,6 +1,5 @@
 import { Link } from 'react-router-dom'
 import AddToFleetButton from './AddToFleetButton'
-import ReplacementScore from './ReplacementScore'
 import UnitPhoto from './UnitPhoto'
 import { batteryConfidenceFromUnit } from '../lib/battery'
 import { DASH } from '../lib/workSpec'
@@ -55,6 +54,8 @@ export default function StackCard({
         bodyType={body}
         kbb={spec?.kbbTradeIn}
         headline={spec?.payload?.known ? `Payload ${spec.payload.text}` : null}
+        score={!current ? score : null}
+        rank={!current ? rank : null}
       />
       <div className="stack-card-body">
         {kicker ? <p className="stack-card-kicker">{kicker}</p> : null}
@@ -70,8 +71,8 @@ export default function StackCard({
             <span className="stack-card-body-tag"> · {bodyLabel}</span>
           ) : null}
         </p>
-        {!current && score ? (
-          <ReplacementScore score={score} compact rank={rank} />
+        {!current && score?.sidegrade ? (
+          <p className="stack-card-side-quiet">Similar miles</p>
         ) : null}
         <div className="stack-card-chips" aria-label="Unit chips">
           {role ? faceChip(role) : null}
