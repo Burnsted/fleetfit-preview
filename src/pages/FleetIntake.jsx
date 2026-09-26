@@ -4,7 +4,8 @@ import PathChrome from '../components/PathChrome'
 import Wordmark from '../components/Wordmark'
 import { matchPackageIdFromIntake } from '../data/package'
 
-/* CLEARED-FOR-WOZ-R2 cache-bust deploy marker · 2026-09-26 ~8:33 ET */
+/** Survives minify — forces new Pages asset hash for R2 re-bar */
+const R2_BUILD = 'intake-r2-20260926-0833'
 
 const TRADES = [
   'Electrical',
@@ -150,7 +151,7 @@ export default function FleetIntake() {
   }
 
   return (
-    <div className="locked-page">
+    <div className="locked-page" data-cleared={R2_BUILD}>
       <PathChrome active="intake" className="path-chrome-intake" />
 
       <header className="locked-page-header">
