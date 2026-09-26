@@ -9,6 +9,7 @@ export const PHOTO_BUILD = 'listing-photos-20260926-1337'
 
 import currentTruck from '../assets/stock/current-truck.webp'
 import currentVan from '../assets/stock/current-van.webp'
+import { LISTING_OUTBOUND } from '../data/listingOutbound'
 import { mergeOemSpecs } from '../data/oemSpecs'
 import {
   LISTING_ALIASES,
@@ -97,6 +98,7 @@ export function applyListingFactsToUnit(unit) {
     },
   })
   if (row) {
+    const outbound = LISTING_OUTBOUND[row.id] || {}
     base = {
       ...base,
       year: row.year,
@@ -108,8 +110,17 @@ export function applyListingFactsToUnit(unit) {
       location: { city: row.city, state: row.state },
       sellerLabel: row.dealer,
       sellerType: 'dealer',
-      listingUrl: row.listing_url,
+      listingUrl: row.listing_url || null,
+      dealerUrl: outbound.dealer_url || null,
+      listingLive: outbound.listing_live === true,
+      sourceSite: row.source_site || null,
       drivetrain: row.drivetrain || null,
+    }
+  } else {
+    base = {
+      ...base,
+      listingLive: false,
+      dealerUrl: null,
     }
   }
   return mergeOemSpecs(base)
@@ -125,6 +136,7 @@ export function applyListingFactsToListing(listing) {
     workValue: listing.workValue || 'Incomplete Data',
   })
   if (row) {
+    const outbound = LISTING_OUTBOUND[row.id] || {}
     base = {
       ...base,
       year: row.year,
@@ -136,8 +148,17 @@ export function applyListingFactsToListing(listing) {
       location: { city: row.city, state: row.state },
       sellerName: row.dealer,
       sellerType: 'dealer',
-      listingUrl: row.listing_url,
+      listingUrl: row.listing_url || null,
+      dealerUrl: outbound.dealer_url || null,
+      listingLive: outbound.listing_live === true,
+      sourceSite: row.source_site || null,
       drivetrain: row.drivetrain || null,
+    }
+  } else {
+    base = {
+      ...base,
+      listingLive: false,
+      dealerUrl: null,
     }
   }
   return mergeOemSpecs(base)

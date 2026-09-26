@@ -6,6 +6,7 @@ import { factKbbTradeIn, readBudget, spendEnvelope, unitsWithinEnvelope } from '
 import { formatMoney } from '../lib/fit'
 import { fleetUnitKey, useFleetPick } from '../lib/fleetPick'
 import { OEM_SPECS_BUILD } from '../data/oemSpecs'
+import { OUTBOUND_LISTING_BUILD } from '../lib/outboundListing'
 import {
   BODY_MIX_BUILD,
   CLEARED_SHIP,
@@ -96,6 +97,7 @@ export default function PackageResults() {
       data-body-mix-build={BODY_MIX_BUILD}
       data-cleared-ship={CLEARED_SHIP}
       data-oem-specs={OEM_SPECS_BUILD}
+      data-outbound-listing={OUTBOUND_LISTING_BUILD}
     >
       <nav className="locked-crumbs" aria-label="Breadcrumb">
         <Link to="/">Home</Link>

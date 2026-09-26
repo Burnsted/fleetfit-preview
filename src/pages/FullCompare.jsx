@@ -1,10 +1,10 @@
 import { useEffect } from 'react'
 import { Link, useLocation, useNavigate, useParams } from 'react-router-dom'
 import AddToFleetButton from '../components/AddToFleetButton'
+import { OutboundListingLabel } from '../components/OutboundListingLink'
 import UnitPhoto from '../components/UnitPhoto'
 import ScoreDialControl from '../components/ScoreDialControl'
 import { getPackage, getUnit } from '../data/package'
-import { batteryConfidenceFromUnit } from '../lib/battery'
 import { useCompareSet } from '../lib/compareSet'
 import { fleetUnitKey } from '../lib/fleetPick'
 import {
@@ -22,7 +22,7 @@ const ROWS = [
   { key: 'cab', label: 'Cab' },
   { key: 'tow', label: 'Tow / pull' },
   { key: 'energy', label: 'Energy' },
-  { key: 'diligence', label: 'EV diligence' },
+  { key: 'listing', label: 'Seller listing' },
   { key: 'select', label: 'Select' },
   { key: 'remove', label: 'Remove' },
 ]
@@ -76,7 +76,7 @@ export default function FullCompare() {
     rank: index + 1,
     spec: displayWorkSpec(unit),
     pickId: fleetUnitKey(pkg.id, unit.id),
-    diligence: batteryConfidenceFromUnit(unit).label,
+    listing: unit,
     ymm: `${unit.year} ${unit.make} ${unit.model}`,
     role: unit.role,
   }))
@@ -91,10 +91,10 @@ export default function FullCompare() {
     if (row.key === 'cab') return cellText(current.spec.cab)
     if (row.key === 'tow') return cellText(current.spec.tow)
     if (row.key === 'energy') return cellText(current.spec.energy)
-    if (row.key === 'diligence') return '—'
+    if (row.key === 'listing') return '—'
     if (row.key === 'select') return 'Your truck'
     if (row.key === 'remove') return ''
-    return '—'
+    return 'Not published'
   }
 
   function renderCandidate(col, row) {
@@ -115,12 +115,8 @@ export default function FullCompare() {
     if (row.key === 'cab') return cellText(col.spec.cab)
     if (row.key === 'tow') return cellText(col.spec.tow)
     if (row.key === 'energy') return cellText(col.spec.energy)
-    if (row.key === 'diligence') {
-      return (
-        <Link to={`/package/${pkg.id}/unit/${col.unit.id}`} state={location.state}>
-          {col.diligence}
-        </Link>
-      )
+    if (row.key === 'listing') {
+      return <OutboundListingLabel vehicle={col.unit} />
     }
     if (row.key === 'select') {
       return <AddToFleetButton pickId={col.pickId} size="btn-sm" />
@@ -132,7 +128,7 @@ export default function FullCompare() {
         </button>
       )
     }
-    return '—'
+    return 'Not published'
   }
 
   return (
@@ -181,6 +177,7 @@ export default function FullCompare() {
                   showCompare={false}
                   score={col.score}
                   rank={col.rank}
+                  outboundPhoto
                 />
                 <p className="full-compare-kicker">EV</p>
               </div>

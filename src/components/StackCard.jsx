@@ -1,5 +1,5 @@
-import { Link } from 'react-router-dom'
 import AddToFleetButton from './AddToFleetButton'
+import OutboundListingLink, { OutboundListingLabel } from './OutboundListingLink'
 import UnitPhoto from './UnitPhoto'
 import { batteryConfidenceFromUnit } from '../lib/battery'
 import { NOT_PUBLISHED } from '../lib/workSpec'
@@ -31,10 +31,10 @@ export default function StackCard({
   const battery = unit ? batteryConfidenceFromUnit(unit) : null
   const body = bodyType || unit?.bodyType
   const bodyLabel = body === 'van' ? 'Van' : body === 'truck' ? 'Pickup' : null
-  const openTo = !current && packageId && unit?.id
-    ? `/package/${packageId}/unit/${unit.id}`
-    : null
   const mixClass = bodyClass || (body === 'van' ? 'van' : body === 'truck' ? 'truck' : null)
+  const ymm = unit
+    ? `${unit.year} ${unit.make} ${unit.model}${unit.trim ? ` ${unit.trim}` : ''}`
+    : heading
 
   return (
     <article
@@ -42,6 +42,7 @@ export default function StackCard({
       data-sidegrade={score?.sidegrade ? 'true' : undefined}
       data-body-class={mixClass || undefined}
       data-model-year={unit?.year != null ? String(unit.year) : undefined}
+      data-listing-live={!current && unit ? String(unit.listingLive === true) : undefined}
     >
       <UnitPhoto
         unit={unit}
@@ -55,14 +56,33 @@ export default function StackCard({
         headline={spec?.payload?.known ? `Payload ${spec.payload.text}` : null}
         score={!current ? score : null}
         rank={!current ? rank : null}
+        outboundPhoto={!current}
       />
       <div className="stack-card-body">
         {kicker ? <p className="stack-card-kicker">{kicker}</p> : null}
-        <h3 className="stack-card-heading">{heading}</h3>
+        {current ? (
+          <h3 className="stack-card-heading">{heading}</h3>
+        ) : (
+          <h3 className="stack-card-heading">
+            <OutboundListingLink
+              vehicle={unit}
+              className="stack-card-title-link"
+              ariaLabel={`View seller listing for ${ymm}`}
+            >
+              {heading}
+            </OutboundListingLink>
+          </h3>
+        )}
         <p className="stack-card-stats">
           {mileage != null ? <span>{Number(mileage).toLocaleString()} mi</span> : null}
           {bodyLabel ? (
             <span className="stack-card-body-tag"> · {bodyLabel}</span>
+          ) : null}
+          {!current && unit?.location?.city ? (
+            <span className="stack-card-loc">
+              {' '}
+              · {unit.location.city}, {unit.location.state}
+            </span>
           ) : null}
         </p>
         {!current && score?.sidegrade ? (
@@ -97,10 +117,8 @@ export default function StackCard({
         {current || !pickId ? null : (
           <AddToFleetButton pickId={pickId} size="btn-block" />
         )}
-        {openTo ? (
-          <Link to={openTo} className="stack-card-open-quiet">
-            Open
-          </Link>
+        {!current && unit ? (
+          <OutboundListingLabel vehicle={unit} className="stack-card-outbound" />
         ) : null}
       </div>
     </article>

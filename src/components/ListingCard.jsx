@@ -1,12 +1,12 @@
-import { Link } from 'react-router-dom'
 import AddToFleetButton from './AddToFleetButton'
+import OutboundListingLink, { OutboundListingLabel } from './OutboundListingLink'
+import ListingPhoto from './ListingPhoto'
 import { distanceFromHome } from '../data/listings'
 import { batteryConfidenceFromListing } from '../lib/battery'
 import { fleetListingKey } from '../lib/fleetPick'
-import ListingPhoto from './ListingPhoto'
 
-/** Listing-card chrome slice · Ted 2026-09-26 — no accessory face-chips */
-const CARD_BUILD = 'listing-card-20260926-0910'
+/** Listing-card chrome · outbound seller · Ted 2026-09-26 */
+const CARD_BUILD = 'listing-card-20260926-1905'
 
 function formatPrice(listing) {
   if (listing.allInPrice == null) {
@@ -27,10 +27,15 @@ export default function ListingCard({ listing }) {
   const price = formatPrice(listing)
   const miles = distanceFromHome(listing)
   const battery = batteryConfidenceFromListing(listing)
+  const ymm = `${listing.year} ${listing.make} ${listing.model}${listing.trim ? ` ${listing.trim}` : ''}`
 
   return (
-    <article className="listing-card" data-card-build={CARD_BUILD}>
-      <Link to={`/listing/${listing.id}`} className="card-media" aria-label={`View ${listing.year} ${listing.make} ${listing.model}`}>
+    <article className="listing-card" data-card-build={CARD_BUILD} data-listing-live={String(listing.listingLive === true)}>
+      <OutboundListingLink
+        vehicle={listing}
+        className="card-media"
+        ariaLabel={`View seller listing for ${ymm}`}
+      >
         <div className="card-badges">
           <span className={valuePillClass(listing.workValue)}>{listing.workValue}</span>
           {listing.titleStatus && (
@@ -40,12 +45,17 @@ export default function ListingCard({ listing }) {
           )}
         </div>
         <ListingPhoto listing={listing} vehicle={listing} className="card-media-photo" />
-      </Link>
+      </OutboundListingLink>
 
       <div className="card-body">
         <h3 className="card-ymm">
-          {listing.year} {listing.make} {listing.model}
-          {listing.trim ? ` ${listing.trim}` : ''}
+          <OutboundListingLink
+            vehicle={listing}
+            className="card-ymm-link"
+            ariaLabel={`View seller listing for ${ymm}`}
+          >
+            {ymm}
+          </OutboundListingLink>
         </h3>
         <p className="card-condition">
           Used
@@ -74,9 +84,7 @@ export default function ListingCard({ listing }) {
 
         <div className="card-actions">
           <AddToFleetButton pickId={fleetListingKey(listing.id)} />
-          <Link to={`/listing/${listing.id}`} className="btn">
-            Show details
-          </Link>
+          <OutboundListingLabel vehicle={listing} className="btn outbound-listing-btn" />
           <button
             type="button"
             className="btn btn-save"

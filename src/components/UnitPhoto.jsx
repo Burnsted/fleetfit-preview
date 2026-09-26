@@ -1,9 +1,14 @@
 import CompareControl from './CompareControl'
 import ListingPhoto, { PhotoPending } from './ListingPhoto'
 import ScoreDialControl from './ScoreDialControl'
+import { resolveOutboundListing } from '../lib/outboundListing'
 import { currentWorkPhoto, listingPhotoRecord, PHOTO_BUILD } from '../lib/vehiclePhoto'
 import { formatAsk } from '../lib/workSpec'
 import { unitWhisper } from '../lib/compareSet'
+
+function stopNav(e) {
+  e.stopPropagation()
+}
 
 export default function UnitPhoto({
   unit,
@@ -18,6 +23,8 @@ export default function UnitPhoto({
   headline,
   score = null,
   rank = null,
+  /** When true, photo itself is the outbound seller link (dial/compare stay local). */
+  outboundPhoto = false,
 }) {
   const body = current
     ? (bodyType || 'truck')
@@ -39,6 +46,35 @@ export default function UnitPhoto({
       : unit?.model || null
 
   const considered = !current ? listingPhotoRecord(unit) : null
+  const outbound = !current && outboundPhoto ? resolveOutboundListing(unit) : null
+
+  const photoInner = current ? (
+    <img
+      src={currentWorkPhoto({ bodyType: body })}
+      alt=""
+      className="unit-photo-img"
+    />
+  ) : considered?.src ? (
+    <ListingPhoto vehicle={unit} className="unit-photo-img" />
+  ) : (
+    <PhotoPending className="unit-photo-img" />
+  )
+
+  const photoEl =
+    outbound?.live && outbound.href ? (
+      <a
+        href={outbound.href}
+        target="_blank"
+        rel="noopener noreferrer"
+        className="unit-photo-outbound"
+        aria-label={`View seller listing for ${heading || 'unit'}`}
+        data-outbound-live="true"
+      >
+        {photoInner}
+      </a>
+    ) : (
+      photoInner
+    )
 
   return (
     <div
@@ -46,17 +82,7 @@ export default function UnitPhoto({
       data-photo-build={PHOTO_BUILD}
       data-photo-kind={current ? 'current-stock' : considered?.src ? 'listing' : 'stub'}
     >
-      {current ? (
-        <img
-          src={currentWorkPhoto({ bodyType: body })}
-          alt=""
-          className="unit-photo-img"
-        />
-      ) : considered?.src ? (
-        <ListingPhoto vehicle={unit} className="unit-photo-img" />
-      ) : (
-        <PhotoPending className="unit-photo-img" />
-      )}
+      {photoEl}
       {current ? <span className="unit-photo-stock">Stock · not a listing</span> : null}
       <span className="unit-photo-glyph sr-only">{thumbLabel}</span>
       {whisper && unit ? (
@@ -65,7 +91,12 @@ export default function UnitPhoto({
       {headline ? <span className="unit-photo-headline">{headline}</span> : null}
 
       {showPriceBand ? (
-        <div className="unit-photo-price-band" data-score-chrome="dial">
+        <div
+          className="unit-photo-price-band"
+          data-score-chrome="dial"
+          onClick={stopNav}
+          onKeyDown={stopNav}
+        >
           {ask?.known ? (
             <span className="unit-photo-ask">{ask.text}</span>
           ) : (
@@ -86,7 +117,9 @@ export default function UnitPhoto({
         <span className="unit-photo-kbb">KBB trade-in ~{kbb.text}</span>
       ) : null}
       {showCompare && packageId && unit && !current ? (
-        <CompareControl packageId={packageId} unitId={unit.id} />
+        <div className="unit-photo-compare-wrap" onClick={stopNav} onKeyDown={stopNav}>
+          <CompareControl packageId={packageId} unitId={unit.id} />
+        </div>
       ) : null}
     </div>
   )
