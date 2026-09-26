@@ -5,6 +5,9 @@ import { batteryConfidenceFromListing } from '../lib/battery'
 import { fleetListingKey } from '../lib/fleetPick'
 import ListingPhoto from './ListingPhoto'
 
+/** Listing-card chrome slice · Ted 2026-09-26 — no accessory face-chips */
+const CARD_BUILD = 'listing-card-20260926-0910'
+
 function formatPrice(listing) {
   if (listing.allInPrice == null) {
     return { text: 'Ask unknown', unknown: true }
@@ -24,10 +27,9 @@ export default function ListingCard({ listing }) {
   const price = formatPrice(listing)
   const miles = distanceFromHome(listing)
   const battery = batteryConfidenceFromListing(listing)
-  const sellerLabel = listing.sellerType.charAt(0).toUpperCase() + listing.sellerType.slice(1)
 
   return (
-    <article className="listing-card">
+    <article className="listing-card" data-card-build={CARD_BUILD}>
       <Link to={`/listing/${listing.id}`} className="card-media" aria-label={`View ${listing.year} ${listing.make} ${listing.model}`}>
         <div className="card-badges">
           <span className={valuePillClass(listing.workValue)}>{listing.workValue}</span>
@@ -46,7 +48,7 @@ export default function ListingCard({ listing }) {
           {listing.trim ? ` ${listing.trim}` : ''}
         </h3>
         <p className="card-condition">
-          Used · {sellerLabel} seller
+          Used
           {listing.mileage != null ? ` · ${listing.mileage.toLocaleString()} mi` : ''}
         </p>
 
@@ -60,23 +62,12 @@ export default function ListingCard({ listing }) {
           <span className="meta-chip">
             Payload<strong>{listing.payload != null ? `${listing.payload.toLocaleString()} lb` : '—'}</strong>
           </span>
-          <span className="meta-chip">
-            Seller<strong>{sellerLabel}</strong>
-          </span>
         </div>
 
         <div className="card-price-block">
           <div className={`card-price ${price.unknown ? 'unknown' : ''}`}>{price.text}</div>
           <span className="card-price-note">asking · fee at checkout TBD</span>
         </div>
-
-        {listing.upfitTags.length > 0 && (
-          <div className="card-upfits">
-            {listing.upfitTags.slice(0, 4).map((t) => (
-              <span key={t} className="tag">{t}</span>
-            ))}
-          </div>
-        )}
 
         <div className="card-actions">
           <AddToFleetButton pickId={fleetListingKey(listing.id)} />
