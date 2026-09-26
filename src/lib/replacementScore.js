@@ -5,7 +5,7 @@
  * No Worth it / SOH / FACT pills in public copy.
  */
 
-export const SCORE_BUILD = 'replacement-score-20260926-1439'
+export const SCORE_BUILD = 'replacement-score-20260926-1540'
 
 /** Soft category weights (INFERENCE v1). Cap any ≤20. Sum = 100. */
 export const SOFT_WEIGHTS = {
@@ -58,7 +58,7 @@ function interp(x, x0, x1, y0, y1) {
  * ΔM = M_c − M_e (positive = EV fewer miles).
  * Similar-mile (0–14k) → grade 2–4 — low rank, still shown. Never hard reject.
  */
-export function gradeLifeDelta(currentMiles, evMiles) {
+export function gradeLifeDelta(currentMiles, evMiles, unitYear) {
   const mc = num(currentMiles)
   const me = num(evMiles)
   if (mc == null || me == null) {
@@ -79,6 +79,11 @@ export function gradeLifeDelta(currentMiles, evMiles) {
   else if (deltaM >= 0) grade = clampGrade(interp(deltaM, 0, 14999, 2, 4.5))
   else grade = deltaM <= -20000 ? 0 : 1
 
+  // Inventory freshness — look newer first (soft; price/ROI may still grade down overall)
+  const year = num(unitYear)
+  if (year != null && year >= 2026) grade = Math.min(10, grade + 1)
+  else if (year != null && year >= 2025) grade = Math.min(10, grade + 1)
+
   const sidegrade = deltaM >= 0 && deltaM < 15000
   let note
   if (deltaM < 0) {
@@ -91,7 +96,7 @@ export function gradeLifeDelta(currentMiles, evMiles) {
     note = 'Fewer miles than your current work vehicle'
   }
 
-  return { grade, unknown: false, deltaM, sidegrade, note }
+  return { grade: clampGrade(grade), unknown: false, deltaM, sidegrade, note }
 }
 
 function gradeJobFitSoft(unit, intake) {
@@ -130,14 +135,23 @@ function gradeWarranty(unit) {
   const months = num(
     unit?.battery?.warrantyBatteryMonths ?? unit?.warrantyBatteryMonths,
   )
-  if (months == null) {
+  if (months != null) {
+    if (months >= 60) return { grade: 9, unknown: false, note: 'Strong warranty time left' }
+    if (months >= 36) return { grade: 7, unknown: false, note: 'Warranty time remaining' }
+    if (months >= 12) return { grade: 5, unknown: false, note: 'Limited warranty time left' }
+    return { grade: 2, unknown: false, note: 'Little warranty time left' }
+  }
+  // Look newer first — scaffold from model year when months not on file (no $ invented)
+  const year = num(unit?.year)
+  if (year == null) {
     return { grade: null, unknown: true, note: 'Warranty remaining not on file' }
   }
-  // Plain-language internal grade — no $ invented
-  if (months >= 60) return { grade: 9, unknown: false, note: 'Strong warranty time left' }
-  if (months >= 36) return { grade: 7, unknown: false, note: 'Warranty time remaining' }
-  if (months >= 12) return { grade: 5, unknown: false, note: 'Limited warranty time left' }
-  return { grade: 2, unknown: false, note: 'Little warranty time left' }
+  const age = Math.max(0, 2026 - year)
+  const yearsLeft = Math.max(0, 8 - age) // typical HV warranty window scaffold
+  if (yearsLeft >= 7) return { grade: 9, unknown: false, note: 'Newer unit — more warranty time likely' }
+  if (yearsLeft >= 5) return { grade: 7, unknown: false, note: 'Warranty window still open on newer MY' }
+  if (yearsLeft >= 3) return { grade: 5, unknown: false, note: 'Mid-age warranty window' }
+  return { grade: 3, unknown: false, note: 'Older MY — less warranty time left' }
 }
 
 /** Internal only — grade may use SOH; public UI must not show SOH pills. */
@@ -216,11 +230,14 @@ function gradeResidual(unit, life) {
   }
   let grade = 5
   if (year != null) {
+    // Look newer first — 2025/2026 preferred in residual outlook
     const age = Math.max(0, 2026 - year)
-    if (age <= 1) grade = 7
+    if (year >= 2026) grade = 9
+    else if (year >= 2025) grade = 8
+    else if (age <= 2) grade = 7
     else if (age <= 3) grade = 6
     else if (age <= 5) grade = 5
-    else grade = 4
+    else grade = 3
   }
   if (life.sidegrade) grade = Math.min(grade, 4)
   if (!life.unknown && life.grade >= 8) grade = Math.min(10, grade + 1)
@@ -250,7 +267,7 @@ function hf3Title(unit) {
  * Sidegrades always remain scorable/visible — Life Delta soft-tapers only.
  */
 export function scoreReplacementUnit(unit, { currentMiles, intake } = {}) {
-  const life = gradeLifeDelta(currentMiles, unit?.mileage)
+  const life = gradeLifeDelta(currentMiles, unit?.mileage, unit?.year)
   const job = gradeJobFitSoft(unit, intake)
   const cats = {
     jobFit: job,

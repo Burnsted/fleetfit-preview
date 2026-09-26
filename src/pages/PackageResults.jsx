@@ -7,7 +7,6 @@ import { formatMoney } from '../lib/fit'
 import { fleetUnitKey, useFleetPick } from '../lib/fleetPick'
 import {
   BODY_MIX_BUILD,
-  bodyClassLabel,
   composeRecommendationSet,
 } from '../lib/recommendationSet'
 import { currentMilesForScore } from '../lib/replacementScore'
@@ -73,6 +72,8 @@ export default function PackageResults() {
   ).length
   const unknownBatt = batteryUnknownCount({ ...pkg, units: visibleUnits })
   const dayNeed = dayNeedLabel(pkg, intake)
+  const truckCount = ranked.filter((r) => r.bodyClass === 'truck').length
+  const vanCount = ranked.filter((r) => r.bodyClass === 'van').length
   const compareCandidates = ranked.map((row) => ({
     id: row.unit.id,
     unit: row.unit,
@@ -84,7 +85,6 @@ export default function PackageResults() {
     mileage: row.unit.mileage,
     score: row.score,
     rank: row.rank,
-    seatLabel: row.seatLabel,
     bodyClass: row.bodyClass,
   }))
 
@@ -128,28 +128,34 @@ export default function PackageResults() {
         data-body-mix-build={BODY_MIX_BUILD}
         data-has-truck={reco.hasTruck ? 'true' : 'false'}
         data-has-van={reco.hasVan ? 'true' : 'false'}
+        data-has-fresh-my={reco.hasFreshMy ? 'true' : 'false'}
       >
         <h2 id="reco-mix-title" className="recommendation-mix-title">
           Recommendation set
         </h2>
         <p className="recommendation-mix-lead">
-          Best Truck and Best Van by Replacement Score when both bodies are in the pool — not a mono-body shortlist.
+          Truck and van options in this pool, ordered by Replacement Score high → low. Newer used years stay in the look.
         </p>
-        <div className="recommendation-mix-chips" aria-label="Body mix">
-          {reco.bestTruck ? (
+        <div className="recommendation-mix-chips" aria-label="Body coverage">
+          {reco.hasTruck ? (
             <span className="recommendation-mix-chip is-truck" data-body-class="truck">
-              Best Truck · {reco.bestTruck.unit.year} {reco.bestTruck.unit.model}
+              Truck · {truckCount}
             </span>
           ) : (
             <span className="recommendation-mix-chip is-missing">Truck not in this set</span>
           )}
-          {reco.bestVan ? (
+          {reco.hasVan ? (
             <span className="recommendation-mix-chip is-van" data-body-class="van">
-              Best Van · {reco.bestVan.unit.year} {reco.bestVan.unit.model}
+              Van · {vanCount}
             </span>
           ) : (
             <span className="recommendation-mix-chip is-missing">Van not in this set</span>
           )}
+          {reco.hasFreshMy ? (
+            <span className="recommendation-mix-chip is-fresh" data-fresh-my="true">
+              Includes 2025–2026
+            </span>
+          ) : null}
         </div>
         {reco.missingBodyNote ? (
           <p className="recommendation-mix-missing">{reco.missingBodyNote}</p>
@@ -166,7 +172,7 @@ export default function PackageResults() {
       <section aria-labelledby="units-title">
         <h2 id="units-title" className="package-units-title">Units</h2>
         <p className="package-score-note">
-          Ranked by Replacement Score vs your current work vehicle. Similar-mile sidegrades stay listed — they sort lower. Body mix keeps Best {bodyClassLabel('truck')} and Best {bodyClassLabel('van')} when both exist.
+          Full available options · Replacement Score high → low vs your current work vehicle. Similar-mile sidegrades stay listed. Dial shows the score — no Best / Worst labels.
         </p>
         {ranked.length === 0 ? (
           <p className="locked-muted">
@@ -189,7 +195,6 @@ export default function PackageResults() {
                   mileage={row.unit.mileage}
                   score={row.score}
                   rank={row.rank}
-                  seatLabel={row.seatLabel}
                   bodyClass={row.bodyClass}
                 />
               </li>

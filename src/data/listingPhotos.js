@@ -8,6 +8,8 @@
 import unit_e1 from '../assets/listings/unit-e1.jpg'
 import unit_e3 from '../assets/listings/unit-e3.jpg'
 import unit_e4 from '../assets/listings/unit-e4.jpg'
+import unit_e5 from '../assets/listings/unit-e5.jpg'
+import unit_e6 from '../assets/listings/unit-e6.jpg'
 import unit_l2 from '../assets/listings/unit-l2.jpg'
 import vnd_001 from '../assets/listings/vnd-001.jpg'
 import vnd_003 from '../assets/listings/vnd-003.jpg'
@@ -21,6 +23,8 @@ export const LISTING_PHOTO_FILES = {
   'unit-e1': unit_e1,
   'unit-e3': unit_e3,
   'unit-e4': unit_e4,
+  'unit-e5': unit_e5,
+  'unit-e6': unit_e6,
   'unit-l2': unit_l2,
   'vnd-001': vnd_001,
   'vnd-003': vnd_003,
@@ -43,6 +47,8 @@ export const LISTING_ROWS = {
   'unit-e2': {"id":"unit-e2","year":2024,"make":"Chevrolet","model":"Silverado EV","trim":"Work Truck","price_usd":43295,"mileage":34345,"dealer":"Ed Morse Bayview Cadillac","city":"Fort Lauderdale","state":"FL","listing_url":"https://www.cars.com/vehicledetail/b562bafd-f638-4933-8904-ff39108403a3/","source_site":"Cars.com","drivetrain":"All-wheel Drive","thumbnail_url":null,"has_photo":false},
   'unit-e3': {"id":"unit-e3","year":2022,"make":"Ford","model":"F-150 Lightning","trim":"Pro","price_usd":34495,"mileage":34255,"dealer":"Soerens Ford","city":"Brookfield","state":"WI","listing_url":"https://www.cars.com/vehicledetail/4f2340ed-2c5b-484b-8e2f-0dfe98898a15/","source_site":"Cars.com","drivetrain":"All-wheel Drive","thumbnail_url":"https://platform.cstatic-images.com/in/v2/2573063b-77a3-5078-a38e-e991c72c80ef/67df049b-aa2f-426f-8251-62e6a8b63e91/dohHOHyQr1Wn-J0tzGx7JCPk_X8.jpg","has_photo":true},
   'unit-e4': {"id":"unit-e4","year":2024,"make":"RAM","model":"ProMaster EV","trim":"Super High Roof","price_usd":27439,"mileage":14225,"dealer":"Rob Lambdin's University Dodge RAM","city":"Davie","state":"FL","listing_url":"https://www.cars.com/vehicledetail/2ee45bdc-2cd0-4ebf-8c6b-3e7f871eb0c0/","source_site":"Cars.com","drivetrain":"Front-wheel Drive","thumbnail_url":"https://platform.cstatic-images.com/in/v2/3bcc172e-3067-5e02-aec1-a12750a0595d/83edfc77-1a2d-45f8-a3b1-98e82ac2ee40/KKQhJFUYFReDE9HWzRE47T2RRsM.jpg","has_photo":true},
+  'unit-e5': {"id":"unit-e5","year":2026,"make":"GMC","model":"Sierra EV","trim":"Standard Range Elevation","price_usd":54177,"mileage":2775,"dealer":"Jimmy Britt Chevrolet","city":"Greensboro","state":"GA","listing_url":"https://www.cars.com/vehicledetail/3465c091-18d2-485e-aaab-8d68c344c526/","source_site":"Cars.com","drivetrain":"All-wheel Drive","thumbnail_url":"https://platform.cstatic-images.com/in/v2/e6684962-95c0-50fb-a815-0c2727322501/fc310d1d-0172-40c1-baf3-934d330c4f79/BJj2tf4TOF9QwSVNm7DY6Nx9XGQ.jpg","has_photo":true},
+  'unit-e6': {"id":"unit-e6","year":2025,"make":"Chevrolet","model":"BrightDrop 600","trim":"","price_usd":27995,"mileage":16565,"dealer":"Baha Auto Sales","city":"Chicago","state":"IL","listing_url":"https://www.cars.com/vehicledetail/94171c18-2ee2-416d-8439-7443fc6b1e40/","source_site":"Cars.com","drivetrain":"Front-wheel Drive","thumbnail_url":"https://platform.cstatic-images.com/in/v2/155744fa-502d-511c-ba03-7ba16527cb21/ee0589e4-973f-4f55-8a5e-2250ab818c5f/rxzn-r2yrAncaenAcZpou2w3hu8.jpg","has_photo":true},
   'unit-l1': {"id":"unit-l1","year":2026,"make":"Chevrolet","model":"Silverado EV","trim":"Trail Boss - Extended Range 4WD","price_usd":55066,"mileage":27706,"dealer":"Chevrolet of Culver City","city":"Culver City","state":"CA","listing_url":"https://www.cars.com/vehicledetail/04b89914-19fd-4f86-80a4-2689a1246113/","source_site":"Cars.com","drivetrain":"All-wheel Drive","thumbnail_url":null,"has_photo":false},
   'unit-l2': {"id":"unit-l2","year":2023,"make":"Ford","model":"F-150 Lightning","trim":"XLT","price_usd":34547,"mileage":51917,"dealer":"AutoNation Toyota White Marsh","city":"Baltimore","state":"MD","listing_url":"https://www.cars.com/vehicledetail/03d2e46c-ea70-4c62-9362-272b45176dfe/","source_site":"Cars.com","drivetrain":"All-wheel Drive","thumbnail_url":"https://platform.cstatic-images.com/in/v2/3554ab10-bee9-4c62-8c5d-65cf90ad3767/d15c2e54-4b8a-4a02-9945-8f510f2a17fe/meNeUuFAG-fgFpHX8PbDMct9xac.jpg","has_photo":true},
   'vnd-001': {"id":"vnd-001","year":2022,"make":"Ford","model":"F-150 Lightning","trim":"Pro","price_usd":34000,"mileage":59012,"dealer":"Berkenkotter Motors Castle Rock","city":"Castle Rock","state":"CO","listing_url":"https://www.cars.com/vehicledetail/d737de9a-f878-449d-b371-ed3ad7628454/","source_site":"Cars.com","drivetrain":"All-wheel Drive","thumbnail_url":"https://platform.cstatic-images.com/in/v2/ccf5bd40-bfbb-584c-9408-563e3c302bfc/d63deffd-493c-4337-9215-3025fd2fd0df/6vyBlOdkemfR6lkh6ZTLXLByIkU.jpg","has_photo":true},

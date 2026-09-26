@@ -26,7 +26,6 @@ export default function StackCard({
   showCompare = true,
   score = null,
   rank = null,
-  seatLabel = null,
   bodyClass = null,
 }) {
   const battery = unit ? batteryConfidenceFromUnit(unit) : null
@@ -39,10 +38,10 @@ export default function StackCard({
 
   return (
     <article
-      className={`stack-card ${current ? 'is-current' : 'is-candidate'} is-dense${score?.sidegrade ? ' is-sidegrade' : ''}${seatLabel ? ' is-best-of-body' : ''}`}
+      className={`stack-card ${current ? 'is-current' : 'is-candidate'} is-dense${score?.sidegrade ? ' is-sidegrade' : ''}`}
       data-sidegrade={score?.sidegrade ? 'true' : undefined}
       data-body-class={mixClass || undefined}
-      data-body-seat={seatLabel ? 'best' : undefined}
+      data-model-year={unit?.year != null ? String(unit.year) : undefined}
     >
       <UnitPhoto
         unit={unit}
@@ -59,11 +58,6 @@ export default function StackCard({
       />
       <div className="stack-card-body">
         {kicker ? <p className="stack-card-kicker">{kicker}</p> : null}
-        {seatLabel ? (
-          <p className="stack-card-seat" data-body-seat="best">
-            {seatLabel}
-          </p>
-        ) : null}
         <h3 className="stack-card-heading">{heading}</h3>
         <p className="stack-card-stats">
           {mileage != null ? <span>{Number(mileage).toLocaleString()} mi</span> : null}

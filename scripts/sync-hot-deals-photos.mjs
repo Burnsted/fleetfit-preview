@@ -32,6 +32,8 @@ const ASSIGN = {
   'unit-e2': { idx: 21, stubPhoto: true }, // Silverado WT FACT; photo blocked rank 73
   'unit-e3': 15, // 2022 Lightning Pro
   'unit-e4': 6, // 2024 ProMaster EV
+  'unit-e5': 26, // 2026 Sierra EV — newly used truck freshness
+  'unit-e6': 9, // 2025 BrightDrop 600 — newer van freshness
   'unit-l1': { idx: 23, stubPhoto: true }, // Silverado Trail Boss FACT; photo blocked rank 107
   'unit-l2': 16, // 2023 Lightning XLT
   'vnd-001': 14, // 2022 Lightning Pro

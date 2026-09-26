@@ -37,7 +37,6 @@ export default function WorkCompare({ current, candidates, title, packageId }) {
               showCompare={Boolean(packageId || col.packageId)}
               score={col.score}
               rank={col.rank}
-              seatLabel={col.seatLabel}
               bodyClass={col.bodyClass}
             />
           </div>

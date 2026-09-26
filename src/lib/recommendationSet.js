@@ -1,15 +1,15 @@
 /**
- * CLEARED Recommendation body mix — Exact Ted pick · 2026-09-26 ~10:50
- * Every set must offer best-of Truck AND best-of Van when both classes exist.
- * Score = Replacement Score soft-taper. Sidegrades may win their class.
- * Intake Body may boost — must not produce a mono-body set when both available.
+ * CLEARED Inventory freshness + full option rank · 2026-09-26 ~11:40
+ * Supersedes best-of-only body-mix shortlist.
+ * Full available truck + van options, Replacement Score high → low.
+ * No Best Truck / Best Van / Best fit / Worst fit labels — dial + order only.
  */
 import {
   rankUnitsByReplacementScore,
   SCORE_BUILD,
 } from './replacementScore'
 
-export const BODY_MIX_BUILD = 'recommendation-body-mix-20260926-1450'
+export const BODY_MIX_BUILD = 'inventory-rank-20260926-1540'
 
 export function bodyClassOf(unit) {
   if (!unit) return null
@@ -24,7 +24,7 @@ export function bodyClassLabel(cls) {
   return null
 }
 
-/** Soft intake Body preference boost — never erases the other available class. */
+/** Soft intake Body preference boost — never erases the other class or drops options. */
 function intakeBoost(entry, intake) {
   const pref = String(intake?.body || '')
   const cls = bodyClassOf(entry.unit)
@@ -37,6 +37,10 @@ function compareBoosted(a, b, intake) {
   const ka = (a.score?.sortKey ?? -1) + intakeBoost(a, intake)
   const kb = (b.score?.sortKey ?? -1) + intakeBoost(b, intake)
   if (kb !== ka) return kb - ka
+  // Look newer first on ties
+  const yA = Number(a.unit?.year) || 0
+  const yB = Number(b.unit?.year) || 0
+  if (yB !== yA) return yB - yA
   const miA = Number(a.unit?.mileage)
   const miB = Number(b.unit?.mileage)
   const aOk = Number.isFinite(miA)
@@ -45,14 +49,10 @@ function compareBoosted(a, b, intake) {
   return String(a.unit?.id || '').localeCompare(String(b.unit?.id || ''))
 }
 
-function bestOfClass(entries, intake) {
-  if (!entries.length) return null
-  return [...entries].sort((a, b) => compareBoosted(a, b, intake))[0]
-}
-
 /**
- * Compose recommendation set after HF-1 / HF-3 (hardReject excluded).
- * Guarantees best Truck + best Van seats when both classes are available.
+ * Full option coverage after HF-1 / HF-3.
+ * One slot per distinct listing identity (unit id) — all eligible truck + van options.
+ * Ordered Replacement Score high → low. No best-of shortlist. No Best* labels.
  */
 export function composeRecommendationSet(units, ctx = {}, options = {}) {
   const intake = ctx.intake
@@ -63,70 +63,54 @@ export function composeRecommendationSet(units, ctx = {}, options = {}) {
   const trucks = eligible.filter((r) => bodyClassOf(r.unit) === 'truck')
   const vans = eligible.filter((r) => bodyClassOf(r.unit) === 'van')
 
-  const bestTruck = bestOfClass(trucks, intake)
-  const bestVan = bestOfClass(vans, intake)
-
-  const maxSlots = Math.max(
-    1,
-    Number(options.maxSlots) || eligible.length || 1,
-  )
-
-  const mandatory = []
-  if (bestTruck) {
-    mandatory.push({
-      ...bestTruck,
-      bodyClass: 'truck',
-      seat: 'best-truck',
-      seatLabel: 'Best Truck',
-    })
-  }
-  if (bestVan) {
-    mandatory.push({
-      ...bestVan,
-      bodyClass: 'van',
-      seat: 'best-van',
-      seatLabel: 'Best Van',
-    })
-  }
-
-  // Prefer showing preferred body first among mandatory seats, else Truck then Van
-  const pref = String(intake?.body || '')
-  mandatory.sort((a, b) => {
-    if (pref === 'Van') {
-      if (a.bodyClass !== b.bodyClass) return a.bodyClass === 'van' ? -1 : 1
-    } else if (pref === 'Pickup') {
-      if (a.bodyClass !== b.bodyClass) return a.bodyClass === 'truck' ? -1 : 1
-    }
-    return compareBoosted(a, b, intake)
-  })
-
-  const used = new Set(mandatory.map((m) => m.unit.id))
-  const fillPool = eligible
-    .filter((r) => !used.has(r.unit.id))
-    .sort((a, b) => compareBoosted(a, b, intake))
-
-  // Never drop mandatory best-of-each when filling — grow past maxSlots if needed
-  const minRequired = mandatory.length
-  const target = Math.max(maxSlots, minRequired)
-
-  const items = [...mandatory]
-  for (const row of fillPool) {
-    if (items.length >= target) break
-    items.push({
+  // Dedupe by unit id (listing identity) — keep highest-ranked instance
+  const seen = new Set()
+  const unique = []
+  for (const row of eligible) {
+    const id = row.unit?.id
+    if (!id || seen.has(id)) continue
+    seen.add(id)
+    unique.push({
       ...row,
       bodyClass: bodyClassOf(row.unit),
-      seat: 'fill',
+      seat: null,
       seatLabel: null,
     })
   }
 
-  // Soft-rank display among the set (overall score), keeping seat labels
-  const byId = new Map(items.map((it) => [it.unit.id, it]))
-  const displayOrder = [...items].sort((a, b) => compareBoosted(a, b, intake))
-  const ordered = displayOrder.map((it, index) => ({
-    ...byId.get(it.unit.id),
-    rank: index + 1,
-  }))
+  const ordered = [...unique]
+    .sort((a, b) => compareBoosted(a, b, intake))
+    .map((it, index) => ({ ...it, rank: index + 1 }))
+
+  // Optional maxSlots still must keep both classes when both available
+  let items = ordered
+  const maxSlots = Number(options.maxSlots)
+  if (Number.isFinite(maxSlots) && maxSlots > 0 && ordered.length > maxSlots) {
+    const pref = String(intake?.body || '')
+    const keep = []
+    const rest = []
+    // Ensure ≥1 of each available class in the truncated window
+    const firstTruck = ordered.find((r) => r.bodyClass === 'truck')
+    const firstVan = ordered.find((r) => r.bodyClass === 'van')
+    if (firstTruck && firstVan) {
+      // Prefer preferred body earlier but keep both
+      const pair =
+        pref === 'Van' ? [firstVan, firstTruck] : [firstTruck, firstVan]
+      for (const p of pair) {
+        if (!keep.find((k) => k.unit.id === p.unit.id)) keep.push(p)
+      }
+    } else if (firstTruck) keep.push(firstTruck)
+    else if (firstVan) keep.push(firstVan)
+
+    for (const row of ordered) {
+      if (keep.find((k) => k.unit.id === row.unit.id)) continue
+      rest.push(row)
+    }
+    items = [...keep, ...rest].slice(0, Math.max(maxSlots, keep.length))
+    items = items
+      .sort((a, b) => compareBoosted(a, b, intake))
+      .map((it, index) => ({ ...it, rank: index + 1 }))
+  }
 
   let missingBodyNote = null
   if (trucks.length && !vans.length) {
@@ -135,28 +119,23 @@ export function composeRecommendationSet(units, ctx = {}, options = {}) {
     missingBodyNote = 'Truck not in this set — none cleared fit in this pool.'
   }
 
-  const monoBodyBlocked =
-    trucks.length > 0 && vans.length > 0
-      ? Boolean(bestTruck && bestVan)
-      : true
+  const years = items.map((r) => Number(r.unit?.year)).filter((y) => Number.isFinite(y))
+  const hasFreshMy = years.some((y) => y >= 2025)
 
   return {
     build: BODY_MIX_BUILD,
     scoreBuild: SCORE_BUILD,
-    items: ordered,
+    items,
     eligible,
     rejected,
-    bestTruck: bestTruck
-      ? { ...bestTruck, bodyClass: 'truck', seat: 'best-truck', seatLabel: 'Best Truck' }
-      : null,
-    bestVan: bestVan
-      ? { ...bestVan, bodyClass: 'van', seat: 'best-van', seatLabel: 'Best Van' }
-      : null,
     hasTruck: trucks.length > 0,
     hasVan: vans.length > 0,
     bothClasses: trucks.length > 0 && vans.length > 0,
     missingBodyNote,
-    monoBodyBlocked,
+    hasFreshMy,
     intakeBody: intake?.body || '',
+    // Legacy keys cleared — no Best* chrome
+    bestTruck: null,
+    bestVan: null,
   }
 }

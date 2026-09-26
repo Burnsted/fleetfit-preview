@@ -195,6 +195,98 @@ const ELECTRICAL_UNITS = [
     description:
       'Placeholder cargo van. Fit score blocked on missing battery + charging diligence.',
   },
+  {
+    id: 'unit-e5',
+    stockId: 'STOCK-E05',
+    role: 'Work pickup',
+    bodyType: 'truck',
+    year: 2026,
+    make: 'GMC',
+    model: 'Sierra EV',
+    trim: 'Elevation',
+    mileage: 2800,
+    location: { city: 'Jupiter', state: 'FL' },
+    askPrice: 54177,
+    sellerType: 'dealer',
+    sellerLabel: 'New-used EV desk (anonymized)',
+    titleStatus: 'Clean',
+    cpo: false,
+    battery: {
+      status: 'Not reported by dealer',
+      soh: null,
+      usableKwh: null,
+      note: 'Newly used 2026 — ask for pack health before travel.',
+    },
+    recall: {
+      status: 'Unchecked — placeholder',
+      detail: 'Recall check not run in this preview. NHTSA lookup is a production stub.',
+    },
+    chargingFit: {
+      label: 'Strong day range',
+      detail: 'Standard-range Elevation · shop L2 covers coastal service days with margin.',
+    },
+    tradeFit: {
+      label: 'Service-body ready',
+      detail: 'Crew pickup for toolboxes and wire reels — verify tow if you haul.',
+    },
+    fitScore: {
+      band: 'open items',
+      reason: 'Newer MY surfaced for look-newer-first; confirm pack health and tow before close.',
+    },
+    openItems: [
+      'Battery health not on file',
+      'PPI recommended on newly used unit',
+    ],
+    upfitNote: 'Stock bed — commercial body not installed.',
+    description:
+      'Newly used 2026 work truck option. Listing ask only; FleetFit has not inspected this unit.',
+  },
+  {
+    id: 'unit-e6',
+    stockId: 'STOCK-F06',
+    role: 'Service van',
+    bodyType: 'van',
+    year: 2025,
+    make: 'Chevrolet',
+    model: 'BrightDrop 600',
+    trim: 'Zevo 600',
+    mileage: 16500,
+    location: { city: 'West Palm Beach', state: 'FL' },
+    askPrice: 27995,
+    sellerType: 'dealer',
+    sellerLabel: 'Commercial van desk (anonymized)',
+    titleStatus: 'Clean',
+    cpo: false,
+    battery: {
+      status: 'Not reported by dealer',
+      soh: null,
+      usableKwh: null,
+      note: '2025 BrightDrop — request pack health printout.',
+    },
+    recall: {
+      status: 'Unchecked — placeholder',
+      detail: 'Recall check not run in this preview. NHTSA lookup is a production stub.',
+    },
+    chargingFit: {
+      label: 'Fits shop L2',
+      detail: 'Cargo EV · overnight L2 at shop covers a typical electrical service day.',
+    },
+    tradeFit: {
+      label: 'Cargo van fit',
+      detail: 'Walk-in cargo for ladder + wire stock; confirm shelving mounts.',
+    },
+    fitScore: {
+      band: 'open items',
+      reason: '2025 van option in the pool — confirm battery report and depot charging.',
+    },
+    openItems: [
+      'Battery health not on file',
+      'Shelving fit not verified',
+    ],
+    upfitNote: 'Empty cargo — shelving TBD.',
+    description:
+      '2025 cargo EV van option. Listing ask only; not inspected by FleetFit.',
+  },
 ]
 
 const LANDSCAPE_UNITS = [
@@ -300,15 +392,15 @@ export const PACKAGES = [
   {
     id: DEFAULT_PACKAGE_ID,
     path: 'PRIMARY',
-    label: 'Treasure Coast electrical — ~4 service vans',
-    headline: '4-unit used-EV fleet package — Treasure Coast electrical (service)',
+    label: 'Treasure Coast electrical — truck + van options',
+    headline: 'Used-EV fleet package — Treasure Coast electrical (truck + van options)',
     summary:
-      'Composite example for a small trade fleet (~4 vans) that needs matched used EVs for typical coastal service routes. Not a real shop.',
+      'Composite example for a small trade fleet that needs matched used EVs for typical coastal service routes — including newer 2025–2026 options. Not a real shop.',
     region: 'Treasure Coast, FL',
     trade: 'Electrical',
     /** Demo FACT scaffold for Life Delta vs current non-EV work vehicle */
     currentMileage: 48000,
-    unitCount: 4,
+    unitCount: 6,
     statedCountNote: '~4 vans stated',
     workDayNote:
       'Typical day: 80–120 mi across coastal jobsites; overnight Level 2 at shop; occasional DC fast on longer runs.',

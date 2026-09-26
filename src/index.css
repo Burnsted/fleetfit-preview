@@ -3371,6 +3371,10 @@ img { max-width: 100%; display: block; }
   color: var(--text-dim);
   font-weight: 600;
 }
+.recommendation-mix-chip.is-fresh {
+  border-color: rgba(245, 166, 35, 0.45);
+  color: #f5a623;
+}
 .recommendation-mix-missing {
   margin: 10px 0 0;
   font-size: 0.82rem;
