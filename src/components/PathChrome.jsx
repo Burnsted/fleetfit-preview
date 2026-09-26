@@ -1,20 +1,10 @@
 import { Link, useLocation } from 'react-router-dom'
-import { DEFAULT_PACKAGE_ID } from '../data/package'
+import { PATH_STEPS } from '../lib/pathSteps'
+import PathBack, { isPathFirstStep } from './PathBack'
 
-const EXAMPLE = `/package/${DEFAULT_PACKAGE_ID}`
 const AMBER = '#F5A623'
 
-/** CLEARED PATH: Intake · Add to fleet · Budget (Package chip retired) */
-export const PATH_STEPS = [
-  { name: 'intake', label: 'Intake', to: '/intake', match: (path) => path.startsWith('/intake') },
-  {
-    name: 'add',
-    label: 'Add to fleet',
-    to: EXAMPLE,
-    match: (path) => path.startsWith('/package') || path.startsWith('/checkout'),
-  },
-  { name: 'budget', label: 'Budget', to: '/budget', match: (path) => path.startsWith('/budget') },
-]
+export { PATH_STEPS }
 
 function PathIcon({ name }) {
   if (name === 'intake') {
@@ -43,6 +33,7 @@ function PathIcon({ name }) {
 /**
  * Oversized PATH tile strip — same mood/home pattern.
  * Active step follows the current route unless `active` is passed.
+ * CLEARED ← Back sits upper-right of this band (hidden on Intake).
  */
 export default function PathChrome({ active, className = '' }) {
   const { pathname } = useLocation()
@@ -50,10 +41,14 @@ export default function PathChrome({ active, className = '' }) {
     active ||
     PATH_STEPS.find((step) => step.match(pathname))?.name ||
     null
+  const showBack = !isPathFirstStep(pathname) && current !== 'intake'
 
   return (
     <section className={`path-chrome ${className}`.trim()} aria-label="Path">
-      <p className="home-path-label">Path</p>
+      <div className="path-chrome-band">
+        <p className="home-path-label">Path</p>
+        {showBack ? <PathBack /> : null}
+      </div>
       <ul className="home-path-icons path-chrome-icons">
         {PATH_STEPS.map((step) => {
           const isActive = current === step.name

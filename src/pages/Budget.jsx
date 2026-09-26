@@ -1,5 +1,6 @@
 import { useState } from 'react'
 import { Link, useNavigate } from 'react-router-dom'
+import PathChrome from '../components/PathChrome'
 import { DEFAULT_PACKAGE_ID, getPackage } from '../data/package'
 import {
   factKbbTradeIn,
@@ -37,6 +38,8 @@ export default function Budget() {
 
   return (
     <div className="locked-page">
+      <PathChrome active="budget" className="path-chrome-flow" />
+
       <nav className="locked-crumbs" aria-label="Breadcrumb">
         <Link to="/">Home</Link>
         <span aria-hidden="true"> / </span>
