@@ -75,17 +75,16 @@ export default function PackageResults() {
         <span>Package</span>
       </nav>
 
-      <header className="match-header">
-        <p className="match-kicker">
-          {pkg.trade} · {pkg.unitCount} units{dayNeed ? ` · Day ${dayNeed}` : ''} · DEMO
-        </p>
+      <header className="match-header is-dense" data-density-build="package-density-20260926-0923">
+        <p className="match-kicker">DEMO</p>
         <h1 className="match-title">{pkg.headline}</h1>
-        <div className="spec-chips match-header-chips">
+        <div className="spec-chips match-header-chips" aria-label="Match facts">
           <span className="spec-chip is-known">Trade {pkg.trade}</span>
           <span className="spec-chip is-known">{pkg.unitCount} units</span>
           {dayNeed ? <span className="spec-chip is-known">Day {dayNeed}</span> : null}
-        </div>
-        <div className="spec-chips">
+          <span className="spec-chip is-known">
+            Trade-in {pkg.tradeIn?.status || '—'}
+          </span>
           <span className="spec-chip is-dash">
             Battery {unknownBatt === pkg.unitCount ? '—' : `${pkg.unitCount - unknownBatt}/${pkg.unitCount}`}
           </span>
@@ -101,7 +100,7 @@ export default function PackageResults() {
         current={current}
         candidates={compareCandidates}
         packageId={pkg.id}
-        title="Fit next to your current work vehicle."
+        title="Current vs package"
       />
 
       <section aria-labelledby="units-title">
@@ -133,7 +132,6 @@ export default function PackageResults() {
       </section>
 
       <p className="package-fee-quiet">Fee at checkout — amount TBD</p>
-      <p className="package-tradein-quiet">Trade-in: {pkg.tradeIn.status}</p>
 
       <div className="package-cta-bar">
         <p className="package-fleet-count">

@@ -1,15 +1,15 @@
-import { useState } from 'react'
+import { Link } from 'react-router-dom'
 import AddToFleetButton from './AddToFleetButton'
 import UnitPhoto from './UnitPhoto'
 import { batteryConfidenceFromUnit } from '../lib/battery'
-import { DASH, EXPAND_SPEC_ROWS } from '../lib/workSpec'
+import { DASH } from '../lib/workSpec'
 
-function recallField(unit) {
-  const status = String(unit?.recall?.status || '')
-  if (!status || /unchecked|placeholder|not run|not reported/i.test(status)) {
-    return { text: DASH, known: false }
-  }
-  return { text: status, known: true }
+function faceChip(label, known = true) {
+  return (
+    <span className={`spec-chip ${known ? 'is-known' : 'is-dash'}`}>
+      {label}
+    </span>
+  )
 }
 
 export default function StackCard({
@@ -25,21 +25,16 @@ export default function StackCard({
   bodyType,
   showCompare = true,
 }) {
-  const [open, setOpen] = useState(false)
   const battery = unit ? batteryConfidenceFromUnit(unit) : null
-  const recall = unit ? recallField(unit) : null
-  const range = spec?.energy?.known ? spec.energy.text : null
-  const payloadChip = spec?.payload?.known ? `Payload ${spec.payload.text}` : null
-
-  function toggle(event) {
-    if (event.target.closest('button, a')) return
-    setOpen((value) => !value)
-  }
+  const body = bodyType || unit?.bodyType
+  const bodyLabel = body === 'van' ? 'Van' : body === 'truck' ? 'Pickup' : null
+  const openTo = !current && packageId && unit?.id
+    ? `/package/${packageId}/unit/${unit.id}`
+    : null
 
   return (
     <article
-      className={`stack-card ${current ? 'is-current' : 'is-candidate'} ${open ? 'is-open' : ''}`}
-      onClick={toggle}
+      className={`stack-card ${current ? 'is-current' : 'is-candidate'} is-dense`}
     >
       <UnitPhoto
         unit={unit}
@@ -48,79 +43,51 @@ export default function StackCard({
         showAsk={!current}
         showCompare={showCompare && !current}
         current={current}
-        bodyType={bodyType || unit?.bodyType}
+        bodyType={body}
         kbb={spec?.kbbTradeIn}
-        headline={payloadChip}
+        headline={spec?.payload?.known ? `Payload ${spec.payload.text}` : null}
       />
       <div className="stack-card-body">
         {kicker ? <p className="stack-card-kicker">{kicker}</p> : null}
-        <h3 className="stack-card-heading">
-          {heading}
-          {role && !current ? <span className="stack-card-role"> · {role}</span> : null}
-        </h3>
+        <h3 className="stack-card-heading">{heading}</h3>
         <p className="stack-card-stats">
-          {range ? <span>{range}</span> : null}
           {mileage != null ? <span>{Number(mileage).toLocaleString()} mi</span> : null}
         </p>
-        {current && role ? (
-          <div className="stack-card-chips">
-            <span className="spec-chip is-known">{role}</span>
-          </div>
-        ) : null}
+        <div className="stack-card-chips" aria-label="Unit chips">
+          {role ? faceChip(role) : null}
+          {bodyLabel ? faceChip(bodyLabel) : null}
+          {faceChip(
+            `Payload ${spec?.payload?.known ? spec.payload.text : DASH}`,
+            !!spec?.payload?.known,
+          )}
+          {faceChip(
+            `Bed ${spec?.bed?.known ? spec.bed.text : DASH}`,
+            !!spec?.bed?.known,
+          )}
+          {faceChip(
+            `Cab ${spec?.cab?.known ? spec.cab.text : DASH}`,
+            !!spec?.cab?.known,
+          )}
+          {faceChip(
+            `Tow ${spec?.tow?.known ? spec.tow.text : DASH}`,
+            !!spec?.tow?.known,
+          )}
+          {battery
+            ? faceChip(
+                battery.known ? battery.label : `Battery ${DASH}`,
+                battery.known,
+              )
+            : null}
+        </div>
         {current || !pickId ? null : (
           <AddToFleetButton pickId={pickId} size="btn-block" />
         )}
-        <button
-          type="button"
-          className="stack-card-details"
-          aria-expanded={open}
-          onClick={(event) => {
-            event.preventDefault()
-            event.stopPropagation()
-            setOpen((value) => !value)
-          }}
-        >
-          {open ? 'Hide details' : 'Details'}
-          <span aria-hidden="true">{open ? ' ▲' : ' ▼'}</span>
-        </button>
+        {openTo ? (
+          <Link to={openTo} className="stack-card-open-quiet">
+            Open
+          </Link>
+        ) : null}
       </div>
-      {open ? (
-        <dl className="stack-card-expand work-spec-rows">
-          {EXPAND_SPEC_ROWS.map((row) => {
-            const field = spec?.[row.key] || { text: DASH, known: false }
-            return (
-              <div key={row.key} className="work-spec-row">
-                <dt>{row.label}</dt>
-                <dd>
-                  <span className={field.known ? 'work-spec-value is-known' : 'work-spec-value is-dash'}>
-                    {field.text}
-                  </span>
-                </dd>
-              </div>
-            )
-          })}
-          {battery ? (
-            <div className="work-spec-row">
-              <dt>Battery</dt>
-              <dd>
-                <span className={battery.known ? 'work-spec-value is-known' : 'work-spec-value is-dash'}>
-                  {battery.known ? battery.label : DASH}
-                </span>
-              </dd>
-            </div>
-          ) : null}
-          {recall ? (
-            <div className="work-spec-row">
-              <dt>Recalls</dt>
-              <dd>
-                <span className={recall.known ? 'work-spec-value is-known' : 'work-spec-value is-dash'}>
-                  {recall.text}
-                </span>
-              </dd>
-            </div>
-          ) : null}
-        </dl>
-      ) : null}
     </article>
   )
 }
