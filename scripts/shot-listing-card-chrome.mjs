@@ -63,4 +63,3 @@ for (const f of ['listing-card-face-clean.png', 'listing-card-shop-strip.png']) 
 
 console.log('CARD_CHROME_PASS', stamp)
 await browser.close()
-}
