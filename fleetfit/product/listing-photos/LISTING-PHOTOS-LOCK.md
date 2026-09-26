@@ -10,11 +10,12 @@ Every photo of a vehicle **being considered** (package, compare, card-stack, mat
 - Generic demo trucks not tied to a for-sale listing
 - Invented VINs, prices, miles, or dealer names
 
-## Current vehicle (Ted ~7:50 AM ET)
-The shop’s current non-EV work vehicle may use a **labeled stock photo**. We do not have their real truck. Never use a random dealer listing photo on that column.
-
 ## Rule
-No real listing photo on a **considered / for-sale** unit → empty/stub state, never fake Commons as a listing. Listing facts only when FACT.
+No real listing photo → empty/stub state, never fake stock. Listing facts only when FACT.
+
+## Exception — current vehicle
+**Ted ~7:50 AM ET:** Current vehicle MAY use a stock / representative photo. We do not have the user’s real truck photo. Stock is allowed only for **current** side of compare / trade. Considered for-sale units still require dealership listing photos.
 
 ## Ship
-Woz: PR #5 draft, Cursor cloud only. No merge without Ted.
+Host: `Burnsted/fleetfit-preview` · Cursor cloud · draft PR · **no merge without Ted**  
+Asset pack (when useful): `hot-deals-ship-pack.json` in this folder

@@ -1,6 +1,6 @@
 import CompareControl from './CompareControl'
-import ListingPhoto from './ListingPhoto'
-import { currentWorkPhoto } from '../lib/vehiclePhoto'
+import ListingPhoto, { PhotoPending } from './ListingPhoto'
+import { currentWorkPhoto, listingPhotoRecord, PHOTO_BUILD } from '../lib/vehiclePhoto'
 import { formatAsk } from '../lib/workSpec'
 import { unitWhisper } from '../lib/compareSet'
 
@@ -29,16 +29,24 @@ export default function UnitPhoto({
   const ask = showAsk && !current ? formatAsk(unit?.askPrice) : null
   const showKbb = current && kbb?.known
 
+  const considered = !current ? listingPhotoRecord(unit) : null
+
   return (
-    <div className={`unit-photo is-${size} is-${body} has-photo ${current ? 'is-current' : ''}`}>
+    <div
+      className={`unit-photo is-${size} is-${body} ${considered?.src || current ? 'has-photo' : 'is-pending'} ${current ? 'is-current' : ''}`}
+      data-photo-build={PHOTO_BUILD}
+      data-photo-kind={current ? 'current-stock' : considered?.src ? 'listing' : 'stub'}
+    >
       {current ? (
         <img
           src={currentWorkPhoto({ bodyType: body })}
           alt=""
           className="unit-photo-img"
         />
-      ) : (
+      ) : considered?.src ? (
         <ListingPhoto vehicle={unit} className="unit-photo-img" />
+      ) : (
+        <PhotoPending className="unit-photo-img" />
       )}
       {current ? <span className="unit-photo-stock">Stock · not a listing</span> : null}
       <span className="unit-photo-glyph sr-only">{thumbLabel}</span>
