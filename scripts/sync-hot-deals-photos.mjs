@@ -15,16 +15,21 @@ const packPath = path.join(
 const outDir = path.join(root, 'src/assets/listings')
 const outJs = path.join(root, 'src/data/listingPhotos.js')
 
-/** Distinct FACT rows from pack → considered unit ids */
+/**
+ * FACT pack index → considered unit ids.
+ * Rank 73 / index 21 Silverado WT thumb is red-cloth "Images Coming Soon" — NEVER assign.
+ * Rank 104 / index 22 and rank 107 / index 23 are real dealer truck exteriors (verified).
+ * unit-e2 + vnd-002 may share index 22 (same FACT listing).
+ */
 const ASSIGN = {
   'unit-e1': 1, // 2023 E-Transit
-  'unit-e2': 21, // 2024 Silverado EV WT
+  'unit-e2': 22, // 2026 Silverado EV LT — rank 104 real truck (was 21 cloth)
   'unit-e3': 15, // 2022 Lightning Pro (URL match)
   'unit-e4': 6, // 2024 ProMaster EV (URL match)
-  'unit-l1': 22, // 2026 Silverado EV LT
+  'unit-l1': 23, // 2026 Silverado EV Trail Boss — rank 107 real truck
   'unit-l2': 16, // 2023 Lightning XLT
   'vnd-001': 14, // 2022 Lightning Pro
-  'vnd-002': 22, // conflict — fixed below
+  'vnd-002': 22, // same FACT listing as unit-e2 (rank 104)
   'vnd-003': 24, // 2026 Sierra EV
   'vnd-004': 25, // 2026 Sierra EV
   'vnd-005': 19, // 2022 R1T
@@ -33,9 +38,7 @@ const ASSIGN = {
   'vnd-008': 32, // 2025 Cybertruck
 }
 
-// vnd-002 URL-matched Silverado LT is index 22; unit-l1 also wanted 22 — split
-ASSIGN['unit-l1'] = 23 // Trail Boss Extended
-ASSIGN['vnd-002'] = 22
+const BLOCKED_CLOTH_INDICES = new Set([21]) // rank 73 red-cloth teaser
 
 const ALIASES = {
   'strip-lightning': 'unit-e3',
@@ -69,16 +72,16 @@ try {
 }
 
 const pack = JSON.parse(await readFile(packPath, 'utf8'))
-const used = new Set()
-for (const [id, idx] of Object.entries(ASSIGN)) {
-  if (used.has(idx)) throw new Error(`Duplicate pack index ${idx} for ${id}`)
-  used.add(idx)
-}
 
 const rows = {}
 const files = {}
+/** cache downloaded buffers by pack index so shared assignments reuse one fetch */
+const bufByIdx = new Map()
 
 for (const [id, idx] of Object.entries(ASSIGN)) {
+  if (BLOCKED_CLOTH_INDICES.has(idx)) {
+    throw new Error(`Refusing cloth/teaser pack index ${idx} for ${id}`)
+  }
   const src = pack[idx]
   if (!src) throw new Error(`Missing pack row ${idx}`)
   const thumb = src.thumbnail_url
@@ -86,20 +89,26 @@ for (const [id, idx] of Object.entries(ASSIGN)) {
   let ext = 'jpg'
   if (thumb) {
     try {
-      const res = await fetch(thumb, {
-        headers: { 'User-Agent': 'FleetFitPreviewBot/1.0' },
-      })
-      if (!res.ok) throw new Error(`HTTP ${res.status}`)
-      const buf = Buffer.from(await res.arrayBuffer())
-      const ct = res.headers.get('content-type') || ''
-      if (ct.includes('png')) ext = 'png'
-      else if (ct.includes('webp')) ext = 'webp'
-      else ext = 'jpg'
+      let cached = bufByIdx.get(idx)
+      if (!cached) {
+        const res = await fetch(thumb, {
+          headers: { 'User-Agent': 'FleetFitPreviewBot/1.0' },
+        })
+        if (!res.ok) throw new Error(`HTTP ${res.status}`)
+        const buf = Buffer.from(await res.arrayBuffer())
+        const ct = res.headers.get('content-type') || ''
+        if (ct.includes('png')) ext = 'png'
+        else if (ct.includes('webp')) ext = 'webp'
+        else ext = 'jpg'
+        cached = { buf, ext }
+        bufByIdx.set(idx, cached)
+      }
+      ext = cached.ext
       const file = `${id}.${ext}`
-      await writeFile(path.join(outDir, file), buf)
+      await writeFile(path.join(outDir, file), cached.buf)
       files[id] = file
       hasPhoto = true
-      console.log('OK', id, '←', idx, file, buf.length)
+      console.log('OK', id, '←', idx, 'rank', src.rank, file, cached.buf.length)
     } catch (err) {
       console.warn('STUB', id, String(err.message || err))
       hasPhoto = false
