@@ -22,16 +22,16 @@ export const SOFT_WEIGHTS = {
 }
 
 export const SOFT_LABELS = {
-  jobFit: 'Job Fit',
+  jobFit: 'Job Fit detail',
   lifeDelta: 'Life Delta',
   warranty: 'Warranty',
-  batteryHealth: 'Battery (internal)',
+  batteryHealth: 'Battery Health',
   range: 'Range',
   charging: 'Charging',
   serviceability: 'Serviceability',
   energy: 'Energy',
   maintenance: 'Maintenance',
-  residual: 'Residual risk',
+  residual: 'Residual',
 }
 
 const TOTAL_WEIGHT = Object.values(SOFT_WEIGHTS).reduce((a, b) => a + b, 0)

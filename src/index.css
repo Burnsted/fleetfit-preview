@@ -2811,6 +2811,9 @@ img { max-width: 100%; display: block; }
   gap: 10px;
   pointer-events: none;
 }
+.unit-photo-price-band .score-dial.is-tappable {
+  pointer-events: auto;
+}
 .unit-photo-ask {
   background: rgba(15, 20, 25, 0.78);
   color: #fff;
@@ -2849,6 +2852,28 @@ img { max-width: 100%; display: block; }
   place-items: center;
   pointer-events: none;
   filter: drop-shadow(0 2px 6px rgba(0, 0, 0, 0.45));
+  appearance: none;
+  border: 0;
+  background: transparent;
+  padding: 0;
+  margin: 0;
+  color: inherit;
+  font: inherit;
+}
+.score-dial.is-tappable {
+  pointer-events: auto;
+  cursor: pointer;
+  min-width: 44px;
+  min-height: 44px;
+  border-radius: 12px;
+}
+.score-dial.is-tappable:hover,
+.score-dial.is-tappable:focus-visible {
+  outline: none;
+  box-shadow: 0 0 0 2px rgba(245, 166, 35, 0.55);
+}
+.score-dial.is-tappable:active {
+  transform: scale(0.97);
 }
 .score-dial.is-hero {
   width: 76px;
@@ -3347,17 +3372,110 @@ img { max-width: 100%; display: block; }
 }
 .replacement-score-cats li {
   display: flex;
+  flex-direction: column;
+  gap: 2px;
+  font-size: 0.84rem;
+  padding: 6px 0;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.06);
+}
+.replacement-score-cat-main {
+  display: flex;
   justify-content: space-between;
   gap: 12px;
-  font-size: 0.84rem;
-  padding: 4px 0;
-  border-bottom: 1px solid rgba(255, 255, 255, 0.06);
+  width: 100%;
 }
 .replacement-score-cats li.is-unknown {
   color: var(--text-dim);
 }
 .replacement-score-cat-label { font-weight: 500; }
 .replacement-score-cat-grade { font-weight: 700; font-variant-numeric: tabular-nums; }
+.replacement-score-cat-why {
+  margin: 0;
+  font-size: 0.76rem;
+  color: var(--text-dim);
+  line-height: 1.35;
+}
+.replacement-score-complete {
+  margin: 4px 0 0;
+  font-size: 0.75rem;
+  color: var(--text-dim);
+}
+
+/* CLEARED dial-tap → full score readout sheet */
+.score-readout-sheet {
+  position: fixed;
+  inset: 0;
+  z-index: 80;
+  display: grid;
+  align-items: end;
+  justify-items: center;
+}
+.score-readout-backdrop {
+  position: absolute;
+  inset: 0;
+  border: 0;
+  padding: 0;
+  margin: 0;
+  background: rgba(10, 14, 18, 0.55);
+  cursor: pointer;
+}
+.score-readout-panel {
+  position: relative;
+  z-index: 1;
+  width: min(520px, 100%);
+  max-height: min(88vh, 820px);
+  overflow: auto;
+  background: var(--bg, #12161c);
+  color: var(--text, #f2f4f7);
+  border-radius: 18px 18px 0 0;
+  box-shadow: 0 -8px 32px rgba(0, 0, 0, 0.35);
+  padding: 14px 16px 28px;
+}
+.score-readout-panel-head {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 12px;
+  margin-bottom: 8px;
+}
+.score-readout-panel-kicker {
+  margin: 0;
+  font-size: 0.72rem;
+  font-weight: 700;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: var(--text-dim);
+}
+.score-readout-panel-title {
+  margin: 4px 0 0;
+  font-size: 1.05rem;
+  font-weight: 700;
+}
+.score-readout-close {
+  appearance: none;
+  border: 0;
+  background: transparent;
+  color: var(--text-dim);
+  font: inherit;
+  font-size: 0.88rem;
+  font-weight: 600;
+  min-height: 44px;
+  min-width: 44px;
+  padding: 8px 10px;
+  cursor: pointer;
+  border-radius: 8px;
+}
+.score-readout-close:hover,
+.score-readout-close:focus-visible {
+  color: #F5A623;
+  outline: none;
+}
+.score-readout-body.replacement-score {
+  border: 0;
+  background: transparent;
+  padding: 0;
+  margin: 0;
+}
 .replacement-score-block {
   margin: 0 0 10px;
 }

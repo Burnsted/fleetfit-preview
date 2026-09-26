@@ -1,16 +1,17 @@
 import { SCORE_BUILD } from '../lib/replacementScore'
 
-export const SCORE_UI_BUILD = 'score-ui-dial-20260926-1451'
+export const SCORE_UI_BUILD = 'score-ui-dial-20260926-1551'
 
 /**
  * CLEARED Score UI dial — glanceable speed-dial RIGHT of pricing.
- * Arc gauge + large score; rank optional near dial (not the only signal).
+ * Tap / click opens full Replacement Score readout (when onOpen provided).
  */
 export default function ScoreDial({
   score,
   rank = null,
   size = 'card',
   className = '',
+  onOpen = null,
 }) {
   if (!score) return null
 
@@ -50,17 +51,32 @@ export default function ScoreDial({
           ? 'is-mid'
           : 'is-low'
 
+  const label = incomplete
+    ? 'Open Replacement Score — incomplete'
+    : `Open Replacement Score ${display} of 10${rank != null ? `, rank ${rank}` : ''}`
+
+  const interactive = typeof onOpen === 'function'
+  const Tag = interactive ? 'button' : 'div'
+  const tagProps = interactive
+    ? {
+        type: 'button',
+        onClick: (e) => {
+          e.preventDefault()
+          e.stopPropagation()
+          onOpen()
+        },
+      }
+    : {}
+
   return (
-    <div
-      className={`score-dial is-${size} ${tone} ${className}`.trim()}
+    <Tag
+      className={`score-dial is-${size} ${tone}${interactive ? ' is-tappable' : ''} ${className}`.trim()}
       data-score-ui={SCORE_UI_BUILD}
       data-score-build={SCORE_BUILD}
       data-sidegrade={score.sidegrade ? 'true' : 'false'}
-      aria-label={
-        incomplete
-          ? 'Replacement Score incomplete'
-          : `Replacement Score ${display} of 10${rank != null ? `, rank ${rank}` : ''}`
-      }
+      data-dial-tap={interactive ? 'open' : undefined}
+      aria-label={label}
+      {...tagProps}
     >
       <svg className="score-dial-svg" viewBox="0 0 44 40" aria-hidden="true">
         <path className="score-dial-track" d={track} fill="none" />
@@ -73,6 +89,6 @@ export default function ScoreDial({
       {rank != null ? (
         <span className="score-dial-rank">#{rank}</span>
       ) : null}
-    </div>
+    </Tag>
   )
 }

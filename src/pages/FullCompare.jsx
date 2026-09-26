@@ -2,7 +2,7 @@ import { useEffect } from 'react'
 import { Link, useLocation, useNavigate, useParams } from 'react-router-dom'
 import AddToFleetButton from '../components/AddToFleetButton'
 import UnitPhoto from '../components/UnitPhoto'
-import ScoreDial from '../components/ScoreDial'
+import ScoreDialControl from '../components/ScoreDialControl'
 import { getPackage, getUnit } from '../data/package'
 import { batteryConfidenceFromUnit } from '../lib/battery'
 import { useCompareSet } from '../lib/compareSet'
@@ -99,7 +99,14 @@ export default function FullCompare() {
 
   function renderCandidate(col, row) {
     if (row.key === 'score') {
-      return <ScoreDial score={col.score} rank={col.rank} size="compare" />
+      return (
+        <ScoreDialControl
+          score={col.score}
+          rank={col.rank}
+          size="compare"
+          heading={col.ymm}
+        />
+      )
     }
     if (row.key === 'ymm') return col.ymm
     if (row.key === 'role') return col.role

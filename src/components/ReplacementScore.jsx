@@ -2,11 +2,13 @@ import { SCORE_BUILD } from '../lib/replacementScore'
 
 /**
  * Public Replacement Score UI — total + transparent cats + helps / watch-outs.
- * No Worth it · SOH · FACT pills. Battery Health stays internal (hidden row).
+ * No Worth it · SOH · FACT pills.
+ * `full` (dial-tap sheet): all ~10 cats incl. Battery Health grade/Unknown + notes.
  */
 export default function ReplacementScore({
   score,
   compact = false,
+  full = false,
   rank,
   className = '',
 }) {
@@ -36,11 +38,15 @@ export default function ReplacementScore({
     )
   }
 
-  const visibleCats = score.categories.filter((c) => c.public)
+  const cats = full
+    ? score.categories
+    : score.categories.filter((c) => c.public)
+
+  const knownCount = score.categories.filter((c) => !c.unknown && c.grade != null).length
 
   return (
     <section
-      className={`replacement-score is-open ${score.sidegrade ? 'is-sidegrade' : ''} ${className}`.trim()}
+      className={`replacement-score is-open${full ? ' is-full' : ''} ${score.sidegrade ? 'is-sidegrade' : ''} ${className}`.trim()}
       data-score-build={SCORE_BUILD}
       data-sidegrade={score.sidegrade ? 'true' : 'false'}
       aria-label="Replacement Score"
@@ -54,6 +60,11 @@ export default function ReplacementScore({
               <span className="replacement-score-of"> / 10</span>
             )}
           </p>
+          {full ? (
+            <p className="replacement-score-complete">
+              {knownCount} of {score.categories.length} categories complete
+            </p>
+          ) : null}
         </div>
         {rank != null ? (
           <span className="replacement-score-rank-lg">Rank #{rank}</span>
@@ -69,12 +80,17 @@ export default function ReplacementScore({
       </p>
 
       <ul className="replacement-score-cats" aria-label="Score categories">
-        {visibleCats.map((c) => (
+        {cats.map((c) => (
           <li key={c.key} className={c.unknown ? 'is-unknown' : ''}>
-            <span className="replacement-score-cat-label">{c.label}</span>
-            <span className="replacement-score-cat-grade">
-              {c.unknown || c.grade == null ? '—' : c.grade}
-            </span>
+            <div className="replacement-score-cat-main">
+              <span className="replacement-score-cat-label">{c.label}</span>
+              <span className="replacement-score-cat-grade">
+                {c.unknown || c.grade == null ? 'Unknown' : c.grade}
+              </span>
+            </div>
+            {full && c.note ? (
+              <p className="replacement-score-cat-why">{c.note}</p>
+            ) : null}
           </li>
         ))}
       </ul>
@@ -106,7 +122,7 @@ export default function ReplacementScore({
       ) : null}
       {score.hardReject ? (
         <p className="replacement-score-flag is-reject">
-          Held on job fit or title FACT — not framed as a fleet improvement.
+          Held on job fit or title — not framed as a fleet improvement.
         </p>
       ) : null}
     </section>

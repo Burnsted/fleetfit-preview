@@ -1,6 +1,6 @@
 import CompareControl from './CompareControl'
 import ListingPhoto, { PhotoPending } from './ListingPhoto'
-import ScoreDial from './ScoreDial'
+import ScoreDialControl from './ScoreDialControl'
 import { currentWorkPhoto, listingPhotoRecord, PHOTO_BUILD } from '../lib/vehiclePhoto'
 import { formatAsk } from '../lib/workSpec'
 import { unitWhisper } from '../lib/compareSet'
@@ -30,9 +30,13 @@ export default function UnitPhoto({
       ? 'EV VAN'
       : 'EV TRUCK'
   const ask = showAsk && !current ? formatAsk(unit?.askPrice) : null
-  const showKbb = current && kbb?.known
   const showDial = !current && score
   const showPriceBand = Boolean(ask?.known || showDial)
+  const showKbb = current && kbb?.known
+  const heading =
+    unit?.year && unit?.model
+      ? `${unit.year} ${unit.model}`
+      : unit?.model || null
 
   const considered = !current ? listingPhotoRecord(unit) : null
 
@@ -68,10 +72,11 @@ export default function UnitPhoto({
             <span className="unit-photo-ask is-empty" aria-hidden="true" />
           )}
           {showDial ? (
-            <ScoreDial
+            <ScoreDialControl
               score={score}
               rank={rank}
               size={size === 'hero' ? 'hero' : 'card'}
+              heading={heading}
             />
           ) : null}
         </div>
