@@ -16,8 +16,11 @@ const DAY_NEED = {
 }
 
 function dayNeedLabel(pkg, intake) {
-  if (intake?.dailyMiles && DAY_NEED[intake.dailyMiles]) {
-    return DAY_NEED[intake.dailyMiles]
+  const miles = String(intake?.dailyMiles || '').trim()
+  if (miles) {
+    if (DAY_NEED[miles]) return DAY_NEED[miles]
+    if (/^\d+(\.\d+)?$/.test(miles)) return `${miles} mi`
+    return miles
   }
   const fromNote = String(pkg.workDayNote || '').match(/(\d+[–-]\d+\s*mi)/i)
   if (fromNote) return fromNote[1].replace('-', '–')

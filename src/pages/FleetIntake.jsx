@@ -4,8 +4,8 @@ import PathChrome from '../components/PathChrome'
 import Wordmark from '../components/Wordmark'
 import { matchPackageIdFromIntake } from '../data/package'
 
-/** Survives minify — forces new Pages asset hash for R2 re-bar */
-const R2_BUILD = 'intake-r2-20260926-0833'
+/** CLEARED-FOR-WOZ-R3 · Exact Ted pick · 2026-09-26 ~10:22 */
+const R3_BUILD = 'intake-r3-20260926-1422'
 
 const TRADES = [
   'Electrical',
@@ -13,15 +13,7 @@ const TRADES = [
   'Plumbing',
   'Landscaping / lawn',
   'General contracting',
-  'Other trade',
-]
-
-const REGIONS = [
-  'Treasure Coast, FL',
-  'South Florida',
-  'Central Florida',
-  'Gulf Coast, FL',
-  'Other / multi-region',
+  'Other',
 ]
 
 const FLEET_SIZE_OPTIONS = [
@@ -34,7 +26,7 @@ const FLEET_SIZE_OPTIONS = [
 
 const BODY_OPTS = ['Van', 'Pickup', 'Either']
 const PAYLOAD_OPTS = ['Light', 'Medium', 'Heavy', 'Not sure']
-const CAB_OPTS = ['Regular', 'Extended', 'Crew', 'Either']
+const CAB_OPTS = ['Double', 'Crew']
 const HAUL_OPTS = [
   'None',
   'Open trailer',
@@ -43,13 +35,6 @@ const HAUL_OPTS = [
   'Not sure',
 ]
 const UPFIT_OPTS = ['Ladder rack', 'Toolbox', 'Cargo rails', 'Other']
-const UNITS_OPTS = [
-  { value: '', label: '—' },
-  { value: '1-2', label: '1–2' },
-  { value: '3-5', label: '3–5' },
-  { value: '6-10', label: '6–10' },
-  { value: 'not-sure', label: 'Not sure' },
-]
 const TRADE_IN_OPTS = [
   { value: '', label: '—' },
   { value: 'Yes', label: 'Yes' },
@@ -57,24 +42,34 @@ const TRADE_IN_OPTS = [
   { value: 'Not sure', label: 'Not sure' },
 ]
 
+const ABRP_URL = 'https://abetterrouteplanner.com/'
+
 const INITIAL = {
   trade: 'Electrical',
+  tradeOther: '',
   fleetSize: '',
-  region: 'Treasure Coast, FL',
-  dailyMiles: '80-120',
+  address: '',
+  dailyMiles: '',
   overnightCharge: 'shop-l2',
   body: '',
   payload: '',
   cab: '',
   haul: '',
   upfits: [],
-  unitsToReplace: '',
+  units: [],
   tradeIn: '',
   tradeInModel: '',
   notes: '',
+  mapSketched: false,
 }
 
-function ChipRow({ label, options, value, onChange, multi = false }) {
+let unitSeq = 0
+function nextUnitId() {
+  unitSeq += 1
+  return `unit-${Date.now()}-${unitSeq}`
+}
+
+function ChipRow({ label, options, value, onChange, multi = false, helper }) {
   return (
     <div className="intake-field">
       <span className="intake-label">{label}</span>
@@ -102,6 +97,7 @@ function ChipRow({ label, options, value, onChange, multi = false }) {
           )
         })}
       </div>
+      {helper ? <span className="intake-hint">{helper}</span> : null}
     </div>
   )
 }
@@ -111,10 +107,19 @@ export default function FleetIntake() {
   const [params] = useSearchParams()
   const adjusting = params.get('adjust') === '1'
   const [form, setForm] = useState(INITIAL)
+  const showTradeOther = form.trade === 'Other'
   const showTradeInModel = form.tradeIn === 'Yes'
 
   function setField(key, value) {
     setForm((prev) => ({ ...prev, [key]: value }))
+  }
+
+  function onTradeChange(value) {
+    setForm((prev) => ({
+      ...prev,
+      trade: value,
+      tradeOther: value === 'Other' ? prev.tradeOther : '',
+    }))
   }
 
   function onTradeInChange(value) {
@@ -125,33 +130,57 @@ export default function FleetIntake() {
     }))
   }
 
+  function addUnit() {
+    setForm((prev) => ({
+      ...prev,
+      units: [...prev.units, { id: nextUnitId() }],
+    }))
+  }
+
+  function removeUnit(id) {
+    setForm((prev) => ({
+      ...prev,
+      units: prev.units.filter((u) => u.id !== id),
+    }))
+  }
+
+  function onMapMyDay() {
+    setField('mapSketched', true)
+  }
+
   function onClear() {
     setForm(INITIAL)
   }
 
   function onSubmit(e) {
     e.preventDefault()
+    const tradeValue =
+      form.trade === 'Other'
+        ? form.tradeOther.trim() || 'Other'
+        : form.trade
     const intake = {
-      trade: form.trade,
+      trade: tradeValue,
+      tradeOther: form.trade === 'Other' ? form.tradeOther.trim() : '',
       fleetSize: form.fleetSize || 'not-surveyed',
-      region: form.region,
-      dailyMiles: form.dailyMiles,
+      address: form.address.trim(),
+      dailyMiles: form.dailyMiles.trim(),
       overnightCharge: form.overnightCharge,
       body: form.body,
       payload: form.payload,
       cab: form.cab,
       haul: form.haul,
       upfits: form.upfits,
-      unitsToReplace: form.unitsToReplace,
+      units: form.units.map((u) => u.id),
       tradeIn: form.tradeIn,
       tradeInModel: form.tradeIn === 'Yes' ? form.tradeInModel : '',
       notes: form.notes,
+      mapSketched: form.mapSketched,
     }
     navigate(`/package/${matchPackageIdFromIntake(intake)}`, { state: { intake } })
   }
 
   return (
-    <div className="locked-page" data-cleared={R2_BUILD}>
+    <div className="locked-page" data-cleared={R3_BUILD}>
       <PathChrome active="intake" className="path-chrome-intake" />
 
       <header className="locked-page-header">
@@ -170,7 +199,7 @@ export default function FleetIntake() {
           <span className="intake-label">Trade</span>
           <select
             value={form.trade}
-            onChange={(e) => setField('trade', e.target.value)}
+            onChange={(e) => onTradeChange(e.target.value)}
             required
           >
             {TRADES.map((t) => (
@@ -178,6 +207,19 @@ export default function FleetIntake() {
             ))}
           </select>
         </label>
+
+        {showTradeOther && (
+          <label className="intake-field">
+            <span className="intake-label">Your trade</span>
+            <input
+              type="text"
+              value={form.tradeOther}
+              onChange={(e) => setField('tradeOther', e.target.value)}
+              placeholder="Type your trade…"
+              autoComplete="off"
+            />
+          </label>
+        )}
 
         <label className="intake-field">
           <span className="intake-label">Fleet size</span>
@@ -193,76 +235,113 @@ export default function FleetIntake() {
         </label>
 
         <label className="intake-field">
-          <span className="intake-label">Region</span>
+          <span className="intake-label">Address</span>
+          <input
+            type="text"
+            value={form.address}
+            onChange={(e) => setField('address', e.target.value)}
+            placeholder="Shop or depot address…"
+            autoComplete="street-address"
+          />
+        </label>
+
+        <div className="intake-field">
+          <label className="intake-miles-label" htmlFor="intake-daily-miles">
+            <span className="intake-label">Typical day miles</span>
+          </label>
+          <input
+            id="intake-daily-miles"
+            type="text"
+            inputMode="numeric"
+            value={form.dailyMiles}
+            onChange={(e) => setField('dailyMiles', e.target.value)}
+            placeholder="Miles per unit…"
+            autoComplete="off"
+          />
+          <div className="intake-map-actions">
+            <button
+              type="button"
+              className="btn btn-primary intake-map-primary"
+              onClick={onMapMyDay}
+            >
+              Map my day
+            </button>
+            <a
+              className="intake-map-alt"
+              href={ABRP_URL}
+              target="_blank"
+              rel="noopener noreferrer"
+            >
+              Map in ABRP
+            </a>
+          </div>
+          <span className="intake-hint">
+            Sketch the day so range isn’t a guess.
+          </span>
+          {form.mapSketched ? (
+            <span className="intake-hint intake-map-echo" role="status">
+              Day sketch noted for this preview.
+            </span>
+          ) : null}
+        </div>
+
+        <label className="intake-field">
+          <span className="intake-label">Overnight charging</span>
           <select
-            value={form.region}
-            onChange={(e) => setField('region', e.target.value)}
-            required
+            value={form.overnightCharge}
+            onChange={(e) => setField('overnightCharge', e.target.value)}
           >
-            {REGIONS.map((r) => (
-              <option key={r} value={r}>{r}</option>
-            ))}
+            <option value="shop-l2">Shop Level 2 available</option>
+            <option value="home-l2">Home / depot L2 mixed</option>
+            <option value="l1-only">Level 1 only today</option>
+            <option value="unknown">Not surveyed yet</option>
           </select>
         </label>
 
-        <fieldset className="intake-fieldset">
-          <legend>Work-day constraints</legend>
-          <label className="intake-field">
-            <span className="intake-label">Typical daily miles</span>
-            <select
-              value={form.dailyMiles}
-              onChange={(e) => setField('dailyMiles', e.target.value)}
-            >
-              <option value="under-60">Under 60 mi</option>
-              <option value="80-120">80–120 mi</option>
-              <option value="120-180">120–180 mi</option>
-              <option value="180+">180+ mi</option>
-              <option value="mixed">Mixed / not sure</option>
-            </select>
-          </label>
-          <label className="intake-field">
-            <span className="intake-label">Overnight charging</span>
-            <select
-              value={form.overnightCharge}
-              onChange={(e) => setField('overnightCharge', e.target.value)}
-            >
-              <option value="shop-l2">Shop Level 2 available</option>
-              <option value="home-l2">Home / depot L2 mixed</option>
-              <option value="l1-only">Level 1 only today</option>
-              <option value="unknown">Not surveyed yet</option>
-            </select>
-          </label>
-        </fieldset>
+        <ChipRow
+          label="Body"
+          options={BODY_OPTS}
+          value={form.body}
+          onChange={(v) => setField('body', v)}
+        />
 
-        <fieldset className="intake-fieldset intake-customize">
-          <legend>Body & units</legend>
-          <div className="intake-body-units">
-            <ChipRow
-              label="Body"
-              options={BODY_OPTS}
-              value={form.body}
-              onChange={(v) => setField('body', v)}
-            />
-            <label className="intake-field">
-              <span className="intake-label">Units to replace</span>
-              <select
-                value={form.unitsToReplace}
-                onChange={(e) => setField('unitsToReplace', e.target.value)}
-              >
-                {UNITS_OPTS.map((o) => (
-                  <option key={o.label} value={o.value}>{o.label}</option>
-                ))}
-              </select>
-            </label>
-          </div>
-        </fieldset>
+        <div className="intake-field intake-add-unit">
+          <button
+            type="button"
+            className="btn intake-add-unit-btn"
+            onClick={addUnit}
+          >
+            <span className="intake-add-unit-plus" aria-hidden="true">+</span>
+            Add unit
+          </button>
+          <span className="intake-hint">Add each unit you want to replace.</span>
+          {form.units.length > 0 ? (
+            <ul className="intake-unit-list" aria-label="Added units">
+              {form.units.map((unit, index) => (
+                <li key={unit.id} className="intake-unit-chip">
+                  <span>Unit {index + 1}</span>
+                  <button
+                    type="button"
+                    className="intake-unit-remove"
+                    onClick={() => removeUnit(unit.id)}
+                    aria-label={`Remove unit ${index + 1}`}
+                  >
+                    Remove
+                  </button>
+                </li>
+              ))}
+            </ul>
+          ) : null}
+        </div>
 
         <ChipRow
           label="Payload"
           options={PAYLOAD_OPTS}
           value={form.payload}
           onChange={(v) => setField('payload', v)}
+          helper="Weight band — not a typed number alone."
         />
+
         <ChipRow
           label="Cab"
           options={CAB_OPTS}
