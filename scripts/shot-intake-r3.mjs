@@ -97,9 +97,10 @@ const banned = [
 for (const s of banned) assert(!body.includes(s), `banned live string: ${s}`)
 
 // Other → Your trade
-await page.locator('label.intake-field', { hasText: 'Trade' }).locator('select').selectOption('Other')
+const tradeSelect = page.locator('form.intake-form > label.intake-field').filter({ has: page.locator('.intake-label', { hasText: /^Trade$/ }) }).locator('select')
+await tradeSelect.selectOption('Other')
 await page.waitForTimeout(200)
-const tradeOther = page.locator('label.intake-field', { hasText: 'Your trade' })
+const tradeOther = page.locator('form.intake-form > label.intake-field').filter({ has: page.locator('.intake-label', { hasText: /^Your trade$/ }) })
 assert((await tradeOther.count()) === 1, 'Your trade field missing')
 assert(
   (await tradeOther.locator('input').getAttribute('placeholder')) === 'Type your trade…',
