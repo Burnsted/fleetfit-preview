@@ -1311,21 +1311,17 @@ export function scoreReplacementV2(
     candMiles != null &&
     Math.abs(curMiles - candMiles) / Math.max(curMiles, 1) < 0.15
 
-  const sortKey = hardReject
-    ? -1
-    : incomplete
-      ? 0
-      : pp > 0
-        ? candidateTotal / pp
-        : 0
+  // Rank by candidate total ÷ PP even when PP < 60 (floor only affects readout footer copy).
+  const sortKey = hardReject ? -1 : pp > 0 ? candidateTotal / pp : 0
 
-  const dialTotal = incomplete ? null : `${candidateTotal.toFixed(1)} / ${pp}`
+  // Card dial always shows scored NN.N / PP when any category counted.
+  // Readout footer still uses incompleteLabel when PP < 60 (scoring rule unchanged).
+  const dialTotal = pp > 0 ? `${candidateTotal.toFixed(1)} / ${pp}` : null
   const dialDiff =
-    incomplete || missingCurrent || difference == null
+    missingCurrent || difference == null
       ? null
       : `${difference > 0 ? '+' : ''}${difference.toFixed(1)} vs current`
-  const dialCurrent =
-    incomplete || missingCurrent ? null : `Current ${currentTotal.toFixed(1)}`
+  const dialCurrent = missingCurrent ? null : `Current ${currentTotal.toFixed(1)}`
 
   return {
     build: SCORE_V2_BUILD,
@@ -1333,10 +1329,10 @@ export function scoreReplacementV2(
     currentName,
     candidateName,
     categories,
-    currentTotal: incomplete || missingCurrent ? null : currentTotal,
-    candidateTotal: incomplete ? null : candidateTotal,
+    currentTotal: missingCurrent ? null : currentTotal,
+    candidateTotal: pp > 0 ? candidateTotal : null,
     pointsPossible: pp,
-    difference: incomplete || missingCurrent ? null : difference,
+    difference: missingCurrent ? null : difference,
     incomplete,
     incompleteLabel,
     missingCurrent,
@@ -1348,7 +1344,7 @@ export function scoreReplacementV2(
     hardReject,
     hardFlag,
     sidegrade,
-    total: incomplete ? null : candidateTotal,
+    total: pp > 0 ? candidateTotal : null,
     helps: [],
     watchOuts: [],
   }

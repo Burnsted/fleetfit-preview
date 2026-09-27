@@ -5,7 +5,7 @@ import Wordmark from '../components/Wordmark'
 import { matchPackageIdFromIntake } from '../data/package'
 
 /** CLEARED Score v2 intake fields + Supervisor preset */
-const INTAKE_BUILD = 'intake-score-v2-f-pages-20260927-1500'
+const INTAKE_BUILD = 'intake-score-v2-f-pages-20260927-1515'
 
 const TRADES = [
   'Electrical',

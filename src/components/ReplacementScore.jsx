@@ -58,19 +58,24 @@ export default function ReplacementScore({
       <header className="replacement-score-head">
         <div>
           <p className="replacement-score-kicker">Replacement Score</p>
-          {score.incomplete ? (
-            <p className="replacement-score-total-lg">{score.incompleteLabel}</p>
-          ) : (
+          {score.candidateTotal != null && score.pointsPossible > 0 ? (
             <p className="replacement-score-total-lg">
               {Number(score.candidateTotal).toFixed(1)}
               <span className="replacement-score-of"> / {score.pointsPossible}</span>
             </p>
+          ) : (
+            <p className="replacement-score-total-lg">
+              {score.incompleteLabel || 'Score incomplete'}
+            </p>
           )}
-          {score.dialDiff && !score.incomplete ? (
+          {score.dialDiff ? (
             <p className="replacement-score-diff-line">{score.dialDiff}</p>
           ) : null}
-          {score.dialCurrent && !score.incomplete ? (
+          {score.dialCurrent ? (
             <p className="replacement-score-current-line">{score.dialCurrent}</p>
+          ) : null}
+          {score.incomplete && score.incompleteLabel ? (
+            <p className="replacement-score-incomplete-note">{score.incompleteLabel}</p>
           ) : null}
         </div>
         {rank != null ? (

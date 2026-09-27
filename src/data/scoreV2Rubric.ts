@@ -3,7 +3,7 @@
  * Every anchor tagged INFERENCE (Steve thresholds). Do not tune.
  */
 
-export const SCORE_V2_BUILD = 'score-v2-f-pages-20260927-1500'
+export const SCORE_V2_BUILD = 'score-v2-f-pages-20260927-1515'
 export const SCORE_DATE = '2026-09-27' // scoring date for warranty years-left
 
 export type AnchorPoint = { x: number; y: number; tag: 'INFERENCE' }

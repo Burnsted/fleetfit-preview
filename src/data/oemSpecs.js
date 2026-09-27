@@ -6,7 +6,7 @@
  * Key: year|make|model|trim (normalized). Aliases cover listing trim variants.
  */
 
-export const OEM_SPECS_BUILD = 'oem-score-v2-f-pages-20260927-1500'
+export const OEM_SPECS_BUILD = 'oem-score-v2-f-pages-20260927-1515'
 
 /** @typedef {{
  *  payloadLb: number|null,

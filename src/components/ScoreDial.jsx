@@ -1,6 +1,6 @@
 import { SCORE_V2_BUILD } from '../data/scoreV2Rubric'
 
-export const SCORE_UI_BUILD = 'score-ui-dial-v2-f-pages-20260927-1500'
+export const SCORE_UI_BUILD = 'score-ui-dial-v2-f-pages-20260927-1515'
 
 /**
  * CLEARED Score UI dial — right of pricing.
@@ -15,13 +15,13 @@ export default function ScoreDial({
 }) {
   if (!score) return null
 
-  const incomplete = Boolean(score.incomplete || score.candidateTotal == null)
-  const total = incomplete ? null : Number(score.candidateTotal)
   const pp = Number(score.pointsPossible) || 0
+  const hasTotal = score.candidateTotal != null && pp > 0
+  const total = hasTotal ? Number(score.candidateTotal) : null
+  const incomplete = Boolean(score.incomplete && !hasTotal)
   // Never em-dash in score cells (CLEARED OEM / Score v2)
-  const displaySafe = incomplete ? '' : total.toFixed(1)
-  const pct =
-    incomplete || !pp ? 0 : Math.max(0, Math.min(1, total / pp))
+  const displaySafe = hasTotal ? total.toFixed(1) : ''
+  const pct = !hasTotal ? 0 : Math.max(0, Math.min(1, total / pp))
 
   const r = 18
   const cx = 22
@@ -51,9 +51,9 @@ export default function ScoreDial({
           ? 'is-mid'
           : 'is-low'
 
-  const label = incomplete
-    ? 'Open Replacement Score (incomplete)'
-    : `Open Replacement Score ${displaySafe} of ${pp}${rank != null ? `, rank ${rank}` : ''}`
+  const label = hasTotal
+    ? `Open Replacement Score ${displaySafe} of ${pp}${rank != null ? `, rank ${rank}` : ''}`
+    : 'Open Replacement Score (incomplete)'
 
   const interactive = typeof onOpen === 'function'
   const Tag = interactive ? 'button' : 'div'
