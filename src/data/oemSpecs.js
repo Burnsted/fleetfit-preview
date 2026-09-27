@@ -6,7 +6,7 @@
  * Key: year|make|model|trim (normalized). Aliases cover listing trim variants.
  */
 
-export const OEM_SPECS_BUILD = 'oem-bar2-20260926-1915'
+export const OEM_SPECS_BUILD = 'oem-score-v2-20260927-1300'
 
 /** @typedef {{
  *  payloadLb: number|null,
@@ -36,12 +36,21 @@ const BY_KEY = {
     drivetrain: 'RWD',
     bedLength: null,
     cargoCuFt: 358.7, // Regular / Medium Roof max cargo (Ford config chart)
-    gvwrLb: null,
+    // GVWR FACT from SOURCES-V2 B (b_preview_ev_specs) / Bob Swope + Ford tech specs
+    gvwrLb: 9500,
+    // Curb: no single published curb for this trim in SOURCES-V2 → Not published
     curbLb: null,
+    seats: null,
+    epaKwhPer100mi: null,
+    towLbNoWdh: null,
+    battWarrantyYr: 8,
+    battWarrantyMi: 100000,
+    warrantyProgram: 'consumer',
+    maintClass: 'van',
     cab: 'Cargo van',
     onboardAcKw: 11.3,
     dcFastMaxKw: 115,
-    note: 'Listed Zeigler unit is Medium Roof 130" WB → Ford Regular/Medium max cargo 358.7 cu ft (315.2 behind first row). Tow unpublished — Ford guide not recommended for trailer towing.',
+    note: 'Listed Zeigler unit is Medium Roof 130" WB → Ford Regular/Medium max cargo 358.7 cu ft (315.2 behind first row). Tow unpublished — Ford guide not recommended for trailer towing. GVWR 9,500 lb from SOURCES-V2 B.',
     sources: {
       payloadLb: 'https://media.ford.com/content/fordmedia/fna/us/en/products/evs/e-transit/2022-ford-e-transit.html',
       usableKwh: 'https://media.ford.com/content/fordmedia/fna/us/en/products/evs/e-transit/2022-ford-e-transit.html',
@@ -49,6 +58,7 @@ const BY_KEY = {
       towingLb: 'https://www.ford.com/content/dam/brand_ford/en_us/brand/towing/pdf/2023-Ford-RV-and-Trailer-Towing-Guide.pdf',
       onboardAcKw: 'https://media.ford.com/content/fordmedia/fna/us/en/products/evs/e-transit/2022-ford-e-transit.html',
       cargoCuFt: 'https://www.imlaycityfordsales.com/research-ford-etransit.html',
+      gvwrLb: 'https://learn.bobswopeford.com/models/ford/e-transit/2023',
     },
   },
   '2023|ford|e-transit|cargo 250': {
@@ -60,18 +70,26 @@ const BY_KEY = {
     drivetrain: 'RWD',
     bedLength: null,
     cargoCuFt: 358.7,
-    gvwrLb: null,
+    gvwrLb: 9500,
     curbLb: null,
+    seats: null,
+    epaKwhPer100mi: null,
+    towLbNoWdh: null,
+    battWarrantyYr: 8,
+    battWarrantyMi: 100000,
+    warrantyProgram: 'consumer',
+    maintClass: 'van',
     cab: 'Cargo van',
     onboardAcKw: 11.3,
     dcFastMaxKw: 115,
-    note: 'Mapped from Cargo 250 listing trim to Ford E-Transit Medium Roof 130" WB cargo figures.',
+    note: 'Mapped from Cargo 250 listing trim to Ford E-Transit Medium Roof 130" WB cargo figures. GVWR 9,500 lb from SOURCES-V2 B.',
     sources: {
       payloadLb: 'https://media.ford.com/content/fordmedia/fna/us/en/products/evs/e-transit/2022-ford-e-transit.html',
       usableKwh: 'https://media.ford.com/content/fordmedia/fna/us/en/products/evs/e-transit/2022-ford-e-transit.html',
       epaRangeMi: 'https://media.ford.com/content/fordmedia/fna/us/en/products/evs/e-transit/2022-ford-e-transit.html',
       towingLb: 'https://www.ford.com/content/dam/brand_ford/en_us/brand/towing/pdf/2023-Ford-RV-and-Trailer-Towing-Guide.pdf',
       cargoCuFt: 'https://www.imlaycityfordsales.com/research-ford-etransit.html',
+      gvwrLb: 'https://learn.bobswopeford.com/models/ford/e-transit/2023',
     },
   },
 
@@ -237,6 +255,7 @@ const BY_KEY = {
   },
 
   // 2026 GMC Sierra EV Standard Range Elevation
+  // GVWR + curb: not published in SOURCES-V2 B for Sierra EV → Not published (do not invent)
   '2026|gmc|sierra ev|standard range elevation': {
     payloadLb: 2250,
     towingLb: 8500,
@@ -247,10 +266,17 @@ const BY_KEY = {
     cargoCuFt: null,
     gvwrLb: null,
     curbLb: null,
+    seats: null,
+    epaKwhPer100mi: null,
+    towLbNoWdh: 8500,
+    battWarrantyYr: 8,
+    battWarrantyMi: 100000,
+    warrantyProgram: 'consumer',
+    maintClass: 'ev-pickup',
     cab: 'Crew',
     onboardAcKw: 19.2,
     dcFastMaxKw: 300,
-    note: 'Elevation Standard Range — EPA-est. 283 mi; 8,500 lb tow / 2,250 lb payload (GMC trim table). 120 kWh SR pack (14-module).',
+    note: 'Elevation Standard Range — EPA-est. 283 mi; 8,500 lb tow / 2,250 lb payload (GMC trim table). 120 kWh SR pack (14-module). GVWR/curb Not published in SOURCES-V2.',
     sources: {
       epaRangeMi: 'https://www.gmc.com/electric/sierra-ev',
       payloadLb: 'https://www.octanegmc.com/new-gmc-sierra-ev.htm',
@@ -268,10 +294,17 @@ const BY_KEY = {
     cargoCuFt: null,
     gvwrLb: null,
     curbLb: null,
+    seats: null,
+    epaKwhPer100mi: null,
+    towLbNoWdh: 8500,
+    battWarrantyYr: 8,
+    battWarrantyMi: 100000,
+    warrantyProgram: 'consumer',
+    maintClass: 'ev-pickup',
     cab: 'Crew',
     onboardAcKw: 19.2,
     dcFastMaxKw: 300,
-    note: 'Listing trim "Elevation" without Extended Range → Standard Range published figures.',
+    note: 'Listing trim "Elevation" without Extended Range → Standard Range published figures. GVWR/curb Not published in SOURCES-V2.',
     sources: {
       epaRangeMi: 'https://www.gmc.com/electric/sierra-ev',
       payloadLb: 'https://www.octanegmc.com/new-gmc-sierra-ev.htm',
@@ -368,47 +401,64 @@ const BY_KEY = {
     },
   },
 
-  // 2022 Rivian R1T Adventure
+  // 2022 Rivian R1T Adventure → Quad Large (SOURCES-V2 A / EPA id 44462)
   '2022|rivian|r1t|adventure': {
     payloadLb: 1764,
     towingLb: 11000,
     epaRangeMi: 314,
-    usableKwh: 135, // Large pack usable commonly published ~135 kWh for 2022 Large
+    usableKwh: 131, // a_r1t_specs.csv FACT
     drivetrain: 'AWD',
     bedLength: '4.5 ft',
     cargoCuFt: null,
     gvwrLb: null,
     curbLb: 7173,
+    seats: null,
+    epaKwhPer100mi: 48.1,
+    towLbNoWdh: 5000,
+    battWarrantyYr: 8,
+    battWarrantyMi: 175000,
+    warrantyProgram: 'consumer',
+    maintClass: 'ev-pickup',
     cab: 'Crew',
     onboardAcKw: 11.5,
     dcFastMaxKw: 200,
-    note: 'Adventure Large pack — EPA 314 mi; Rivian max payload 1,764 lb / tow 11,000 lb.',
+    note: 'Adventure mapped to Quad Large (EPA 44462). Payload/tow/kWh/warranty from SOURCES-V2 A.',
     sources: {
-      epaRangeMi: 'https://www.caranddriver.com/rivian/r1t-2022',
-      payloadLb: 'https://www.iseecars.com/car/2022-rivian-r1t-specs',
-      towingLb: 'https://www.kbb.com/rivian/r1t/2022/specs/',
+      epaRangeMi: 'https://www.fueleconomy.gov/feg/noframes/44462.shtml',
+      payloadLb: 'https://rivian.com/support/article/what-is-the-maximum-payload',
+      towingLb: 'https://rivian.com/support/article/what-is-the-maximum-towing-capacity',
       curbLb: 'https://www.iseecars.com/car/2022-rivian-r1t-specs',
-      usableKwh: 'https://www.caranddriver.com/rivian/r1t-2022',
+      usableKwh: 'https://rivian.com/support/article/what-is-the-usable-kwh-capacity-of-your-batteries',
+      epaKwhPer100mi: 'https://www.fueleconomy.gov/feg/noframes/44462.shtml',
+      battWarrantyYr:
+        'https://assets.ctfassets.net/2md5qhoeajym/3jyOsY7odpa35j9Yzb0KXK/edc6d556b122b351117b409a9bb8cf8a/r1t_r1s-new-vehicle-limited-warranty-guide-us-en-us-20260813.pdf',
     },
   },
   '2022|rivian|r1t|adventure dual-motor': {
     payloadLb: 1764,
     towingLb: 11000,
     epaRangeMi: 314,
-    usableKwh: 135,
+    usableKwh: 131,
     drivetrain: 'AWD',
     bedLength: '4.5 ft',
     cargoCuFt: null,
     gvwrLb: null,
     curbLb: 7173,
+    seats: null,
+    epaKwhPer100mi: 48.1,
+    towLbNoWdh: 5000,
+    battWarrantyYr: 8,
+    battWarrantyMi: 175000,
+    warrantyProgram: 'consumer',
+    maintClass: 'ev-pickup',
     cab: 'Crew',
     onboardAcKw: 11.5,
     dcFastMaxKw: 200,
-    note: 'Alias for seed listing trim Adventure Dual-Motor.',
+    note: 'Alias for seed listing trim Adventure Dual-Motor → Quad Large score inputs.',
     sources: {
-      epaRangeMi: 'https://www.caranddriver.com/rivian/r1t-2022',
-      payloadLb: 'https://www.iseecars.com/car/2022-rivian-r1t-specs',
-      towingLb: 'https://www.kbb.com/rivian/r1t/2022/specs/',
+      epaRangeMi: 'https://www.fueleconomy.gov/feg/noframes/44462.shtml',
+      payloadLb: 'https://rivian.com/support/article/what-is-the-maximum-payload',
+      towingLb: 'https://rivian.com/support/article/what-is-the-maximum-towing-capacity',
     },
   },
 
@@ -577,6 +627,13 @@ export function mergeOemSpecs(vehicle) {
       s.onboardAcKw,
     ),
     dcFastMaxKw: pick(vehicle.dcFastMaxKw, s.dcFastMaxKw),
+    seats: pick(vehicle.seats, s.seats),
+    epaKwhPer100mi: pick(vehicle.epaKwhPer100mi, s.epaKwhPer100mi),
+    towLbNoWdh: pick(vehicle.towLbNoWdh, s.towLbNoWdh),
+    battWarrantyYr: pick(vehicle.battWarrantyYr, s.battWarrantyYr),
+    battWarrantyMi: pick(vehicle.battWarrantyMi, s.battWarrantyMi),
+    warrantyProgram: pick(vehicle.warrantyProgram, s.warrantyProgram),
+    maintClass: pick(vehicle.maintClass, s.maintClass),
   }
 
   const usable = pick(vehicle.battery?.usableKwh ?? vehicle.usableKwh, s.usableKwh)

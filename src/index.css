@@ -3005,6 +3005,91 @@ img { max-width: 100%; display: block; }
   text-align: center;
   line-height: 1.25;
 }
+.score-dial-diff {
+  display: block;
+  margin-top: 2px;
+  font-size: 0.58rem;
+  font-weight: 700;
+  line-height: 1.2;
+  color: rgba(255, 255, 255, 0.88);
+  text-align: center;
+  white-space: nowrap;
+}
+.score-v2-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 0.82rem;
+  margin-top: 12px;
+}
+.score-v2-table th,
+.score-v2-table td {
+  border-top: 1px solid rgba(15, 20, 25, 0.1);
+  padding: 8px 6px;
+  vertical-align: top;
+  text-align: left;
+}
+.score-v2-table thead th {
+  font-size: 0.72rem;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  color: rgba(15, 20, 25, 0.55);
+  border-top: none;
+}
+.score-v2-cell-num {
+  font-weight: 800;
+  font-variant-numeric: tabular-nums;
+}
+.score-v2-reason {
+  margin: 4px 0 0;
+  font-size: 0.72rem;
+  line-height: 1.35;
+  font-weight: 500;
+  color: rgba(15, 20, 25, 0.72);
+}
+.score-v2-reason a {
+  color: inherit;
+  text-decoration: underline;
+  text-underline-offset: 2px;
+}
+.score-v2-totals th,
+.score-v2-totals td,
+.score-v2-difference th,
+.score-v2-difference td {
+  font-weight: 800;
+  border-top: 2px solid rgba(15, 20, 25, 0.18);
+}
+.replacement-score-diff-line {
+  margin: 4px 0 0;
+  font-size: 0.85rem;
+  font-weight: 700;
+}
+.replacement-score-current-name,
+.replacement-score-candidate-name {
+  margin: 2px 0;
+  font-size: 0.78rem;
+  color: rgba(15, 20, 25, 0.7);
+}
+.intake-current-vehicle {
+  border: 1px solid rgba(15, 20, 25, 0.12);
+  border-radius: 12px;
+  padding: 12px;
+}
+.intake-current-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(140px, 1fr));
+  gap: 10px;
+}
+.sr-only {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  margin: -1px;
+  overflow: hidden;
+  clip: rect(0, 0, 0, 0);
+  white-space: nowrap;
+  border: 0;
+}
 .stack-card-side-quiet {
   margin: 0 0 8px;
   font-size: 0.72rem;

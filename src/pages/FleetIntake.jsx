@@ -4,8 +4,8 @@ import PathChrome from '../components/PathChrome'
 import Wordmark from '../components/Wordmark'
 import { matchPackageIdFromIntake } from '../data/package'
 
-/** CLEARED-FOR-WOZ-R3 · Exact Ted pick · 2026-09-26 ~10:22 */
-const R3_BUILD = 'intake-r3-20260926-1422'
+/** CLEARED Score v2 intake fields + Supervisor preset */
+const INTAKE_BUILD = 'intake-score-v2-20260927-1300'
 
 const TRADES = [
   'Electrical',
@@ -36,10 +36,15 @@ const HAUL_OPTS = [
 ]
 const UPFIT_OPTS = ['Ladder rack', 'Toolbox', 'Cargo rails', 'Other']
 const TRADE_IN_OPTS = [
-  { value: '', label: '—' },
+  { value: '', label: 'Not entered' },
   { value: 'Yes', label: 'Yes' },
   { value: 'No', label: 'No' },
   { value: 'Not sure', label: 'Not sure' },
+]
+const SHOP_CITIES = ['Vero Beach', 'Fort Pierce', 'West Palm Beach']
+const ROLE_PRESETS = [
+  { value: '', label: 'No preset' },
+  { value: 'Supervisor / team lead', label: 'Supervisor / team lead' },
 ]
 
 const ABRP_URL = 'https://abetterrouteplanner.com/'
@@ -49,7 +54,14 @@ const INITIAL = {
   tradeOther: '',
   fleetSize: '',
   address: '',
+  shopCity: '',
   dailyMiles: '',
+  loadLb: '',
+  cargoCuFt: '',
+  crew: '',
+  tows: '',
+  trailerLb: '',
+  wdh: '',
   overnightCharge: 'shop-l2',
   body: '',
   payload: '',
@@ -59,6 +71,13 @@ const INITIAL = {
   units: [],
   tradeIn: '',
   tradeInModel: '',
+  currentYear: '',
+  currentMake: '',
+  currentModel: '',
+  currentEngine: '',
+  currentDrivetrain: '',
+  currentMiles: '',
+  rolePreset: '',
   notes: '',
   mapSketched: false,
 }
@@ -109,6 +128,7 @@ export default function FleetIntake() {
   const [form, setForm] = useState(INITIAL)
   const showTradeOther = form.trade === 'Other'
   const showTradeInModel = form.tradeIn === 'Yes'
+  const showTowFields = form.tows === 'yes' || (form.tows === '' && form.haul && form.haul !== 'None')
 
   function setField(key, value) {
     setForm((prev) => ({ ...prev, [key]: value }))
@@ -128,6 +148,27 @@ export default function FleetIntake() {
       tradeIn: value,
       tradeInModel: value === 'Yes' ? prev.tradeInModel : '',
     }))
+  }
+
+  function applySupervisorPreset() {
+    setForm((prev) => ({
+      ...prev,
+      rolePreset: 'Supervisor / team lead',
+      crew: '2',
+      tows: 'no',
+      haul: 'None',
+      trailerLb: '',
+      wdh: '',
+      // Daily miles and load still come from intake; preset never invents them
+    }))
+  }
+
+  function onRolePreset(value) {
+    if (value === 'Supervisor / team lead') {
+      applySupervisorPreset()
+    } else {
+      setField('rolePreset', value)
+    }
   }
 
   function addUnit() {
@@ -158,11 +199,34 @@ export default function FleetIntake() {
       form.trade === 'Other'
         ? form.tradeOther.trim() || 'Other'
         : form.trade
+
+    const tows =
+      form.tows === 'yes'
+        ? true
+        : form.tows === 'no'
+          ? false
+          : form.haul === 'None' || form.haul === ''
+            ? false
+            : form.haul === 'Not sure'
+              ? null
+              : true
+
+    const loadFromBand =
+      form.loadLb.trim() ||
+      (form.payload === 'Light'
+        ? '500'
+        : form.payload === 'Medium'
+          ? '1000'
+          : form.payload === 'Heavy'
+            ? '1500'
+            : '')
+
     const intake = {
       trade: tradeValue,
       tradeOther: form.trade === 'Other' ? form.tradeOther.trim() : '',
       fleetSize: form.fleetSize || 'not-surveyed',
       address: form.address.trim(),
+      shopCity: form.shopCity || undefined,
       dailyMiles: form.dailyMiles.trim(),
       overnightCharge: form.overnightCharge,
       body: form.body,
@@ -175,12 +239,42 @@ export default function FleetIntake() {
       tradeInModel: form.tradeIn === 'Yes' ? form.tradeInModel : '',
       notes: form.notes,
       mapSketched: form.mapSketched,
+      rolePreset: form.rolePreset || undefined,
+      job: {
+        dailyMiles: form.dailyMiles.trim() ? Number(form.dailyMiles.trim()) : null,
+        loadLb: loadFromBand ? Number(loadFromBand) : null,
+        cargoCuFt: form.cargoCuFt.trim() ? Number(form.cargoCuFt.trim()) : null,
+        crew: form.crew.trim() ? Number(form.crew.trim()) : null,
+        tows,
+        trailerLb: form.trailerLb.trim() ? Number(form.trailerLb.trim()) : null,
+        wdh: form.wdh === 'yes' ? true : form.wdh === 'no' ? false : null,
+        shopCity: form.shopCity || null,
+      },
+      current: {
+        year: form.currentYear.trim() ? Number(form.currentYear.trim()) : null,
+        make: form.currentMake.trim() || null,
+        model: form.currentModel.trim() || null,
+        engine: form.currentEngine.trim() || null,
+        drivetrain: form.currentDrivetrain.trim() || null,
+        miles: form.currentMiles.trim() ? Number(form.currentMiles.trim()) : null,
+      },
+      currentYear: form.currentYear.trim() || undefined,
+      currentMake: form.currentMake.trim() || undefined,
+      currentModel: form.currentModel.trim() || undefined,
+      currentEngine: form.currentEngine.trim() || undefined,
+      currentDrivetrain: form.currentDrivetrain.trim() || undefined,
+      currentMiles: form.currentMiles.trim() || undefined,
+      loadLb: loadFromBand || undefined,
+      crew: form.crew.trim() || undefined,
+      tows,
+      trailerLb: form.trailerLb.trim() || undefined,
+      wdh: form.wdh === 'yes' ? true : form.wdh === 'no' ? false : undefined,
     }
     navigate(`/package/${matchPackageIdFromIntake(intake)}`, { state: { intake } })
   }
 
   return (
-    <div className="locked-page" data-cleared={R3_BUILD}>
+    <div className="locked-page" data-cleared={INTAKE_BUILD}>
       <PathChrome active="intake" className="path-chrome-intake" />
 
       <header className="locked-page-header">
@@ -195,6 +289,21 @@ export default function FleetIntake() {
       </header>
 
       <form className="intake-form" onSubmit={onSubmit}>
+        <label className="intake-field">
+          <span className="intake-label">Role preset</span>
+          <select
+            value={form.rolePreset}
+            onChange={(e) => onRolePreset(e.target.value)}
+          >
+            {ROLE_PRESETS.map((o) => (
+              <option key={o.label} value={o.value}>{o.label}</option>
+            ))}
+          </select>
+          <span className="intake-hint">
+            Supervisor / team lead: crew 2, no tow. Daily miles and load stay yours.
+          </span>
+        </label>
+
         <label className="intake-field">
           <span className="intake-label">Trade</span>
           <select
@@ -231,7 +340,19 @@ export default function FleetIntake() {
               <option key={o.label} value={o.value}>{o.label}</option>
             ))}
           </select>
-          <span className="intake-hint">Blank is fine.</span>
+        </label>
+
+        <label className="intake-field">
+          <span className="intake-label">Shop / home-base city</span>
+          <select
+            value={form.shopCity}
+            onChange={(e) => setField('shopCity', e.target.value)}
+          >
+            <option value="">Not entered</option>
+            {SHOP_CITIES.map((c) => (
+              <option key={c} value={c}>{c}</option>
+            ))}
+          </select>
         </label>
 
         <label className="intake-field">
@@ -255,7 +376,7 @@ export default function FleetIntake() {
             inputMode="numeric"
             value={form.dailyMiles}
             onChange={(e) => setField('dailyMiles', e.target.value)}
-            placeholder="Miles per unit…"
+            placeholder="e.g. 120"
             autoComplete="off"
           />
           <div className="intake-map-actions">
@@ -275,15 +396,87 @@ export default function FleetIntake() {
               Map in ABRP
             </a>
           </div>
-          <span className="intake-hint">
-            Sketch the day so range isn’t a guess.
-          </span>
           {form.mapSketched ? (
             <span className="intake-hint intake-map-echo" role="status">
               Day sketch noted for this preview.
             </span>
           ) : null}
         </div>
+
+        <label className="intake-field">
+          <span className="intake-label">Load (lb)</span>
+          <input
+            type="text"
+            inputMode="numeric"
+            value={form.loadLb}
+            onChange={(e) => setField('loadLb', e.target.value)}
+            placeholder="Top of payload bracket, e.g. 1000"
+            autoComplete="off"
+          />
+        </label>
+
+        <label className="intake-field">
+          <span className="intake-label">Crew size</span>
+          <input
+            type="text"
+            inputMode="numeric"
+            value={form.crew}
+            onChange={(e) => setField('crew', e.target.value)}
+            placeholder="People riding"
+            autoComplete="off"
+          />
+        </label>
+
+        <label className="intake-field">
+          <span className="intake-label">Current vehicle tows?</span>
+          <select
+            value={form.tows}
+            onChange={(e) => setField('tows', e.target.value)}
+          >
+            <option value="">Not entered</option>
+            <option value="no">No</option>
+            <option value="yes">Yes</option>
+          </select>
+        </label>
+
+        {showTowFields ? (
+          <>
+            <label className="intake-field">
+              <span className="intake-label">Trailer weight (lb)</span>
+              <input
+                type="text"
+                inputMode="numeric"
+                value={form.trailerLb}
+                onChange={(e) => setField('trailerLb', e.target.value)}
+                placeholder="Stated trailer weight"
+                autoComplete="off"
+              />
+            </label>
+            <label className="intake-field">
+              <span className="intake-label">Weight-distributing hitch?</span>
+              <select
+                value={form.wdh}
+                onChange={(e) => setField('wdh', e.target.value)}
+              >
+                <option value="">Not entered</option>
+                <option value="no">No</option>
+                <option value="yes">Yes</option>
+              </select>
+            </label>
+          </>
+        ) : null}
+
+        <label className="intake-field">
+          <span className="intake-label">Cargo volume need (cu ft, vans)</span>
+          <input
+            type="text"
+            inputMode="numeric"
+            value={form.cargoCuFt}
+            onChange={(e) => setField('cargoCuFt', e.target.value)}
+            placeholder="Optional"
+            autoComplete="off"
+          />
+        </label>
 
         <label className="intake-field">
           <span className="intake-label">Overnight charging</span>
@@ -314,7 +507,6 @@ export default function FleetIntake() {
             <span className="intake-add-unit-plus" aria-hidden="true">+</span>
             Add unit
           </button>
-          <span className="intake-hint">Add each unit you want to replace.</span>
           {form.units.length > 0 ? (
             <ul className="intake-unit-list" aria-label="Added units">
               {form.units.map((unit, index) => (
@@ -335,11 +527,11 @@ export default function FleetIntake() {
         </div>
 
         <ChipRow
-          label="Payload"
+          label="Payload band"
           options={PAYLOAD_OPTS}
           value={form.payload}
           onChange={(v) => setField('payload', v)}
-          helper="Weight band — not a typed number alone."
+          helper="Used when Load (lb) is blank: Light 500 / Medium 1000 / Heavy 1500."
         />
 
         <ChipRow
@@ -355,12 +547,11 @@ export default function FleetIntake() {
             value={form.haul}
             onChange={(e) => setField('haul', e.target.value)}
           >
-            <option value="">—</option>
+            <option value="">Not entered</option>
             {HAUL_OPTS.map((opt) => (
               <option key={opt} value={opt}>{opt}</option>
             ))}
           </select>
-          <span className="intake-hint">Trailer type only — not a full build.</span>
         </label>
 
         <ChipRow
@@ -370,6 +561,68 @@ export default function FleetIntake() {
           onChange={(v) => setField('upfits', v)}
           multi
         />
+
+        <fieldset className="intake-field intake-current-vehicle">
+          <legend className="intake-label">Current vehicle (replaced)</legend>
+          <div className="intake-current-grid">
+            <label>
+              <span className="intake-label">Year</span>
+              <input
+                type="text"
+                inputMode="numeric"
+                value={form.currentYear}
+                onChange={(e) => setField('currentYear', e.target.value)}
+                placeholder="2018"
+              />
+            </label>
+            <label>
+              <span className="intake-label">Make</span>
+              <input
+                type="text"
+                value={form.currentMake}
+                onChange={(e) => setField('currentMake', e.target.value)}
+                placeholder="Ford"
+              />
+            </label>
+            <label>
+              <span className="intake-label">Model</span>
+              <input
+                type="text"
+                value={form.currentModel}
+                onChange={(e) => setField('currentModel', e.target.value)}
+                placeholder="F-150"
+              />
+            </label>
+            <label>
+              <span className="intake-label">Engine</span>
+              <input
+                type="text"
+                value={form.currentEngine}
+                onChange={(e) => setField('currentEngine', e.target.value)}
+                placeholder="3.5 EcoBoost"
+              />
+            </label>
+            <label>
+              <span className="intake-label">Drivetrain</span>
+              <input
+                type="text"
+                value={form.currentDrivetrain}
+                onChange={(e) => setField('currentDrivetrain', e.target.value)}
+                placeholder="4x4"
+              />
+            </label>
+            <label>
+              <span className="intake-label">Odometer (mi)</span>
+              <input
+                type="text"
+                inputMode="numeric"
+                value={form.currentMiles}
+                onChange={(e) => setField('currentMiles', e.target.value)}
+                placeholder="120000"
+              />
+            </label>
+          </div>
+        </fieldset>
 
         <label className="intake-field">
           <span className="intake-label">Trade-in</span>
@@ -385,12 +638,12 @@ export default function FleetIntake() {
 
         {showTradeInModel && (
           <label className="intake-field">
-            <span className="intake-label">Trade-in model</span>
+            <span className="intake-label">Trade-in model (free text)</span>
             <input
               type="text"
               value={form.tradeInModel}
               onChange={(e) => setField('tradeInModel', e.target.value)}
-              placeholder="Year make model…"
+              placeholder="2018 Ford F-150 3.5 EcoBoost 4x4"
               autoComplete="off"
             />
           </label>
@@ -410,9 +663,6 @@ export default function FleetIntake() {
           <button type="submit" className="btn btn-primary">
             Match a package
           </button>
-          <p className="intake-hint">
-            We’ll build from what you set above. Blanks stay open.
-          </p>
           <button type="button" className="btn btn-ghost" onClick={onClear}>
             Clear
           </button>

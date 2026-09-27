@@ -1,10 +1,10 @@
-import { SCORE_BUILD } from '../lib/replacementScore'
+import { SCORE_V2_BUILD } from '../data/scoreV2Rubric'
 
-export const SCORE_UI_BUILD = 'score-ui-dial-20260926-1628'
+export const SCORE_UI_BUILD = 'score-ui-dial-v2-20260927'
 
 /**
- * CLEARED Score UI dial — glanceable speed-dial RIGHT of pricing.
- * Tap / click opens full Replacement Score readout (when onOpen provided).
+ * CLEARED Score UI dial — right of pricing.
+ * Shows NN.N / PP + ±N.N vs current beneath.
  */
 export default function ScoreDial({
   score,
@@ -15,12 +15,14 @@ export default function ScoreDial({
 }) {
   if (!score) return null
 
-  const incomplete = Boolean(score.incomplete || score.total == null)
-  const value = incomplete ? null : Number(score.total)
-  const display = incomplete ? '—' : value.toFixed(1)
-  const pct = incomplete ? 0 : Math.max(0, Math.min(1, value / 10))
+  const incomplete = Boolean(score.incomplete || score.candidateTotal == null)
+  const total = incomplete ? null : Number(score.candidateTotal)
+  const pp = Number(score.pointsPossible) || 0
+  // Never em-dash in score cells (CLEARED OEM / Score v2)
+  const displaySafe = incomplete ? '' : total.toFixed(1)
+  const pct =
+    incomplete || !pp ? 0 : Math.max(0, Math.min(1, total / pp))
 
-  // Arc from 225° to -45° (270° sweep) — classic speedometer
   const r = 18
   const cx = 22
   const cy = 22
@@ -37,23 +39,21 @@ export default function ScoreDial({
   const track = `M ${x0} ${y0} A ${r} ${r} 0 1 1 ${x1} ${y1}`
   const large = sweep * pct > Math.PI ? 1 : 0
   const fill =
-    pct <= 0
-      ? ''
-      : `M ${x0} ${y0} A ${r} ${r} 0 ${large} 1 ${xe} ${ye}`
+    pct <= 0 ? '' : `M ${x0} ${y0} A ${r} ${r} 0 ${large} 1 ${xe} ${ye}`
 
   const tone = score.sidegrade
     ? 'is-sidegrade'
     : incomplete
       ? 'is-incomplete'
-      : value >= 7
+      : pct >= 0.7
         ? 'is-strong'
-        : value >= 5
+        : pct >= 0.5
           ? 'is-mid'
           : 'is-low'
 
   const label = incomplete
     ? 'Open Replacement Score — incomplete'
-    : `Open Replacement Score ${display} of 10${rank != null ? `, rank ${rank}` : ''}`
+    : `Open Replacement Score ${displaySafe} of ${pp}${rank != null ? `, rank ${rank}` : ''}`
 
   const interactive = typeof onOpen === 'function'
   const Tag = interactive ? 'button' : 'div'
@@ -68,11 +68,13 @@ export default function ScoreDial({
       }
     : {}
 
+  const diffLine = score.dialDiff || null
+
   return (
     <Tag
       className={`score-dial is-${size} ${tone}${interactive ? ' is-tappable' : ''} ${className}`.trim()}
       data-score-ui={SCORE_UI_BUILD}
-      data-score-build={SCORE_BUILD}
+      data-score-build={SCORE_V2_BUILD}
       data-sidegrade={score.sidegrade ? 'true' : 'false'}
       data-dial-tap={interactive ? 'open' : undefined}
       aria-label={label}
@@ -83,12 +85,13 @@ export default function ScoreDial({
         {fill ? <path className="score-dial-arc" d={fill} fill="none" /> : null}
       </svg>
       <div className="score-dial-readout">
-        <span className="score-dial-value">{display}</span>
-        {!incomplete ? <span className="score-dial-max">/10</span> : null}
+        <span className="score-dial-value">{displaySafe}</span>
+        {!incomplete && pp ? (
+          <span className="score-dial-max">/{pp}</span>
+        ) : null}
       </div>
-      {rank != null ? (
-        <span className="score-dial-rank">#{rank}</span>
-      ) : null}
+      {diffLine ? <span className="score-dial-diff">{diffLine}</span> : null}
+      {rank != null ? <span className="score-dial-rank">#{rank}</span> : null}
     </Tag>
   )
 }

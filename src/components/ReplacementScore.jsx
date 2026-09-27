@@ -1,9 +1,8 @@
-import { SCORE_BUILD } from '../lib/replacementScore'
+import { SCORE_V2_BUILD } from '../data/scoreV2Rubric'
 
 /**
- * Public Replacement Score UI — total + transparent cats + helps / watch-outs.
- * No Worth it · FACT pills.
- * `full` (dial-tap sheet): all ~10 cats incl. Usable pack grade/Unknown + notes.
+ * Score v2 readout — Category | Current | Candidate.
+ * Numbers only. One-line sourced reason + link per number.
  */
 export default function ReplacementScore({
   score,
@@ -14,22 +13,20 @@ export default function ReplacementScore({
 }) {
   if (!score) return null
 
-  const totalLabel = score.incomplete
-    ? score.incompleteLabel
-    : `${score.total.toFixed(1)} / 10`
-
   if (compact) {
     return (
       <div
         className={`replacement-score is-compact ${score.sidegrade ? 'is-sidegrade' : ''} ${className}`.trim()}
-        data-score-build={SCORE_BUILD}
+        data-score-build={SCORE_V2_BUILD}
         data-sidegrade={score.sidegrade ? 'true' : 'false'}
       >
         {rank != null ? (
           <span className="replacement-score-rank">#{rank}</span>
         ) : null}
         <span className="replacement-score-total">
-          {score.incomplete ? 'Score incomplete' : totalLabel}
+          {score.incomplete
+            ? score.incompleteLabel || 'Score incomplete'
+            : score.dialTotal || `${Number(score.candidateTotal).toFixed(1)} / ${score.pointsPossible}`}
         </span>
         {score.sidegrade ? (
           <span className="replacement-score-side">Similar miles</span>
@@ -38,93 +35,112 @@ export default function ReplacementScore({
     )
   }
 
-  const cats = full
-    ? score.categories
-    : score.categories.filter((c) => c.public)
-
-  const knownCount = score.categories.filter((c) => !c.unknown && c.grade != null).length
+  const curName = score.currentName || 'Current'
+  const candName = score.candidateName || 'Candidate'
 
   return (
     <section
-      className={`replacement-score is-open${full ? ' is-full' : ''} ${score.sidegrade ? 'is-sidegrade' : ''} ${className}`.trim()}
-      data-score-build={SCORE_BUILD}
+      className={`replacement-score is-open is-v2${full ? ' is-full' : ''} ${score.sidegrade ? 'is-sidegrade' : ''} ${className}`.trim()}
+      data-score-build={SCORE_V2_BUILD}
+      data-score-v2="1"
       data-sidegrade={score.sidegrade ? 'true' : 'false'}
       aria-label="Replacement Score"
     >
       <header className="replacement-score-head">
         <div>
           <p className="replacement-score-kicker">Replacement Score</p>
-          <p className="replacement-score-total-lg">
-            {score.incomplete ? 'Score incomplete' : score.total.toFixed(1)}
-            {score.incomplete ? null : (
-              <span className="replacement-score-of"> / 10</span>
-            )}
-          </p>
-          {full ? (
-            <p className="replacement-score-complete">
-              {knownCount} of {score.categories.length} categories complete
+          {score.incomplete ? (
+            <p className="replacement-score-total-lg">{score.incompleteLabel}</p>
+          ) : (
+            <p className="replacement-score-total-lg">
+              {Number(score.candidateTotal).toFixed(1)}
+              <span className="replacement-score-of"> / {score.pointsPossible}</span>
             </p>
+          )}
+          {score.dialDiff && !score.incomplete ? (
+            <p className="replacement-score-diff-line">{score.dialDiff}</p>
           ) : null}
         </div>
         {rank != null ? (
-          <span className="replacement-score-rank-lg">Rank #{rank}</span>
+          <span className="replacement-score-rank-lg">#{rank}</span>
         ) : null}
       </header>
 
-      {score.incomplete ? (
-        <p className="replacement-score-incomplete">{score.incompleteLabel}</p>
-      ) : null}
-
-      <p className="replacement-score-voice">
-        Vs your current work vehicle — soft rank, not a hide list.
+      <p className="replacement-score-current-name">
+        Current: {score.currentName || 'Score incomplete: current vehicle not entered'}
       </p>
+      <p className="replacement-score-candidate-name">Candidate: {candName}</p>
 
-      <ul className="replacement-score-cats" aria-label="Score categories">
-        {cats.map((c) => (
-          <li key={c.key} className={c.unknown ? 'is-unknown' : ''}>
-            <div className="replacement-score-cat-main">
-              <span className="replacement-score-cat-label">{c.label}</span>
-              <span className="replacement-score-cat-grade">
-                {c.unknown || c.grade == null ? 'Unknown' : c.grade}
-              </span>
-            </div>
-            {full && c.note ? (
-              <p className="replacement-score-cat-why">{c.note}</p>
-            ) : null}
-          </li>
-        ))}
-      </ul>
+      <table className="score-v2-table" aria-label="Score categories">
+        <thead>
+          <tr>
+            <th scope="col">Category</th>
+            <th scope="col">Current</th>
+            <th scope="col">Candidate</th>
+          </tr>
+        </thead>
+        <tbody>
+          {score.categories.map((row) => (
+            <tr key={row.key}>
+              <th scope="row">{row.label}</th>
+              <td>
+                <div className="score-v2-cell-num">{row.current.display}</div>
+                {full && row.current.reason ? (
+                  <p className="score-v2-reason">
+                    {row.current.url ? (
+                      <a href={row.current.url} target="_blank" rel="noopener noreferrer">
+                        {row.current.reason}
+                      </a>
+                    ) : (
+                      row.current.reason
+                    )}
+                  </p>
+                ) : null}
+              </td>
+              <td>
+                <div className="score-v2-cell-num">{row.candidate.display}</div>
+                {full && row.candidate.reason ? (
+                  <p className="score-v2-reason">
+                    {row.candidate.url ? (
+                      <a href={row.candidate.url} target="_blank" rel="noopener noreferrer">
+                        {row.candidate.reason}
+                      </a>
+                    ) : (
+                      row.candidate.reason
+                    )}
+                  </p>
+                ) : null}
+              </td>
+            </tr>
+          ))}
+        </tbody>
+        <tfoot>
+          <tr className="score-v2-totals">
+            <th scope="row">Total</th>
+            <td>
+              {score.incomplete
+                ? score.incompleteLabel
+                : `${Number(score.currentTotal).toFixed(1)} / ${score.pointsPossible}`}
+            </td>
+            <td>
+              {score.incomplete
+                ? score.incompleteLabel
+                : `${Number(score.candidateTotal).toFixed(1)} / ${score.pointsPossible}`}
+            </td>
+          </tr>
+          <tr className="score-v2-difference">
+            <th scope="row">Difference</th>
+            <td colSpan={2}>
+              {score.incomplete || score.difference == null
+                ? score.incompleteLabel || ''
+                : `${score.difference > 0 ? '+' : ''}${Number(score.difference).toFixed(1)}`}
+            </td>
+          </tr>
+        </tfoot>
+      </table>
 
-      {score.helps?.length ? (
-        <div className="replacement-score-block">
-          <p className="replacement-score-block-title">Helps</p>
-          <ul>
-            {score.helps.map((line) => (
-              <li key={line}>{line}</li>
-            ))}
-          </ul>
-        </div>
-      ) : null}
-
-      {score.watchOuts?.length ? (
-        <div className="replacement-score-block is-watch">
-          <p className="replacement-score-block-title">Watch-outs</p>
-          <ul>
-            {score.watchOuts.map((line) => (
-              <li key={line}>{line}</li>
-            ))}
-          </ul>
-        </div>
-      ) : null}
-
-      {score.hardFlag ? (
-        <p className="replacement-score-flag">Fit or title needs a closer look — still listed.</p>
-      ) : null}
-      {score.hardReject ? (
-        <p className="replacement-score-flag is-reject">
-          Held on job fit or title — not framed as a fleet improvement.
-        </p>
-      ) : null}
+      {/* curName kept for a11y context */}
+      <span className="sr-only">{curName}</span>
     </section>
   )
 }

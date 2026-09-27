@@ -287,6 +287,53 @@ const ELECTRICAL_UNITS = [
     description:
       '2025 cargo EV van option. Listing ask only; not inspected by FleetFit.',
   },
+  {
+    id: 'unit-e7',
+    stockId: 'STOCK-R1T',
+    role: 'Work pickup',
+    bodyType: 'truck',
+    year: 2022,
+    make: 'Rivian',
+    model: 'R1T',
+    trim: 'Adventure',
+    mileage: 41446,
+    location: { city: 'Clermont', state: 'FL' },
+    askPrice: 53343,
+    sellerType: 'dealer',
+    sellerLabel: 'Dealer listing (anonymized)',
+    titleStatus: 'Clean',
+    cpo: false,
+    warrantyProgram: 'consumer',
+    battery: {
+      status: 'Reported',
+      soh: null,
+      usableKwh: 131,
+      note: 'OEM usable pack 131 kWh (Large).',
+    },
+    recall: {
+      status: 'Unchecked — placeholder',
+      detail: 'Recall check not run in this preview. NHTSA lookup is a production stub.',
+    },
+    chargingFit: {
+      label: 'Day range on file',
+      detail: '314 mi EPA class · overnight L2 covers a 120 mi supervisor day with margin.',
+    },
+    tradeFit: {
+      label: 'Crew pickup',
+      detail: 'Quad Large payload 1,764 lb; tow not used on supervisor routes.',
+    },
+    fitScore: {
+      band: 'open items',
+      reason: 'Consumer warranty commercial-use exclusion applies for fleet work unless Rivian Commercial.',
+    },
+    openItems: [
+      'Battery 131 kWh',
+      'Commercial-use warranty exclusion on consumer guide',
+    ],
+    upfitNote: 'Adventure trim — upfit TBD by buyer.',
+    description:
+      '2022 R1T Quad Large class (most-listed sample). Listing ask only; median sample miles/ask used for score validation.',
+  },
 ]
 
 const LANDSCAPE_UNITS = [
@@ -513,9 +560,8 @@ export const DEMO_PACKAGE = PACKAGES[0]
 /** @deprecated use getPackage(...).units */
 export const PACKAGE_UNITS = ELECTRICAL_UNITS
 
-/** @deprecated Replacement Score supersedes Worth-it bands (CLEARED · no public Worth it) */
+/** @deprecated Score v2 — bands unused in public UI */
 export const FIT_SCORE_BANDS = [
-  'strong match',
   'open items',
   'pass',
   'not enough data',

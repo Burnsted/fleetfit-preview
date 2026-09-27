@@ -1,0 +1,20 @@
+vehicle_or_class,item,value,unit,label,source_url,source_published,accessed
+Rivian R1 (R1T),tire rotation,9000,mi interval,FACT,https://rivian.com/support/article/what-is-the-maintenance-schedule-for-r1-vehicles,,2026-09-27
+Rivian R1 (R1T),comprehensive inspection,18000 mi / 18 mo,interval,FACT,https://rivian.com/support/article/what-is-the-maintenance-schedule-for-r1-vehicles,,2026-09-27
+Rivian R1 (R1T),brake fluid,3,yr interval,FACT,https://rivian.com/support/article/what-is-the-maintenance-schedule-for-r1-vehicles,,2026-09-27
+Rivian R1 (R1T),coolant (and coolant filter 2022-24),108000,mi interval,FACT,https://rivian.com/support/article/what-is-the-maintenance-schedule-for-r1-vehicles,,2026-09-27
+Rivian R1 (R1T),drive unit fluid (2022-24 Quad only),108000,mi interval,FACT,https://rivian.com/support/article/what-is-the-maintenance-schedule-for-r1-vehicles,,2026-09-27
+Rivian R1 (R1T),maintenance cost per mile,UNKNOWN,cents/mi,UNKNOWN (Rivian publishes none),,,2026-09-27
+LDV BEV (class),scheduled maintenance,6.1,cents/mi,"INF (class-level, Argonne 2021)",https://publications.anl.gov/anlpubs/2021/05/167399.pdf,2021-05,2026-09-27
+LDV ICEV (class),scheduled maintenance,10.1,cents/mi,"INF (class-level, Argonne 2021)",https://publications.anl.gov/anlpubs/2021/05/167399.pdf,2021-05,2026-09-27
+Pickup BEV (class),repair cost multiplier vs gasoline car (Table 3.17),0.47,ratio,"INF (class-level, Argonne 2021)",https://publications.anl.gov/anlpubs/2021/05/167399.pdf,2021-05,2026-09-27
+Pickup ICEV (class),repair cost multiplier vs gasoline car (Table 3.17),0.70,ratio,"INF (class-level, Argonne 2021)",https://publications.anl.gov/anlpubs/2021/05/167399.pdf,2021-05,2026-09-27
+DOE FOTW #1190,BEV vs ICEV scheduled maintenance,6.1 vs 10.1,cents/mi,FACT (confirms ANL),https://www.energy.gov/cmei/vehicles/articles/fotw-1190-june-14-2021-battery-electric-vehicles-have-lower-scheduled,2021-06-14,2026-09-27
+AAA 2026 Pickup Truck Electric,"maintenance, repair & tires at 15k mi/yr",1618,"USD/yr (=10.79 c/mi by division, INF)","FACT (class-level, new vehicle 5-yr)",https://newsroom.aaa.com/wp-content/uploads/2026/09/8-YDC-Brochure_2026-1.pdf,2026-09,2026-09-27
+AAA 2026 Pickup Truck Gas,maintenance at 15k mi/yr,1788,"USD/yr (=11.92 c/mi by division, INF)",FACT (class-level),https://newsroom.aaa.com/wp-content/uploads/2026/09/8-YDC-Brochure_2026-1.pdf,2026-09,2026-09-27
+AAA 2026 half-ton pickup,maintenance,11.82,cents/mi,FACT (class-level),https://newsroom.aaa.com/wp-content/uploads/2026/09/8-YDC-Brochure_2026-1.pdf,2026-09,2026-09-27
+AAA 2026 midsize pickup,maintenance,11.26,cents/mi,FACT (class-level),https://newsroom.aaa.com/wp-content/uploads/2026/09/8-YDC-Brochure_2026-1.pdf,2026-09,2026-09-27
+AAA 2026 weighted average all classes,maintenance,11.73,cents/mi,FACT (class-level),https://newsroom.aaa.com/wp-content/uploads/2026/09/8-YDC-Brochure_2026-1.pdf,2026-09,2026-09-27
+AAA 2025 EV,maintenance,10.07,cents/mi,FACT (class-level),https://newsroom.aaa.com/wp-content/uploads/2025/09/AAA-Brochure-Your-Driving-Cost-9.2025.pdf,2025-09,2026-09-27
+AAA 2025 half-ton crew cab pickup,maintenance,11.36,cents/mi,FACT (class-level),https://newsroom.aaa.com/wp-content/uploads/2025/09/AAA-Brochure-Your-Driving-Cost-9.2025.pdf,2025-09,2026-09-27
+AAA 2025 midsize pickup,maintenance,11.44,cents/mi,FACT (class-level),https://newsroom.aaa.com/wp-content/uploads/2025/09/AAA-Brochure-Your-Driving-Cost-9.2025.pdf,2025-09,2026-09-27

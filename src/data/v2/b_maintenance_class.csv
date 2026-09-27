@@ -1,0 +1,10 @@
+source,vehicle_class,maint_usd_per_yr,miles_per_yr,maint_cents_per_mi,label,scope,publish,url,accessed
+AAA Your Driving Costs 2026,Pickup truck — Electric (AAA EV/gas/hybrid comparison),1618,15000,10.79 (computed),FACT ($/yr) / INFERENCE (c/mi arithmetic),"maintenance, repair & tires incl. comprehensive extended warranty; 5-yr ownership; new vehicles",2026-09 (upload path /2026/09/),https://newsroom.aaa.com/wp-content/uploads/2026/09/8-YDC-Brochure_2026-1.pdf,2026-09-27
+AAA Your Driving Costs 2026,Pickup truck — Gas,1788,15000,11.92 (computed),FACT/INFERENCE,same,2026-09,https://newsroom.aaa.com/wp-content/uploads/2026/09/8-YDC-Brochure_2026-1.pdf,2026-09-27
+AAA Your Driving Costs 2026,Pickup truck — Hybrid,1539,15000,10.26 (computed),FACT/INFERENCE,same,2026-09,https://newsroom.aaa.com/wp-content/uploads/2026/09/8-YDC-Brochure_2026-1.pdf,2026-09-27
+AAA Your Driving Costs 2026,"1/2 Ton Pickup category (top sellers, mostly gas)",,15000,11.82,FACT,same,2026-09,https://newsroom.aaa.com/wp-content/uploads/2026/09/8-YDC-Brochure_2026-1.pdf,2026-09-27
+AAA Your Driving Costs 2026,Midsize Pickup category,,15000,11.26,FACT,same,2026-09,https://newsroom.aaa.com/wp-content/uploads/2026/09/8-YDC-Brochure_2026-1.pdf,2026-09-27
+AAA Your Driving Costs 2025,Electric Vehicle category,,15000,10.07,FACT,same (2025 models),2025-09,https://newsroom.aaa.com/wp-content/uploads/2025/09/AAA-Brochure-Your-Driving-Cost-9.2025.pdf,2026-09-27
+AAA Your Driving Costs 2025,1/2 Ton/Crew-Cab Pickup category,,15000,11.36,FACT,same,2025-09,https://newsroom.aaa.com/wp-content/uploads/2025/09/AAA-Brochure-Your-Driving-Cost-9.2025.pdf,2026-09-27
+Argonne 2021 TCO study via DOE FOTW #1190,Light-duty BEV,,,6.1,FACT,scheduled maintenance only (no repairs/tires),2021-06-14,https://www.energy.gov/cmei/vehicles/articles/fotw-1190-june-14-2021-battery-electric-vehicles-have-lower-scheduled,2026-09-27
+Argonne 2021 TCO study via DOE FOTW #1190,Light-duty ICEV,,,10.1,FACT,scheduled maintenance only,2021-06-14,https://www.energy.gov/cmei/vehicles/articles/fotw-1190-june-14-2021-battery-electric-vehicles-have-lower-scheduled,2026-09-27

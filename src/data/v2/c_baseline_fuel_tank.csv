@@ -1,0 +1,11 @@
+make,model,years,fuel_tank_gal,config_note,label,source_url,accessed
+Ford,F-150,2018,23,"cars.com default trim; 2018 brochure: 23 std reg/SuperCab, 26 SuperCrew, 36 optional (secondary)",FACT (default trim),https://www.cars.com/research/ford-f_150-2018/specs/,2026-09-27
+Ford,F-150,2020,23,cars.com default trim,FACT,https://www.cars.com/research/ford-f_150-2020/specs/,2026-09-27
+Chevrolet,Silverado 1500,2018,26,cars.com default trim; long bed 34 (secondary),FACT,https://www.cars.com/research/chevrolet-silverado_1500-2018/specs/,2026-09-27
+Chevrolet,Silverado 1500,2020,28,cars.com default trim,FACT,https://www.cars.com/research/chevrolet-silverado_1500-2020/specs/,2026-09-27
+Ram,1500,2018,32,cars.com default trim (26 std per secondary),FACT,https://www.cars.com/research/ram-1500-2018/specs/,2026-09-27
+Ram,1500,2020,23,cars.com default trim (new-body DT; 26/33 on other configs not verified),FACT,https://www.cars.com/research/ram-1500-2020/specs/,2026-09-27
+Toyota,Tacoma,2018,21,cars.com (21.1 per KBB snippet),FACT,https://www.cars.com/research/toyota-tacoma-2018/specs/,2026-09-27
+Chevrolet,Colorado,2018,21,cars.com default trim,FACT,https://www.cars.com/research/chevrolet-colorado-2018/specs/,2026-09-27
+Ford,Transit-250/350,2018,25,cars.com (31 optional per secondary),FACT,https://www.cars.com/research/ford-transit_350-2018/specs/,2026-09-27
+Ram,ProMaster 2500,2018,24,cars.com,FACT,https://www.cars.com/research/ram-promaster_2500-2018/specs/,2026-09-27

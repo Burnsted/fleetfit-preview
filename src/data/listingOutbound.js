@@ -58,6 +58,12 @@ export const LISTING_OUTBOUND = {
     dealer_url: null,
     check_note: 'VIN not confirmed on Baha Auto inventory',
   },
+  'unit-e7': {
+    listingStatus: 'dead',
+    checkedAt: LISTING_OUTBOUND_CHECKED_AT,
+    dealer_url: null,
+    check_note: 'Score v2 validation unit (2022 R1T Quad Large sample); no live dealer VDP pinned',
+  },
   'unit-l1': {
     listingStatus: 'live',
     checkedAt: LISTING_OUTBOUND_CHECKED_AT,

@@ -1,0 +1,10 @@
+state,item,value,unit,period,as_of,comparison,source,url,label,accessed
+FL,electricity_residential_avg,15.03,cents/kWh,July 2026 (monthly),EIA release 2026-09-24 (next 2026-10-23),July 2025: 15.11,EIA Electric Power Monthly Table 5.6.A,https://www.eia.gov/electricity/monthly/epm_table_grapher.php?t=epmt_5_6_a,FACT,2026-09-27
+FL,electricity_commercial_avg,11.37,cents/kWh,July 2026 (monthly),EIA release 2026-09-24,July 2025: 11.30,EIA EPM Table 5.6.A,https://www.eia.gov/electricity/monthly/epm_table_grapher.php?t=epmt_5_6_a,FACT,2026-09-27
+FL,electricity_residential_ytd,15.3,cents/kWh,YTD through July 2026,EIA release 2026-09-24,YTD Jul 2025: 15.03,EIA EPM Table 5.6.B,https://www.eia.gov/electricity/monthly/epm_table_grapher.php?t=epmt_5_6_b,FACT,2026-09-27
+FL,electricity_commercial_ytd,11.78,cents/kWh,YTD through July 2026,EIA release 2026-09-24,YTD Jul 2025: 11.40,EIA EPM Table 5.6.B,https://www.eia.gov/electricity/monthly/epm_table_grapher.php?t=epmt_5_6_b,FACT,2026-09-27
+FL,gasoline_regular_aaa,4.3679,USD/gal,daily,"AAA ""Price as of 9/27/26""",yesterday 4.3963; week ago 4.2954; month ago 3.9605; year ago 2.9529,AAA Gas Prices – Florida,https://gasprices.aaa.com/?state=FL,FACT,2026-09-27
+FL,diesel_aaa,6.104,USD/gal,daily,"AAA ""Price as of 9/27/26""",yesterday 6.1342; week ago 6.3116; month ago 5.5089; year ago 3.5556; record 6.3492 on 9/18/26,AAA Gas Prices – Florida,https://gasprices.aaa.com/?state=FL,FACT,2026-09-27
+FL,gasoline_regular_eia,4.217,USD/gal,week of 09/21/26,EIA release 9/22/2026 (next 9/29/2026),09/14/26: 4.102,EIA Weekly Retail Gasoline and Diesel Prices – Florida,https://www.eia.gov/dnav/pet/pet_pri_gnd_dcus_sfl_w.htm,FACT,2026-09-27
+FL,diesel_eia,NOT PUBLISHED,,,EIA FL page lists gasoline only,,EIA FL weekly page,https://www.eia.gov/dnav/pet/pet_pri_gnd_dcus_sfl_w.htm,FACT (not published for FL),2026-09-27
+"PADD 1C (Lower Atlantic, incl. FL)",diesel_eia_regional,6.139,USD/gal,week of 09/21/26,EIA release 9/22/2026,09/14/26: 6.096,EIA Weekly Retail – Lower Atlantic (PADD 1C),https://www.eia.gov/dnav/pet/pet_pri_gnd_dcus_r1z_w.htm,FACT (regional proxy for FL = INFERENCE),2026-09-27

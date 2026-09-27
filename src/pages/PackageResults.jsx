@@ -6,6 +6,7 @@ import { factKbbTradeIn, readBudget, spendEnvelope, unitsWithinEnvelope } from '
 import { formatMoney } from '../lib/fit'
 import { fleetUnitKey, useFleetPick } from '../lib/fleetPick'
 import { OEM_SPECS_BUILD } from '../data/oemSpecs'
+import { SCORE_V2_BUILD } from '../data/scoreV2Rubric'
 import { OUTBOUND_LISTING_BUILD } from '../lib/outboundListing'
 import {
   BODY_MIX_BUILD,
@@ -103,6 +104,7 @@ export default function PackageResults() {
       data-cleared-ship={CLEARED_SHIP}
       data-oem-specs={OEM_SPECS_BUILD}
       data-outbound-listing={OUTBOUND_LISTING_BUILD}
+      data-score-v2={SCORE_V2_BUILD}
     >
       <nav className="locked-crumbs" aria-label="Breadcrumb">
         <Link to="/">Home</Link>
@@ -183,7 +185,7 @@ export default function PackageResults() {
       <section aria-labelledby="units-title">
         <h2 id="units-title" className="package-units-title">Units</h2>
         <p className="package-score-note">
-          Full available options · Replacement Score high → low vs your current work vehicle. Similar-mile sidegrades stay listed. Dial shows the score — no Best / Worst labels.
+          Full available options · Replacement Score high → low vs your current work vehicle. Similar-mile sidegrades stay listed.
         </p>
         {ranked.length === 0 ? (
           <p className="locked-muted">
