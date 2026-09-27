@@ -192,8 +192,8 @@ export function displayWorkSpec(unit) {
 
 /**
  * Current non-EV work vehicle for the compare moment.
- * Intake does not capture current-vehicle specs — placeholder role only.
- * Never invent payload / cab / bed / tow / tank gallons / MPG for the current column.
+ * Demo package may seed an Example current vehicle from c_/f_ CSV rows.
+ * Never invent payload / cab / bed / tow / tank gallons / MPG beyond sourced seed.
  */
 export function currentWorkVehicle(intake, pkg) {
   const trade = intake?.trade || pkg?.trade || ''
@@ -205,6 +205,14 @@ export function currentWorkVehicle(intake, pkg) {
     role = 'Work truck'
   }
 
+  const seed = pkg?.currentVehicle
+  const hasIntakeCurrent =
+    intake?.current?.year ||
+    intake?.currentYear ||
+    intake?.tradeInModel ||
+    intake?.currentMake
+  const useSeed = Boolean(seed && !hasIntakeCurrent)
+
   const empty = { text: NOT_PUBLISHED, known: false }
   const energy = formatTankEnergy({
     tankRangeMi: intake?.tankRangeMi ?? pkg?.currentTankRangeMi,
@@ -212,17 +220,37 @@ export function currentWorkVehicle(intake, pkg) {
     tankGallons: intake?.tankGallons ?? pkg?.currentTankGallons,
   })
   const kbb = factField(intake?.kbbTradeIn ?? pkg?.currentKbbTradeIn)
-  const milesRaw = intake?.currentMileage ?? intake?.currentMiles ?? pkg?.currentMileage
+  const milesRaw =
+    intake?.current?.miles ??
+    intake?.currentMileage ??
+    intake?.currentMiles ??
+    (useSeed ? seed.miles : null) ??
+    pkg?.currentMileage
   const milesN = milesRaw == null || milesRaw === '' ? null : Number(milesRaw)
   const mileage =
     milesN != null && Number.isFinite(milesN)
       ? { text: `${milesN.toLocaleString()} mi`, known: true, value: milesN }
       : { text: NOT_PUBLISHED, known: false, value: null }
+
+  const heading = useSeed
+    ? seed.label || 'Example current vehicle'
+    : 'Your current work vehicle'
+  const kind = useSeed ? 'Example current' : 'Your current'
+  if (useSeed && /transit/i.test(String(seed.model || ''))) {
+    role = 'Service van'
+  }
+
   return {
-    heading: 'Your current work vehicle',
+    heading,
     role,
-    kind: 'Your current',
-    bodyType: /van/i.test(role) ? 'van' : 'truck',
+    kind,
+    bodyType: useSeed
+      ? /transit|promaster|van/i.test(`${seed.model || ''} ${role}`)
+        ? 'van'
+        : 'truck'
+      : /van/i.test(role)
+        ? 'van'
+        : 'truck',
     mileage: mileage.value,
     spec: {
       payload: empty,

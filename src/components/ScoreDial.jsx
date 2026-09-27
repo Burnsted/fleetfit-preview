@@ -1,10 +1,10 @@
 import { SCORE_V2_BUILD } from '../data/scoreV2Rubric'
 
-export const SCORE_UI_BUILD = 'score-ui-dial-v2-f-20260927-1400'
+export const SCORE_UI_BUILD = 'score-ui-dial-v2-f-pages-20260927-1500'
 
 /**
  * CLEARED Score UI dial — right of pricing.
- * Shows NN.N / PP + ±N.N vs current beneath.
+ * Shows NN.N / PP, ±N.N vs current, muted Current NN.N.
  */
 export default function ScoreDial({
   score,
@@ -69,6 +69,7 @@ export default function ScoreDial({
     : {}
 
   const diffLine = score.dialDiff || null
+  const currentLine = score.dialCurrent || null
 
   return (
     <Tag
@@ -91,6 +92,7 @@ export default function ScoreDial({
         ) : null}
       </div>
       {diffLine ? <span className="score-dial-diff">{diffLine}</span> : null}
+      {currentLine ? <span className="score-dial-current">{currentLine}</span> : null}
       {rank != null ? <span className="score-dial-rank">#{rank}</span> : null}
     </Tag>
   )

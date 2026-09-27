@@ -71,6 +71,7 @@ export default function PackageResults() {
   const scoreCtx = {
     currentMiles: currentMilesForScore(intake, pkg),
     intake,
+    pkg,
   }
   const reco = composeRecommendationSet(visibleUnits, scoreCtx, {
     maxSlots: Math.max(visibleUnits.length, pkg.unitCount || 0),
@@ -184,9 +185,6 @@ export default function PackageResults() {
 
       <section aria-labelledby="units-title">
         <h2 id="units-title" className="package-units-title">Units</h2>
-        <p className="package-score-note">
-          Full available options · Replacement Score high → low vs your current work vehicle. Similar-mile sidegrades stay listed.
-        </p>
         {ranked.length === 0 ? (
           <p className="locked-muted">
             No units in this demo fit that spend.{' '}

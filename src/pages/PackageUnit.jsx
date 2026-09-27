@@ -48,6 +48,7 @@ export default function PackageUnit() {
   const score = scoreReplacementUnit(unit, {
     currentMiles: currentMilesForScore(intake, pkg),
     intake,
+    pkg,
   })
   const candidate = {
     id: unit.id,

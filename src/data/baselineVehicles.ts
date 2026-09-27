@@ -11,8 +11,9 @@ import recallRaw from './v2/c_baseline_recall_complaint_counts.csv?raw'
 import failRaw from './v2/c_baseline_failures.csv?raw'
 import vansRaw from './v2/c_baseline_vans.csv?raw'
 import maintRaw from './v2/c_maintenance.csv?raw'
+import warrantyRaw from './v2/c_baseline_warranty.csv?raw'
 
-export const BASELINE_VEHICLES_BUILD = 'score-v2-baseline-20260927'
+export const BASELINE_VEHICLES_BUILD = 'score-v2-baseline-f-pages-20260927'
 
 export type RetainedEntry = {
   value: number
@@ -71,6 +72,29 @@ const recalls = parseCsv(recallRaw)
 const failures = parseCsv(failRaw)
 const vans = parseCsv(vansRaw)
 const maint = parseCsv(maintRaw)
+const warranties = parseCsv(warrantyRaw)
+
+function warrantyFor(make: string, model: string): {
+  yr: number | null
+  mi: number | null
+  url: string
+} {
+  const hit = warranties.find((w) => {
+    if (w.make.toLowerCase() !== make.toLowerCase()) return false
+    const models = String(w.models || '').toLowerCase()
+    const m = model.toLowerCase()
+    if (m.includes('transit')) return models.includes('transit')
+    if (m.includes('promaster')) return models.includes('promaster') || models.includes('ram')
+    if (m.includes('f-150') || m.includes('f150')) return models.includes('f-150') || models.includes('f150')
+    return models.includes(m.split(' ')[0])
+  })
+  if (!hit) return { yr: null, mi: null, url: '' }
+  return {
+    yr: numOrNull(hit.powertrain_yr),
+    mi: numOrNull(hit.powertrain_mi),
+    url: hit.source_url || '',
+  }
+}
 
 function tankFor(make: string, model: string, year: number): { gal: number | null; url: string } {
   const hits = tanks.filter(
@@ -213,7 +237,7 @@ function fuellyFor(year: number, make: string, model: string) {
 
 const SPEC_ROWS = parseCsv(specsRaw)
 
-export const BASELINE_VEHICLES: BaselineVehicle[] = SPEC_ROWS.map((r) => {
+const SPEC_BASELINES: BaselineVehicle[] = SPEC_ROWS.map((r) => {
   const year = Number(r.year)
   const make = r.make
   const model = r.model
@@ -252,6 +276,55 @@ export const BASELINE_VEHICLES: BaselineVehicle[] = SPEC_ROWS.map((r) => {
     label: r.label,
   }
 })
+
+/** Cargo vans from c_baseline_vans.csv (not EPA-rated pickups in c_baseline_specs). */
+const VAN_YEARS = [2016, 2017, 2018, 2019, 2020]
+const VAN_BASELINES: BaselineVehicle[] = vans.flatMap((v) => {
+  const make = v.make
+  const model = v.model
+  const engine = v.engine
+  const w = warrantyFor(make, model)
+  return VAN_YEARS.filter((y) => yearInRange(y, v.years)).map((year) => {
+    const fuelly = fuellyFor(year, make, model)
+    const tank = tankFor(make, model, year)
+    const rec = recallFor(year, make, model.includes('Transit') ? 'Transit' : model)
+    // Also try exact model for recalls
+    const recExact = recallFor(year, make, model)
+    const recall = recExact.count != null ? recExact : rec
+    return {
+      year,
+      make,
+      model,
+      engine,
+      drivetrain: '4x2',
+      transmission: '',
+      epaCombMpg: null,
+      epaFuel: 'Regular',
+      fuelTankGal: tank.gal ?? numOrNull(v.fuel_tank_gal),
+      powertrainWarrantyYr: w.yr,
+      powertrainWarrantyMi: w.mi,
+      feId: '',
+      epaSourceUrl: v.source_url || '',
+      warrantySourceUrl: w.url,
+      retained3yrPct: retainedFor(make, model.includes('Transit') ? 'Transit' : model),
+      recallCampaignsMy: recall.count,
+      recallUrl: recall.url,
+      failurePatterns: failuresFor(year, make, model, engine),
+      maintClass: 'van' as const,
+      payloadLb: numOrNull(v.payload_lb),
+      towLb: null,
+      seats: null,
+      serviceDistanceMi: null,
+      bodyType: 'van' as const,
+      fuellyMpg: fuelly.mpg,
+      fuellyUrl: fuelly.url,
+      fuellyLabel: fuelly.label,
+      label: v.label,
+    }
+  })
+})
+
+export const BASELINE_VEHICLES: BaselineVehicle[] = [...SPEC_BASELINES, ...VAN_BASELINES]
 
 /** AAA 2026 class maintenance ¢/mi (same-basis rule). */
 export const MAINT_CLASS_AAA = {

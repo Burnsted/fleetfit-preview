@@ -105,9 +105,15 @@ export type ScoreV2Result = {
   difference: number | null
   incomplete: boolean
   incompleteLabel: string | null
+  /** True when custom intake has no current vehicle (candidate-only mode). */
+  missingCurrent: boolean
+  /** One-time banner copy when missingCurrent. */
+  banner: string | null
   /** Dial: NN.N / PP */
   dialTotal: string | null
   dialDiff: string | null
+  /** Dial muted line: Current NN.N (null when no current / no compare). */
+  dialCurrent: string | null
   sortKey: number
   hardReject: boolean
   hardFlag: boolean
@@ -684,33 +690,39 @@ function pairCells(
   return { current: cur, candidate: cand }
 }
 
-export function parseJobFromIntake(intake: Record<string, unknown> | null | undefined): JobInputs {
+export function parseJobFromIntake(
+  intake: Record<string, unknown> | null | undefined,
+  pkg?: Record<string, unknown> | null,
+): JobInputs {
   const job = (intake?.job as Record<string, unknown>) || {}
+  const defaults = (pkg?.jobDefaults as Record<string, unknown>) || {}
   const daily =
     num(job.dailyMiles) ??
     num(intake?.dailyMiles) ??
     (typeof intake?.dailyMiles === 'string' && /^\d+/.test(intake.dailyMiles)
       ? num(String(intake.dailyMiles).match(/\d+/)?.[0])
-      : null)
+      : null) ??
+    num(defaults.dailyMiles)
   // loadLb: top of payload bracket or explicit
-  let loadLb = num(job.loadLb) ?? num(intake?.loadLb)
+  let loadLb = num(job.loadLb) ?? num(intake?.loadLb) ?? num(defaults.loadLb)
   if (loadLb == null) {
     const p = String(intake?.payload || job.payload || '')
     if (/light/i.test(p)) loadLb = 500
     else if (/medium/i.test(p)) loadLb = 1000
     else if (/heavy/i.test(p)) loadLb = 1500
   }
-  const crew = num(job.crew) ?? num(intake?.crew)
+  const crew = num(job.crew) ?? num(intake?.crew) ?? num(defaults.crew)
   let tows: boolean | null = null
   if (job.tows === true || job.tows === false) tows = job.tows as boolean
   else if (intake?.tows === true || intake?.tows === false) tows = intake.tows as boolean
-  else {
+  else if (defaults.tows === true || defaults.tows === false) tows = defaults.tows as boolean
+  else if (intake || Object.keys(job).length) {
     const haul = String(intake?.haul || '')
     if (!haul || /none/i.test(haul)) tows = false
     else if (/not sure/i.test(haul)) tows = null
     else tows = true
   }
-  const trailerLb = num(job.trailerLb) ?? num(intake?.trailerLb)
+  const trailerLb = num(job.trailerLb) ?? num(intake?.trailerLb) ?? num(defaults.trailerLb)
   const wdh =
     job.wdh === true || intake?.wdh === true
       ? true
@@ -720,8 +732,10 @@ export function parseJobFromIntake(intake: Record<string, unknown> | null | unde
   const shopCity =
     (job.shopCity as string) ||
     (intake?.shopCity as string) ||
-    inferShopCity(String(intake?.address || ''))
-  const cargoCuFt = num(job.cargoCuFt) ?? num(intake?.cargoCuFt)
+    inferShopCity(String(intake?.address || '')) ||
+    (defaults.shopCity as string) ||
+    null
+  const cargoCuFt = num(job.cargoCuFt) ?? num(intake?.cargoCuFt) ?? num(defaults.cargoCuFt)
   return {
     dailyMiles: daily,
     loadLb,
@@ -744,16 +758,19 @@ function inferShopCity(address: string): string | null {
 
 export function parseCurrentFromIntake(
   intake: Record<string, unknown> | null | undefined,
-  pkg?: { currentMileage?: number } | null,
+  pkg?: {
+    currentMileage?: number
+    currentVehicle?: Record<string, unknown> | null
+  } | null,
 ): CurrentVehicleInput | null {
   const cur = (intake?.current as Record<string, unknown>) || {}
-  const year = num(cur.year) ?? num(intake?.currentYear)
-  const make = (cur.make as string) || (intake?.currentMake as string) || null
-  const model = (cur.model as string) || (intake?.currentModel as string) || null
-  const engine = (cur.engine as string) || (intake?.currentEngine as string) || null
-  const drivetrain =
+  let year = num(cur.year) ?? num(intake?.currentYear)
+  let make = (cur.make as string) || (intake?.currentMake as string) || null
+  let model = (cur.model as string) || (intake?.currentModel as string) || null
+  let engine = (cur.engine as string) || (intake?.currentEngine as string) || null
+  let drivetrain =
     (cur.drivetrain as string) || (intake?.currentDrivetrain as string) || null
-  const miles =
+  let miles =
     num(cur.miles) ??
     num(intake?.currentMiles) ??
     num(intake?.currentMileage) ??
@@ -762,20 +779,22 @@ export function parseCurrentFromIntake(
   if ((!year || !make || !model) && intake?.tradeInModel) {
     const parsed = parseTradeInModel(String(intake.tradeInModel))
     if (parsed) {
-      return {
-        year: year || parsed.year,
-        make: make || parsed.make,
-        model: model || parsed.model,
-        engine: engine || parsed.engine,
-        drivetrain: drivetrain || parsed.drivetrain,
-        miles,
-        cab: (cur.cab as string) || (intake?.cab as string) || null,
-        warrantyType:
-          normalizeWarrantyType(cur.warrantyType ?? cur.warrantyProgram) || null,
-        oemWrittenConfirmation: Boolean(cur.oemWrittenConfirmation),
-        fleetAccount: Boolean(cur.fleetAccount),
-      }
+      year = year || parsed.year
+      make = make || parsed.make
+      model = model || parsed.model
+      engine = engine || parsed.engine
+      drivetrain = drivetrain || parsed.drivetrain
     }
+  }
+  // Demo package seed when intake has no current vehicle
+  const seed = pkg?.currentVehicle
+  if ((!year || !make || !model) && seed) {
+    year = year || num(seed.year)
+    make = make || (seed.make as string) || null
+    model = model || (seed.model as string) || null
+    engine = engine || (seed.engine as string) || null
+    drivetrain = drivetrain || (seed.drivetrain as string) || null
+    miles = miles ?? num(seed.miles)
   }
   if (!year || !make || !model) return null
   return {
@@ -824,13 +843,19 @@ export function scoreReplacementV2(
   unit: Record<string, unknown>,
   opts: {
     intake?: Record<string, unknown> | null
-    pkg?: { currentMileage?: number } | null
+    pkg?: {
+      currentMileage?: number
+      currentVehicle?: Record<string, unknown> | null
+      jobDefaults?: Record<string, unknown> | null
+    } | null
     scoringDate?: string
   } = {},
 ): ScoreV2Result {
   const intake = opts.intake || null
-  const job = parseJobFromIntake(intake)
-  const currentIn = parseCurrentFromIntake(intake, opts.pkg)
+  const pkg = opts.pkg || null
+  const job = parseJobFromIntake(intake, pkg)
+  const currentIn = parseCurrentFromIntake(intake, pkg)
+  const missingCurrent = !currentIn
   const merged = mergeOemSpecs(unit) as Record<string, unknown>
   const candRow = lookupCandidate({
     year: num(merged.year) ?? undefined,
@@ -841,49 +866,24 @@ export function scoreReplacementV2(
 
   const candidateName = `${merged.year} ${merged.make} ${merged.model}${merged.trim ? ` ${merged.trim}` : ''}`
 
-  if (!currentIn) {
-    const emptyCats: CategoryRow[] = CATEGORY_KEYS.map((key) => ({
-      key,
-      label: CATEGORY_LABELS[key],
-      current: cell(null, {
-        status: STATUS.INCOMPLETE_CURRENT,
-        reason: STATUS.INCOMPLETE_CURRENT,
-        counted: false,
-      }),
-      candidate: cell(null, {
-        status: STATUS.INCOMPLETE_CURRENT,
-        reason: STATUS.INCOMPLETE_CURRENT,
-        counted: false,
-      }),
-    }))
-    return {
-      build: SCORE_V2_BUILD,
-      version: 2,
-      currentName: null,
-      candidateName,
-      categories: emptyCats,
-      currentTotal: null,
-      candidateTotal: null,
-      pointsPossible: 0,
-      difference: null,
-      incomplete: true,
-      incompleteLabel: STATUS.INCOMPLETE_CURRENT,
-      dialTotal: null,
-      dialDiff: null,
-      sortKey: 0,
-      hardReject: false,
-      hardFlag: false,
-      sidegrade: false,
-      total: null,
-      helps: [],
-      watchOuts: [],
-    }
-  }
-
-  const { vehicle: baseline, reasonNote: baselineNote } = lookupBaseline(currentIn)
-  const currentName = baseline
-    ? `${baseline.year} ${baseline.make} ${baseline.model} ${baseline.engine}${baselineNote ? '' : ''}`
-    : `${currentIn.year} ${currentIn.make} ${currentIn.model}`
+  const { vehicle: baseline, reasonNote: baselineNote } = currentIn
+    ? lookupBaseline(currentIn)
+    : { vehicle: null, reasonNote: null }
+  const exampleLabel =
+    typeof pkg?.currentVehicle?.label === 'string'
+      ? String(pkg.currentVehicle.label)
+      : null
+  const currentName = missingCurrent
+    ? null
+    : exampleLabel
+      ? `${exampleLabel} · ${
+          baseline
+            ? `${baseline.year} ${baseline.make} ${baseline.model} ${baseline.engine}`
+            : `${currentIn!.year} ${currentIn!.make} ${currentIn!.model}`
+        }`
+      : baseline
+        ? `${baseline.year} ${baseline.make} ${baseline.model} ${baseline.engine}`
+        : `${currentIn!.year} ${currentIn!.make} ${currentIn!.model}`
 
   // Build candidate effective fields (CSV row + OEM merge)
   const cand: Partial<CandidateVehicle> = candRow || {
@@ -924,29 +924,43 @@ export function scoreReplacementV2(
   const isVanCur = baseline?.bodyType === 'van'
 
   // --- Category cells (score each side, then pair-drop) ---
-  const curMiles = currentIn.miles
+  const curMiles = currentIn?.miles ?? null
+  const notEntered = () =>
+    cell(null, {
+      status: STATUS.NOT_ENTERED,
+      reason: '',
+      counted: false,
+    })
 
   // 1 Range
   const curRangeMi =
     baseline && baseline.epaCombMpg != null && baseline.fuelTankGal != null
       ? baseline.epaCombMpg * baseline.fuelTankGal
       : null
-  const c1cur = baseline
-    ? scoreRange(curRangeMi, job.dailyMiles, baseline.epaSourceUrl, 'EPA tank')
-    : cell(null, { status: STATUS.notScored('current vehicle'), reason: STATUS.notScored('current vehicle'), counted: false })
-  if (baseline && baselineNote && c1cur.counted) {
-    c1cur.reason += ` · ${baselineNote}`
+  let c1curFinal = missingCurrent
+    ? notEntered()
+    : baseline
+      ? scoreRange(curRangeMi, job.dailyMiles, baseline.epaSourceUrl, 'EPA tank')
+      : cell(null, {
+          status: STATUS.notScored('current vehicle'),
+          reason: STATUS.notScored('current vehicle'),
+          counted: false,
+        })
+  if (baseline && baselineNote && c1curFinal.counted) {
+    c1curFinal.reason += ` · ${baselineNote}`
   }
   // Gas vans: use Fuelly for range via mpg × tank
-  let c1curFinal = c1cur
-  if (baseline && isVanCur && baseline.fuellyMpg != null && baseline.fuelTankGal != null) {
+  if (!missingCurrent && baseline && isVanCur && baseline.fuellyMpg != null && baseline.fuelTankGal != null) {
+    const fuellyLabel = /INF/i.test(baseline.fuellyLabel || '')
+      ? 'Fuelly crowd-sourced mpg (INF, not EPA-rated: GVWR >8,500)'
+      : 'Fuelly INF tank'
     c1curFinal = scoreRange(
       baseline.fuellyMpg * baseline.fuelTankGal,
       job.dailyMiles,
       baseline.fuellyUrl,
-      'Fuelly INF tank',
+      fuellyLabel,
     )
-  } else if (baseline && isVanCur && !baseline.fuellyMpg) {
+  } else if (!missingCurrent && baseline && isVanCur && !baseline.fuellyMpg) {
     c1curFinal = cell(null, {
       status: 'Not scored: mpg not published (van >8,500 GVWR)',
       reason: 'Not scored: mpg not published (van >8,500 GVWR)',
@@ -963,10 +977,12 @@ export function scoreReplacementV2(
     cand.epaSourceUrl ?? null,
     rangeBasis,
   )
-  const p1 = pairCells(c1curFinal, c1cand)
+  const p1 = missingCurrent
+    ? { current: notEntered(), candidate: c1cand }
+    : pairCells(c1curFinal, c1cand)
 
   // 2 Payload — section F low-end rule for baselines; listing/OEM low for candidates
-  const curCab = currentIn.cab || (intake?.cab as string) || null
+  const curCab = currentIn?.cab || (intake?.cab as string) || null
   const listingPayload = num(merged.payload) ?? num(merged.payloadLb)
   const baselinePayloadHit = baseline
     ? lookupBaselinePayload({
@@ -978,21 +994,39 @@ export function scoreReplacementV2(
         cab: curCab,
       })
     : null
-  const c2cur = baseline
-    ? scorePayload(
-        baselinePayloadHit?.payloadLb ?? baseline.payloadLb,
-        job.loadLb,
-        null,
-        job.cargoCuFt,
-        baselinePayloadHit?.url ?? null,
-        isVanCur,
-        baselinePayloadHit?.reasonLabel ?? null,
-      )
-    : cell(null, {
-        status: STATUS.notScored('current payload'),
-        reason: STATUS.notScored('current payload'),
-        counted: false,
-      })
+  const loadNote =
+    pkg?.jobDefaults && typeof (pkg.jobDefaults as { loadNote?: string }).loadNote === 'string'
+      ? String((pkg.jobDefaults as { loadNote: string }).loadNote)
+      : null
+  const loadUrl =
+    pkg?.jobDefaults && typeof (pkg.jobDefaults as { loadUrl?: string }).loadUrl === 'string'
+      ? String((pkg.jobDefaults as { loadUrl: string }).loadUrl)
+      : null
+  const c2cur = missingCurrent
+    ? notEntered()
+    : baseline
+      ? (() => {
+          const cell2 = scorePayload(
+            baselinePayloadHit?.payloadLb ?? baseline.payloadLb,
+            job.loadLb,
+            null,
+            job.cargoCuFt,
+            baselinePayloadHit?.url ?? loadUrl,
+            isVanCur,
+            baselinePayloadHit?.reasonLabel ?? null,
+          )
+          if (loadNote) {
+            cell2.reason = cell2.reason
+              ? `${cell2.reason} · ${loadNote}${loadUrl ? ` (${loadUrl})` : ''}`
+              : `${loadNote}${loadUrl ? ` (${loadUrl})` : ''}`
+          }
+          return cell2
+        })()
+      : cell(null, {
+          status: STATUS.notScored('current payload'),
+          reason: STATUS.notScored('current payload'),
+          counted: false,
+        })
   // Candidate: explicit listing/VIN payload wins; else CSV/OEM (low figure)
   const unitListingPayload =
     num(unit.payload) ??
@@ -1014,7 +1048,9 @@ export function scoreReplacementV2(
     isVanCand,
     candPayloadLabel,
   )
-  const p2 = pairCells(c2cur, c2cand)
+  const p2 = missingCurrent
+    ? { current: notEntered(), candidate: c2cand }
+    : pairCells(c2cur, c2cand)
 
   // 3 Cab / seats — f_seat_counts.csv
   const curSeatHit = baseline
@@ -1035,29 +1071,34 @@ export function scoreReplacementV2(
     listingSeats: num(merged.seats),
     side: 'candidate',
   })
-  const c3cur = scoreCab(
-    curSeatHit?.seats ?? baseline?.seats ?? null,
-    job.crew,
-    curSeatHit?.reasonLabel ?? null,
-    baseline ? isGasCargoVanModel(baseline.make, baseline.model) : false,
-  )
+  const crewNote =
+    pkg?.jobDefaults && typeof (pkg.jobDefaults as { crewNote?: string }).crewNote === 'string'
+      ? String((pkg.jobDefaults as { crewNote: string }).crewNote)
+      : null
+  const c3cur = missingCurrent
+    ? notEntered()
+    : (() => {
+        const cell3 = scoreCab(
+          curSeatHit?.seats ?? baseline?.seats ?? null,
+          job.crew,
+          curSeatHit?.reasonLabel ?? null,
+          baseline ? isGasCargoVanModel(baseline.make, baseline.model) : false,
+        )
+        if (crewNote && cell3.reason) cell3.reason += ` · ${crewNote}`
+        else if (crewNote && !cell3.reason) cell3.reason = crewNote
+        return cell3
+      })()
   const c3cand = scoreCab(
     candSeatHit?.seats ?? cand.seats ?? null,
     job.crew,
     candSeatHit?.reasonLabel ?? null,
     isGasCargoVanModel(String(cand.make || merged.make), String(cand.model || merged.model)),
   )
-  const p3 = pairCells(c3cur, c3cand)
+  const p3 = missingCurrent
+    ? { current: notEntered(), candidate: c3cand }
+    : pairCells(c3cur, c3cand)
 
   // 4 Tow
-  const c4cur = scoreTow(
-    job.tows,
-    job.trailerLb,
-    job.wdh,
-    baseline?.towLb ?? null,
-    baseline?.towLb ?? null,
-    null,
-  )
   const c4cand = scoreTow(
     job.tows,
     job.trailerLb,
@@ -1069,80 +1110,84 @@ export function scoreReplacementV2(
   const p4 =
     job.tows === false || job.tows == null
       ? bothNotUsed()
-      : pairCells(
-          baseline?.towLb == null && job.tows
-            ? cell(null, {
-                status: STATUS.notScored('current tow rating'),
-                reason: STATUS.notScored('current tow rating'),
-                counted: false,
-              })
-            : c4cur,
-          c4cand,
-        )
+      : missingCurrent
+        ? { current: notEntered(), candidate: c4cand }
+        : pairCells(
+            baseline?.towLb == null && job.tows
+              ? cell(null, {
+                  status: STATUS.notScored('current tow rating'),
+                  reason: STATUS.notScored('current tow rating'),
+                  counted: false,
+                })
+              : scoreTow(
+                  job.tows,
+                  job.trailerLb,
+                  job.wdh,
+                  baseline?.towLb ?? null,
+                  baseline?.towLb ?? null,
+                  null,
+                ),
+            c4cand,
+          )
 
   // 5 Resale
-  const c5cur = scoreResale(baseline?.retained3yrPct || [], 'current')
   const c5cand = scoreResale(cand.retained3yrPct || [], 'candidate')
-  const p5 = pairCells(c5cur, c5cand)
+  const p5 = missingCurrent
+    ? { current: notEntered(), candidate: c5cand }
+    : pairCells(scoreResale(baseline?.retained3yrPct || [], 'current'), c5cand)
 
   // 6 Reliability
-  const c6cur = baseline
-    ? scoreReliability(
-        baseline.recallCampaignsMy,
-        baseline.failurePatterns,
-        baseline.recallUrl,
-        true,
-      )
-    : cell(null, { status: STATUS.notScored('recall campaign count'), reason: STATUS.notScored('recall campaign count'), counted: false })
   const c6cand = scoreReliability(
     cand.recallCampaignsMy ?? null,
     cand.failurePatterns || [],
     cand.recallUrl ?? null,
     false,
   )
-  const p6 = pairCells(c6cur, c6cand)
+  const p6 = missingCurrent
+    ? { current: notEntered(), candidate: c6cand }
+    : pairCells(
+        baseline
+          ? scoreReliability(
+              baseline.recallCampaignsMy,
+              baseline.failurePatterns,
+              baseline.recallUrl,
+              true,
+            )
+          : cell(null, {
+              status: STATUS.notScored('recall campaign count'),
+              reason: STATUS.notScored('recall campaign count'),
+              counted: false,
+            }),
+        c6cand,
+      )
 
   // 7 Service — f_service_distance.csv at Vero Beach
-  const c7cur = baseline
-    ? scoreService(baseline.make, job.shopCity, false, baseline.model)
-    : cell(null, {
-        status: STATUS.notScored('current service distance'),
-        reason: STATUS.notScored('current service distance'),
-        counted: false,
-      })
   const c7cand = scoreService(
     String(cand.make || merged.make),
     job.shopCity,
     true,
     String(cand.model || merged.model),
   )
-  const p7 = pairCells(c7cur, c7cand)
+  const p7 = missingCurrent
+    ? { current: notEntered(), candidate: c7cand }
+    : pairCells(
+        baseline
+          ? scoreService(baseline.make, job.shopCity, false, baseline.model)
+          : cell(null, {
+              status: STATUS.notScored('current service distance'),
+              reason: STATUS.notScored('current service distance'),
+              counted: false,
+            }),
+        c7cand,
+      )
 
   // 8 Longevity — warrantyType consumer | commercial_fleet
   const candMiles = num(merged.mileage)
   const candWarrantyType: WarrantyType =
     normalizeWarrantyType(
       merged.warrantyType ?? merged.warrantyProgram ?? cand.warrantyProgram,
-    ) || (/rivian/i.test(String(cand.make || merged.make)) ? 'consumer' : 'consumer')
+    ) || 'consumer'
   const candUpfit = normalizeUpfit(merged.upfit ?? 'none')
-  const c8cur = baseline
-    ? scoreLongevity({
-        isEv: false,
-        year: baseline.year,
-        miles: curMiles,
-        battYr: null,
-        battMi: null,
-        powerYr: baseline.powertrainWarrantyYr,
-        powerMi: baseline.powertrainWarrantyMi,
-        make: baseline.make,
-        model: baseline.model,
-        warrantyType: currentIn.warrantyType || null,
-        oemWrittenConfirmation: false,
-        warrantyUrl: baseline.warrantySourceUrl,
-        upfit: 'none',
-        fleetAccount: Boolean(currentIn.fleetAccount),
-      })
-    : cell(null, { status: STATUS.notScored('warranty terms'), reason: STATUS.notScored('warranty terms'), counted: false })
   const c8cand = scoreLongevity({
     isEv: true,
     year: num(merged.year) || cand.year || 0,
@@ -1158,27 +1203,69 @@ export function scoreReplacementV2(
     warrantyUrl: cand.warrantySourceUrl ?? null,
     upfit: candUpfit,
   })
-  const p8 = pairCells(c8cur, c8cand)
+  const p8 = missingCurrent
+    ? { current: notEntered(), candidate: c8cand }
+    : pairCells(
+        baseline
+          ? scoreLongevity({
+              isEv: false,
+              year: baseline.year,
+              miles: curMiles,
+              battYr: null,
+              battMi: null,
+              powerYr: baseline.powertrainWarrantyYr,
+              powerMi: baseline.powertrainWarrantyMi,
+              make: baseline.make,
+              model: baseline.model,
+              warrantyType: currentIn?.warrantyType || null,
+              oemWrittenConfirmation: false,
+              warrantyUrl: baseline.warrantySourceUrl,
+              upfit: 'none',
+              fleetAccount: Boolean(currentIn?.fleetAccount),
+            })
+          : cell(null, {
+              status: STATUS.notScored('warranty terms'),
+              reason: STATUS.notScored('warranty terms'),
+              counted: false,
+            }),
+        c8cand,
+      )
 
   // 9 Energy
-  const c9cur = baseline
-    ? scoreEnergyGas(
-        baseline.epaCombMpg,
-        baseline.epaFuel,
-        baseline.epaSourceUrl,
-        baseline.fuellyMpg != null
-          ? { mpg: baseline.fuellyMpg, url: baseline.fuellyUrl, label: baseline.fuellyLabel }
-          : null,
-        isVanCur,
-      )
-    : cell(null, { status: STATUS.notScored('mpg'), reason: STATUS.notScored('mpg'), counted: false })
   const c9cand = scoreEnergyEv(cand.epaKwhPer100mi ?? null, cand.epaSourceUrl ?? null)
-  const p9 = pairCells(c9cur, c9cand)
+  const p9 = missingCurrent
+    ? { current: notEntered(), candidate: c9cand }
+    : pairCells(
+        baseline
+          ? scoreEnergyGas(
+              baseline.epaCombMpg,
+              baseline.epaFuel,
+              baseline.epaSourceUrl,
+              baseline.fuellyMpg != null
+                ? {
+                    mpg: baseline.fuellyMpg,
+                    url: baseline.fuellyUrl,
+                    label: baseline.fuellyLabel,
+                  }
+                : null,
+              isVanCur,
+            )
+          : cell(null, {
+              status: STATUS.notScored('mpg'),
+              reason: STATUS.notScored('mpg'),
+              counted: false,
+            }),
+        c9cand,
+      )
 
   // 10 Maintenance
-  const c10cur = scoreMaint(baseline?.maintClass ?? null, Boolean(isVanCur))
   const c10cand = scoreMaint(cand.maintClass ?? null, Boolean(isVanCand))
-  const p10 = pairCells(c10cur, c10cand)
+  const p10 = missingCurrent
+    ? { current: notEntered(), candidate: c10cand }
+    : pairCells(
+        scoreMaint(baseline?.maintClass ?? null, Boolean(isVanCur)),
+        c10cand,
+      )
 
   const pairs = [p1, p2, p3, p4, p5, p6, p7, p8, p9, p10]
   const categories: CategoryRow[] = CATEGORY_KEYS.map((key, i) => ({
@@ -1192,7 +1279,13 @@ export function scoreReplacementV2(
   let candidateTotal = 0
   let pp = 0
   for (const row of categories) {
-    if (row.current.counted && row.candidate.counted) {
+    if (missingCurrent) {
+      // Candidate-only: score each counted candidate cell; no pair-drop / no difference.
+      if (row.candidate.counted) {
+        candidateTotal += row.candidate.points || 0
+        pp += 10
+      }
+    } else if (row.current.counted && row.candidate.counted) {
       currentTotal += row.current.points || 0
       candidateTotal += row.candidate.points || 0
       pp += 10
@@ -1200,10 +1293,12 @@ export function scoreReplacementV2(
   }
   currentTotal = round1(currentTotal)
   candidateTotal = round1(candidateTotal)
-  const difference = round1(candidateTotal - currentTotal)
+  const difference = missingCurrent ? null : round1(candidateTotal - currentTotal)
 
   const incomplete = pp < POINTS_FLOOR
   const incompleteLabel = incomplete ? STATUS.INCOMPLETE_KEY : null
+  const banner =
+    missingCurrent && !incomplete ? STATUS.ADD_CURRENT_BANNER : null
 
   const hf3 = hf3Title(merged)
   const hardReject = hf3.status === 'reject'
@@ -1211,6 +1306,7 @@ export function scoreReplacementV2(
 
   // Similar miles soft label (does not affect score)
   const sidegrade =
+    !missingCurrent &&
     curMiles != null &&
     candMiles != null &&
     Math.abs(curMiles - candMiles) / Math.max(curMiles, 1) < 0.15
@@ -1225,9 +1321,11 @@ export function scoreReplacementV2(
 
   const dialTotal = incomplete ? null : `${candidateTotal.toFixed(1)} / ${pp}`
   const dialDiff =
-    incomplete || difference == null
+    incomplete || missingCurrent || difference == null
       ? null
       : `${difference > 0 ? '+' : ''}${difference.toFixed(1)} vs current`
+  const dialCurrent =
+    incomplete || missingCurrent ? null : `Current ${currentTotal.toFixed(1)}`
 
   return {
     build: SCORE_V2_BUILD,
@@ -1235,14 +1333,17 @@ export function scoreReplacementV2(
     currentName,
     candidateName,
     categories,
-    currentTotal: incomplete ? null : currentTotal,
+    currentTotal: incomplete || missingCurrent ? null : currentTotal,
     candidateTotal: incomplete ? null : candidateTotal,
     pointsPossible: pp,
-    difference: incomplete ? null : difference,
+    difference: incomplete || missingCurrent ? null : difference,
     incomplete,
     incompleteLabel,
+    missingCurrent,
+    banner,
     dialTotal,
     dialDiff,
+    dialCurrent,
     sortKey,
     hardReject,
     hardFlag,
@@ -1266,7 +1367,14 @@ function hf3Title(unit: Record<string, unknown>) {
 
 export function rankUnitsByScoreV2(
   units: Record<string, unknown>[],
-  ctx: { intake?: Record<string, unknown> | null; pkg?: { currentMileage?: number } | null },
+  ctx: {
+    intake?: Record<string, unknown> | null
+    pkg?: {
+      currentMileage?: number
+      currentVehicle?: Record<string, unknown> | null
+      jobDefaults?: Record<string, unknown> | null
+    } | null
+  },
 ) {
   return [...units]
     .map((unit) => ({

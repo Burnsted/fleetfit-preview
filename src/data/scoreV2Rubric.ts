@@ -3,7 +3,7 @@
  * Every anchor tagged INFERENCE (Steve thresholds). Do not tune.
  */
 
-export const SCORE_V2_BUILD = 'score-v2-f-20260927-1400'
+export const SCORE_V2_BUILD = 'score-v2-f-pages-20260927-1500'
 export const SCORE_DATE = '2026-09-27' // scoring date for warranty years-left
 
 export type AnchorPoint = { x: number; y: number; tag: 'INFERENCE' }
@@ -120,6 +120,8 @@ export const STATUS = {
     `Not scored: ${field} not ${kind}`,
   INCOMPLETE_KEY: 'Score incomplete: key data missing',
   INCOMPLETE_CURRENT: 'Score incomplete: current vehicle not entered',
+  NOT_ENTERED: 'Not entered',
+  ADD_CURRENT_BANNER: 'Add your current vehicle to compare',
   AT_RISK: 'At risk, not counted',
   FL_PRICE: 'Not scored: FL energy price not loaded',
 } as const

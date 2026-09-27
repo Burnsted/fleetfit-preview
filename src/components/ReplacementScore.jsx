@@ -1,4 +1,4 @@
-import { SCORE_V2_BUILD } from '../data/scoreV2Rubric'
+import { SCORE_V2_BUILD, STATUS } from '../data/scoreV2Rubric'
 
 /**
  * Score v2 readout — Category | Current | Candidate.
@@ -35,7 +35,9 @@ export default function ReplacementScore({
     )
   }
 
-  const curName = score.currentName || 'Current'
+  const curName = score.missingCurrent
+    ? STATUS.NOT_ENTERED
+    : score.currentName || 'Current'
   const candName = score.candidateName || 'Candidate'
 
   return (
@@ -44,8 +46,15 @@ export default function ReplacementScore({
       data-score-build={SCORE_V2_BUILD}
       data-score-v2="1"
       data-sidegrade={score.sidegrade ? 'true' : 'false'}
+      data-missing-current={score.missingCurrent ? 'true' : 'false'}
       aria-label="Replacement Score"
     >
+      {score.banner ? (
+        <p className="replacement-score-banner" role="status">
+          {score.banner}
+        </p>
+      ) : null}
+
       <header className="replacement-score-head">
         <div>
           <p className="replacement-score-kicker">Replacement Score</p>
@@ -60,15 +69,16 @@ export default function ReplacementScore({
           {score.dialDiff && !score.incomplete ? (
             <p className="replacement-score-diff-line">{score.dialDiff}</p>
           ) : null}
+          {score.dialCurrent && !score.incomplete ? (
+            <p className="replacement-score-current-line">{score.dialCurrent}</p>
+          ) : null}
         </div>
         {rank != null ? (
           <span className="replacement-score-rank-lg">#{rank}</span>
         ) : null}
       </header>
 
-      <p className="replacement-score-current-name">
-        Current: {score.currentName || 'Score incomplete: current vehicle not entered'}
-      </p>
+      <p className="replacement-score-current-name">Current: {curName}</p>
       <p className="replacement-score-candidate-name">Candidate: {candName}</p>
 
       <table className="score-v2-table" aria-label="Score categories">
@@ -118,9 +128,11 @@ export default function ReplacementScore({
           <tr className="score-v2-totals">
             <th scope="row">Total</th>
             <td>
-              {score.incomplete
-                ? score.incompleteLabel
-                : `${Number(score.currentTotal).toFixed(1)} / ${score.pointsPossible}`}
+              {score.missingCurrent
+                ? STATUS.NOT_ENTERED
+                : score.incomplete
+                  ? score.incompleteLabel
+                  : `${Number(score.currentTotal).toFixed(1)} / ${score.pointsPossible}`}
             </td>
             <td>
               {score.incomplete
@@ -131,16 +143,15 @@ export default function ReplacementScore({
           <tr className="score-v2-difference">
             <th scope="row">Difference</th>
             <td colSpan={2}>
-              {score.incomplete || score.difference == null
-                ? score.incompleteLabel || ''
-                : `${score.difference > 0 ? '+' : ''}${Number(score.difference).toFixed(1)}`}
+              {score.missingCurrent
+                ? ''
+                : score.incomplete || score.difference == null
+                  ? score.incompleteLabel || ''
+                  : `${score.difference > 0 ? '+' : ''}${Number(score.difference).toFixed(1)}`}
             </td>
           </tr>
         </tfoot>
       </table>
-
-      {/* curName kept for a11y context */}
-      <span className="sr-only">{curName}</span>
     </section>
   )
 }

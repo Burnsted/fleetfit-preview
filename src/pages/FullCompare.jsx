@@ -69,6 +69,7 @@ export default function FullCompare() {
   const ranked = rankUnitsByReplacementScore(units, {
     currentMiles: currentMilesForScore(intake, pkg),
     intake,
+    pkg,
   })
   const candidates = ranked.map(({ unit, score }, index) => ({
     unit,

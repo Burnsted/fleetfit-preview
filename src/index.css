@@ -3015,6 +3015,32 @@ img { max-width: 100%; display: block; }
   text-align: center;
   white-space: nowrap;
 }
+.score-dial-current {
+  display: block;
+  margin-top: 1px;
+  font-size: 0.52rem;
+  font-weight: 600;
+  line-height: 1.2;
+  color: rgba(255, 255, 255, 0.55);
+  text-align: center;
+  white-space: nowrap;
+}
+.replacement-score-banner {
+  margin: 0 0 10px;
+  padding: 8px 10px;
+  border-radius: 8px;
+  background: rgba(15, 20, 25, 0.06);
+  border: 1px solid rgba(15, 20, 25, 0.1);
+  font-size: 0.84rem;
+  font-weight: 600;
+  color: rgba(15, 20, 25, 0.78);
+}
+.replacement-score-current-line {
+  margin: 2px 0 0;
+  font-size: 0.78rem;
+  font-weight: 600;
+  color: rgba(15, 20, 25, 0.5);
+}
 .score-v2-table {
   width: 100%;
   border-collapse: collapse;

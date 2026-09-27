@@ -42,7 +42,6 @@ export default function WorkCompare({ current, candidates, title, packageId }) {
           </div>
         ))}
       </div>
-      <p className="work-compare-note">Dash = not on file.</p>
     </section>
   )
 }

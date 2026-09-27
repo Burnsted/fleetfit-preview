@@ -449,6 +449,34 @@ export const PACKAGES = [
     trade: 'Electrical',
     /** Demo FACT scaffold for Life Delta vs current non-EV work vehicle */
     currentMileage: 48000,
+    /**
+     * CLEARED Pages bar — Example current vehicle (c_ + f_ CSV only).
+     * Labeled in UI; used when intake has no current vehicle.
+     */
+    currentVehicle: {
+      label: 'Example current vehicle',
+      year: 2018,
+      make: 'Ford',
+      model: 'Transit-250',
+      engine: '3.7L V6',
+      drivetrain: '4x2',
+      miles: 48000,
+      roof: 'high roof',
+    },
+    /** Demo job inputs when intake is empty (home → package). */
+    jobDefaults: {
+      trade: 'Electrical',
+      dailyMiles: 120,
+      loadLb: 543,
+      loadNote:
+        'Adrian Steel ELE-FTMR148B electrical mid-roof upfit 542.73 lb → 543 lb load (FACT). Cargo weight not entered.',
+      loadUrl:
+        'https://industrialladder.com/Adrian-ELE-FTMR148B-Electrical-Package-FTM148/',
+      crew: 2,
+      crewNote: 'INF: electrician plus helper',
+      tows: false,
+      shopCity: 'Vero Beach',
+    },
     unitCount: 6,
     statedCountNote: '~4 vans stated',
     workDayNote:
