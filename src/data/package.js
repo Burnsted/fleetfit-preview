@@ -82,7 +82,7 @@ const ELECTRICAL_UNITS = [
       detail: 'Recall check not run in this preview. NHTSA lookup is a production stub.',
     },
     chargingFit: {
-      label: 'Strong day range',
+      label: 'Long day range',
       detail: 'Long-range WT · shop L2 + rare DC fast covers 100+ mi service days with margin.',
     },
     tradeFit: {
@@ -90,8 +90,8 @@ const ELECTRICAL_UNITS = [
       detail: 'Crew cab WT with payload headroom for toolboxes and wire reels.',
     },
     fitScore: {
-      band: 'strong match',
-      reason: 'Strong match for longer coastal runs and heavier stock days.',
+      band: 'route match',
+      reason: 'Matches longer coastal runs and heavier stock days.',
     },
     openItems: [
       'Confirm service-body lead time if not included',
@@ -180,7 +180,7 @@ const ELECTRICAL_UNITS = [
     },
     tradeFit: {
       label: 'Van volume',
-      detail: 'Standing height for shelving; good for wire / fixture stock.',
+      detail: 'Standing height for shelving; fits wire / fixture stock.',
     },
     fitScore: {
       band: 'not enough data',
@@ -222,7 +222,7 @@ const ELECTRICAL_UNITS = [
       detail: 'Recall check not run in this preview. NHTSA lookup is a production stub.',
     },
     chargingFit: {
-      label: 'Strong day range',
+      label: 'Long day range',
       detail: 'Standard-range Elevation · shop L2 covers coastal service days with margin.',
     },
     tradeFit: {
@@ -454,7 +454,7 @@ export const PACKAGES = [
     matchNote:
       'Package matched from placeholder stock to the intake profile. Vehicle prices shown are listing asks only — buyer’s fee appears only at checkout.',
     packageFit: {
-      band: 'Good package if…',
+      band: 'Package notes',
       detail:
         'OEM pack kWh on file · recalls Not checked per stock ID · ~4 vans stated',
     },
@@ -493,7 +493,7 @@ export const PACKAGES = [
     matchNote:
       'Package matched from placeholder stock. Listing asks only — buyer’s fee appears only at checkout. No fee $ or % on this screen.',
     packageFit: {
-      band: 'Good package if…',
+      band: 'Package notes',
       detail:
         'OEM pack kWh on file · tow rating for dual-axle enclosed cargo must be verified · no fee $',
     },

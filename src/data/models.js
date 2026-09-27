@@ -30,7 +30,7 @@ function workBlurb(make, model) {
   const key = `${make} ${model}`
   const blurbs = {
     'Ford F-150 Lightning':
-      'Familiar full-size work truck packaging with onboard power and a usable frunk for jobsite tools. Strong fit for trades that already run F-150s and need a documented pack report.',
+      'Familiar full-size work truck packaging with onboard power and a usable frunk for jobsite tools. Fits trades that already run F-150s and need a documented pack report.',
     'Chevrolet Silverado EV':
       'Work-trim electric pickup with large usable packs and fleet-friendly upfit paths. Built for routes that need range, payload, and a true service body — not lifestyle trim.',
     'GMC Sierra EV':
@@ -101,26 +101,26 @@ export function getModels() {
       stats: {
         rangeMi: {
           value: typical(ranges),
-          best: ranges.length ? Math.max(...ranges) : null,
+          max: ranges.length ? Math.max(...ranges) : null,
           caption: 'Rated / sticker-class range across listed units (mi)',
           footnote: 'From listing ratedRange fields; EPA/sticker class as provided by seller.',
         },
         payloadLb: {
           value: typical(payloads),
-          best: payloads.length ? Math.max(...payloads) : null,
+          max: payloads.length ? Math.max(...payloads) : null,
           caption: 'Payload capacity (lb)',
           footnote: 'From listing payload fields on this model.',
         },
         sohPct: {
           value: sohs.length ? Math.round(sohs.reduce((a, b) => a + b, 0) / sohs.length) : null,
-          best: sohs.length ? Math.max(...sohs) : null,
+          max: sohs.length ? Math.max(...sohs) : null,
           missing: sohs.length < m.listings.length,
-          caption: 'Usable pack — typical / best across listings',
+          caption: 'Usable pack — typical across listings',
           footnote: 'From listing pack readings when present. Units without a reading show Incomplete Data on the listing.',
         },
         gvwrLb: {
           value: typical(gvwrs),
-          best: gvwrs.length ? Math.max(...gvwrs) : null,
+          max: gvwrs.length ? Math.max(...gvwrs) : null,
           caption: 'Gross vehicle weight rating (lb)',
           footnote: 'From listing gvwr. Tow ratings are omitted when not present in seed data.',
         },

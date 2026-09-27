@@ -13,7 +13,7 @@ function StatBlock({ value, unit, caption, incomplete }) {
   if (incomplete) {
     return (
       <div className="model-stat incomplete">
-        <div className="model-stat-num">—</div>
+        <div className="model-stat-num">Not published</div>
         <div className="model-stat-cap">Incomplete Data · {caption}</div>
       </div>
     )
@@ -128,11 +128,7 @@ export default function Model() {
           <StatBlock
             value={s.sohPct.value}
             unit="%"
-            caption={
-              s.sohPct.best != null
-                ? `${s.sohPct.caption} (best ${s.sohPct.best}%)`
-                : s.sohPct.caption
-            }
+            caption={s.sohPct.caption}
             incomplete={s.sohPct.value == null}
           />
           <StatBlock

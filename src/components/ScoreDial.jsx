@@ -1,6 +1,6 @@
 import { SCORE_V2_BUILD } from '../data/scoreV2Rubric'
 
-export const SCORE_UI_BUILD = 'score-ui-dial-v2-20260927'
+export const SCORE_UI_BUILD = 'score-ui-dial-v2-20260927-1330'
 
 /**
  * CLEARED Score UI dial — right of pricing.
@@ -46,13 +46,13 @@ export default function ScoreDial({
     : incomplete
       ? 'is-incomplete'
       : pct >= 0.7
-        ? 'is-strong'
+        ? 'is-high'
         : pct >= 0.5
           ? 'is-mid'
           : 'is-low'
 
   const label = incomplete
-    ? 'Open Replacement Score — incomplete'
+    ? 'Open Replacement Score (incomplete)'
     : `Open Replacement Score ${displaySafe} of ${pp}${rank != null ? `, rank ${rank}` : ''}`
 
   const interactive = typeof onOpen === 'function'

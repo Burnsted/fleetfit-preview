@@ -1,8 +1,7 @@
 /**
  * CLEARED Inventory freshness + full option rank · 2026-09-26 ~11:40
- * Supersedes best-of-only body-mix shortlist.
  * Full available truck + van options, Replacement Score high → low.
- * No Best Truck / Best Van / Best fit / Worst fit labels — dial + order only.
+ * Dial + order only — no ordinal chrome labels.
  */
 import {
   rankUnitsByReplacementScore,
@@ -10,8 +9,8 @@ import {
 } from './replacementScore'
 
 /** CLEARED inventory freshness + full option rank · Score v2 stamp */
-export const BODY_MIX_BUILD = 'score-v2-rank-20260927-1300'
-export const CLEARED_SHIP = 'score-v2-20260927-1300'
+export const BODY_MIX_BUILD = 'score-v2-rank-20260927-1330'
+export const CLEARED_SHIP = 'score-v2-20260927-1330'
 
 export function bodyClassOf(unit) {
   if (!unit) return null
@@ -54,7 +53,7 @@ function compareBoosted(a, b, intake) {
 /**
  * Full option coverage after HF-1 / HF-3.
  * One slot per distinct listing identity (unit id) — all eligible truck + van options.
- * Ordered Replacement Score high → low. No best-of shortlist. No Best* labels.
+ * Ordered Replacement Score high → low.
  */
 export function composeRecommendationSet(units, ctx = {}, options = {}) {
   const intake = ctx.intake
@@ -136,8 +135,5 @@ export function composeRecommendationSet(units, ctx = {}, options = {}) {
     missingBodyNote,
     hasFreshMy,
     intakeBody: intake?.body || '',
-    // Legacy keys cleared — no Best* chrome
-    bestTruck: null,
-    bestVan: null,
   }
 }

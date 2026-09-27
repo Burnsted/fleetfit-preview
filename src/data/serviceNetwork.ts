@@ -107,22 +107,22 @@ export function nearestService(
       url: RIVIAN_MOBILE_SERVICE?.url || null,
     }
   }
-  let best: ServiceLocation | null = null
-  let bestMi: number | null = null
+  let nearest: ServiceLocation | null = null
+  let nearestMi: number | null = null
   for (const loc of rivianCenters) {
     const mi = loc.roadMi[shopCity]
     if (mi == null) continue
-    if (bestMi == null || mi < bestMi) {
-      bestMi = mi
-      best = loc
+    if (nearestMi == null || mi < nearestMi) {
+      nearestMi = mi
+      nearest = loc
     }
   }
   return {
-    location: best,
-    miles: bestMi,
+    location: nearest,
+    miles: nearestMi,
     shopCity,
     mobile: RIVIAN_MOBILE_SERVICE,
-    url: best?.url || RIVIAN_MOBILE_SERVICE?.url || null,
+    url: nearest?.url || RIVIAN_MOBILE_SERVICE?.url || null,
   }
 }
 

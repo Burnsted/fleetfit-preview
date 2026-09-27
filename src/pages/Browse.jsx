@@ -211,7 +211,7 @@ export default function Browse() {
       <section>
         <div className="results-toolbar">
           <div className="results-count">
-            <strong>{results.length}</strong> of {LISTINGS.length} trucks
+            <span className="results-count-em">{results.length}</span> of {LISTINGS.length} trucks
             {q ? <> matching “{q}”</> : null}
           </div>
         </div>

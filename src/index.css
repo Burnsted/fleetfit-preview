@@ -371,7 +371,7 @@ img { max-width: 100%; display: block; }
   position: static;
 }
 .results-count { font-size: 0.9rem; color: var(--text-muted); font-weight: 400; }
-.results-count strong { color: var(--text); font-weight: 600; }
+.results-count-em { color: var(--text); font-weight: 600; }
 .sort-wrap { margin-left: auto; display: flex; align-items: center; gap: 8px; }
 .sort-wrap label { font-size: 0.75rem; color: var(--text-dim); font-weight: 400; letter-spacing: 0.04em; text-transform: uppercase; }
 .sort-wrap select {
@@ -446,9 +446,9 @@ img { max-width: 100%; display: block; }
 .pill-seller-dealer { background: #fff; color: var(--text-muted); border: 1px solid var(--border-strong); }
 .pill-seller-fleet { background: var(--green-bg); color: var(--green); border: 1px solid rgba(26,127,75,0.3); }
 .pill-seller-upfitter { background: var(--amber-bg); color: var(--amber); border: 1px solid rgba(196,122,0,0.3); }
-.pill-value-Strong { background: var(--green-bg); color: var(--green); }
-.pill-value-Fair { background: var(--amber-bg); color: var(--amber); }
-.pill-value-Stretched { background: var(--orange-bg); color: var(--orange); }
+.pill-value-at { background: var(--green-bg); color: var(--green); }
+.pill-value-near { background: var(--amber-bg); color: var(--amber); }
+.pill-value-above { background: var(--orange-bg); color: var(--orange); }
 .pill-value-Incomplete { background: var(--amber-bg); color: var(--amber); }
 .pill-incomplete { background: var(--amber-bg); color: var(--amber); border: 1px solid rgba(196,122,0,0.35); }
 
@@ -525,10 +525,10 @@ img { max-width: 100%; display: block; }
   color: var(--cyan);
   background: var(--cyan-bg);
 }
-.meta-chip strong {
+.meta-chip-em {
   color: var(--text); font-weight: 600; margin-left: 3px;
 }
-.meta-chip.ev-chip strong { color: var(--cyan); }
+.meta-chip.ev-chip .meta-chip-em { color: var(--cyan); }
 .card-actions {
   display: flex; flex-wrap: wrap; gap: 10px;
   margin-top: 14px;
@@ -748,9 +748,9 @@ img { max-width: 100%; display: block; }
 .work-value-banner .band {
   font-size: 1.05rem; font-weight: 700;
 }
-.band-Strong { color: var(--green); }
-.band-Fair { color: var(--amber); }
-.band-Stretched { color: var(--orange); }
+.band-at { color: var(--green); }
+.band-near { color: var(--amber); }
+.band-above { color: var(--orange); }
 .band-incomplete-data { color: var(--amber); }
 
 .cta-sticky {
@@ -850,7 +850,7 @@ img { max-width: 100%; display: block; }
   display: grid; grid-template-columns: 1fr 1fr; gap: 4px 10px;
   font-size: 0.78rem; color: var(--text-muted); font-weight: 400;
 }
-.card-meta-grid strong { color: var(--text); font-weight: 600; }
+.card-meta-grid .meta-chip-em { color: var(--text); font-weight: 600; }
 
 /* Sort dropdown panel (inline under chrome) */
 .sort-panel {
@@ -3759,6 +3759,6 @@ img { max-width: 100%; display: block; }
 .stack-card-body-tag {
   color: var(--text-dim);
 }
-.stack-card.is-best-of-body {
+.stack-card.is-body-highlight {
   box-shadow: inset 0 0 0 1px rgba(61, 214, 198, 0.22);
 }

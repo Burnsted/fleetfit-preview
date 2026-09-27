@@ -203,8 +203,8 @@ function fuellyFor(year: number, make: string, model: string) {
       mpg: Number(m[2]),
     }))
     if (all.length) {
-      const best = all.reduce((a, b) => (b.mpg > a.mpg ? b : a))
-      return { mpg: best.mpg, url: v.alt_mpg_source_url, label: v.alt_mpg_label, modelKey: v.model }
+      const topMpg = all.reduce((a, b) => (b.mpg > a.mpg ? b : a))
+      return { mpg: topMpg.mpg, url: v.alt_mpg_source_url, label: v.alt_mpg_label, modelKey: v.model }
     }
     return { mpg: null, url: v.alt_mpg_source_url || null, label: v.alt_mpg_label || null, modelKey: v.model }
   }

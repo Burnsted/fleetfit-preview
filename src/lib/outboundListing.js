@@ -4,7 +4,7 @@
  * Never invent URLs. Dead / unknown → plain "Seller listing not available".
  */
 
-export const OUTBOUND_LISTING_BUILD = 'score-v2-20260927-1300'
+export const OUTBOUND_LISTING_BUILD = 'score-v2-20260927-1330'
 export const SELLER_LISTING_UNAVAILABLE = 'Seller listing not available'
 
 /**

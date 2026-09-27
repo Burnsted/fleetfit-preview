@@ -20,7 +20,10 @@ function formatPrice(listing) {
 
 function valuePillClass(band) {
   if (band === 'Incomplete Data') return 'pill pill-incomplete'
-  return `pill pill-value-${band}`
+  if (band === 'At comps') return 'pill pill-value-at'
+  if (band === 'Near comps') return 'pill pill-value-near'
+  if (band === 'Above comps') return 'pill pill-value-above'
+  return 'pill pill-incomplete'
 }
 
 export default function ListingCard({ listing }) {
@@ -65,24 +68,24 @@ export default function ListingCard({ listing }) {
 
         <div className="card-chip-row">
           <span className="meta-chip ev-chip">
-            Battery<strong>{spec.usableKwh?.known ? spec.usableKwh.text : NOT_PUBLISHED}</strong>
+            Battery<span className="meta-chip-em">{spec.usableKwh?.known ? spec.usableKwh.text : NOT_PUBLISHED}</span>
           </span>
           <span className="meta-chip ev-chip">
-            Range<strong>{spec.range?.known ? spec.range.text : NOT_PUBLISHED}</strong>
+            Range<span className="meta-chip-em">{spec.range?.known ? spec.range.text : NOT_PUBLISHED}</span>
           </span>
           <span className="meta-chip">
-            Payload<strong>{spec.payload?.known ? spec.payload.text : NOT_PUBLISHED}</strong>
+            Payload<span className="meta-chip-em">{spec.payload?.known ? spec.payload.text : NOT_PUBLISHED}</span>
           </span>
           <span className="meta-chip">
-            Tow<strong>{spec.tow?.known ? spec.tow.text : NOT_PUBLISHED}</strong>
+            Tow<span className="meta-chip-em">{spec.tow?.known ? spec.tow.text : NOT_PUBLISHED}</span>
           </span>
           <span className="meta-chip">
             {isVan ? 'Cargo' : 'Bed'}
-            <strong>
+            <span className="meta-chip-em">
               {isVan
                 ? (spec.cargo?.known ? spec.cargo.text : NOT_PUBLISHED)
                 : (spec.bed?.known ? spec.bed.text : NOT_PUBLISHED)}
-            </strong>
+            </span>
           </span>
         </div>
 

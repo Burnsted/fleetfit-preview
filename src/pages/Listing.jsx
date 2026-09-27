@@ -16,7 +16,10 @@ const GALLERY_LABELS = [
 
 function bandClass(band) {
   if (band === 'Incomplete Data') return 'band-incomplete-data'
-  return `band-${band}`
+  if (band === 'At comps') return 'band-at'
+  if (band === 'Near comps') return 'band-near'
+  if (band === 'Above comps') return 'band-above'
+  return 'band-incomplete-data'
 }
 
 export default function Listing() {
@@ -55,7 +58,12 @@ export default function Listing() {
         <section className="hero-block" aria-labelledby="listing-title">
           <div style={{ display: 'flex', flexWrap: 'wrap', gap: 8, marginBottom: 8 }}>
             <span className={`pill pill-seller-${listing.sellerType}`}>{listing.sellerType}</span>
-            <span className={listing.workValue === 'Incomplete Data' ? 'pill pill-incomplete' : `pill pill-value-${listing.workValue}`}>
+            <span className={
+              listing.workValue === 'At comps' ? 'pill pill-value-at'
+                : listing.workValue === 'Near comps' ? 'pill pill-value-near'
+                  : listing.workValue === 'Above comps' ? 'pill pill-value-above'
+                    : 'pill pill-incomplete'
+            }>
               Work Value: {listing.workValue}
             </span>
             <span className="pill" style={{ background: 'var(--bg)', border: '1px solid var(--border)', color: 'var(--text-muted)' }}>
