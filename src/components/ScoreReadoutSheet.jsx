@@ -3,7 +3,7 @@ import { createPortal } from 'react-dom'
 import ReplacementScore from './ReplacementScore'
 import UnitSpecsBlock from './UnitSpecsBlock'
 
-export const SCORE_DIAL_TAP_BUILD = 'score-dial-tap-v2-20260927-1330'
+export const SCORE_DIAL_TAP_BUILD = 'score-dial-tap-v2-f-20260927-1400'
 
 /**
  * CLEARED dial-tap surface — full Replacement Score readout + quiet OEM Specs.

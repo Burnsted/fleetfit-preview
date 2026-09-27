@@ -303,7 +303,9 @@ const ELECTRICAL_UNITS = [
     sellerLabel: 'Dealer listing (anonymized)',
     titleStatus: 'Clean',
     cpo: false,
+    warrantyType: 'consumer',
     warrantyProgram: 'consumer',
+    upfit: 'none',
     battery: {
       status: 'Reported',
       soh: null,

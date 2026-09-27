@@ -9,8 +9,8 @@ import {
 } from './replacementScore'
 
 /** CLEARED inventory freshness + full option rank · Score v2 stamp */
-export const BODY_MIX_BUILD = 'score-v2-rank-20260927-1330'
-export const CLEARED_SHIP = 'score-v2-20260927-1330'
+export const BODY_MIX_BUILD = 'score-v2-rank-f-20260927-1400'
+export const CLEARED_SHIP = 'score-v2-f-20260927-1400'
 
 export function bodyClassOf(unit) {
   if (!unit) return null

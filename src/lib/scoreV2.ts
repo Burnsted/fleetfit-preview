@@ -37,8 +37,17 @@ import {
 import {
   lookupCommercialExclusion,
   RIVIAN_COMMERCIAL_WARRANTY,
+  RIVIAN_CONSUMER_WARRANTY,
+  normalizeWarrantyType,
+  normalizeUpfit,
+  lookupCapacityFloor,
+  GM_FLEET_POWERTRAIN,
+  type WarrantyType,
+  type UpfitKind,
 } from '../data/warrantyRules'
 import { nearestService } from '../data/serviceNetwork'
+import { lookupBaselinePayload } from '../data/baselinePayload'
+import { lookupSeats, isGasCargoVanModel } from '../data/seatCounts'
 import { mergeOemSpecs } from '../data/oemSpecs'
 
 export { SCORE_V2_BUILD }
@@ -61,8 +70,11 @@ export type CurrentVehicleInput = {
   engine: string | null
   drivetrain: string | null
   miles: number | null
-  warrantyProgram?: 'consumer' | 'commercial' | null
+  cab?: string | null
+  warrantyType?: WarrantyType | null
+  warrantyProgram?: 'consumer' | 'commercial' | 'commercial_fleet' | null
   oemWrittenConfirmation?: boolean
+  fleetAccount?: boolean
 }
 
 export type CellResult = {
@@ -204,6 +216,7 @@ function scorePayload(
   cargoNeed: number | null,
   url: string | null,
   isVan: boolean,
+  payloadReasonLabel: string | null = null,
 ) {
   if (loadLb == null) {
     return cell(null, {
@@ -214,15 +227,18 @@ function scorePayload(
   }
   if (payloadLb == null) {
     return cell(null, {
-      status: STATUS.notScored('payload'),
-      reason: STATUS.notScored('payload'),
+      status: STATUS.notScored('payload for this config'),
+      reason: STATUS.notScored('payload for this config'),
       url,
       counted: false,
     })
   }
   const ratio = payloadLb / loadLb
   let pts = clampScore(lin(ratio, PAYLOAD_ANCHORS))
-  let reason = `${payloadLb.toLocaleString()} lb rated payload vs ${loadLb.toLocaleString()} lb load (ratio ${ratio.toFixed(2)})`
+  const head =
+    payloadReasonLabel ||
+    `${payloadLb.toLocaleString()} lb rated payload`
+  let reason = `${head} vs ${loadLb.toLocaleString()} lb load (ratio ${ratio.toFixed(2)})`
   if (isVan && cargoNeed != null) {
     if (cargoCuFt == null) {
       reason += ' · cargo volume Not published'
@@ -236,7 +252,12 @@ function scorePayload(
   return cell(pts, { reason, url })
 }
 
-function scoreCab(seats: number | null, crew: number | null) {
+function scoreCab(
+  seats: number | null,
+  crew: number | null,
+  seatReasonLabel: string | null = null,
+  vanNotPublished = false,
+) {
   if (crew == null) {
     return cell(null, {
       status: STATUS.notScored('crew', 'entered'),
@@ -245,9 +266,12 @@ function scoreCab(seats: number | null, crew: number | null) {
     })
   }
   if (seats == null) {
+    const status = vanNotPublished
+      ? 'Not scored: seating not published for this van'
+      : STATUS.notScored('seating')
     return cell(null, {
-      status: STATUS.notScored('seating'),
-      reason: STATUS.notScored('seating'),
+      status,
+      reason: status,
       counted: false,
     })
   }
@@ -256,8 +280,9 @@ function scoreCab(seats: number | null, crew: number | null) {
   if (short <= 0) pts = 10
   else if (short === 1) pts = 4
   else pts = 0
+  const head = seatReasonLabel || `${seats} seats`
   return cell(pts, {
-    reason: `${seats} seats vs crew ${crew}`,
+    reason: `${head} vs crew ${crew}`,
   })
 }
 
@@ -353,7 +378,12 @@ function scoreReliability(
   return cell(pts, { reason, url })
 }
 
-function scoreService(make: string, shopCity: string | null, isCandidate: boolean) {
+function scoreService(
+  make: string,
+  shopCity: string | null,
+  isCandidate: boolean,
+  model: string | null = null,
+) {
   if (!shopCity) {
     return cell(null, {
       status: STATUS.notScored('shop location', 'entered'),
@@ -361,7 +391,18 @@ function scoreService(make: string, shopCity: string | null, isCandidate: boolea
       counted: false,
     })
   }
-  const n = nearestService(make, shopCity)
+  const n = nearestService(make, shopCity, {
+    model,
+    isEvCandidate: isCandidate,
+  })
+  if (n.notScoredStatus) {
+    return cell(null, {
+      status: n.notScoredStatus,
+      reason: n.notScoredStatus,
+      counted: false,
+      url: n.url,
+    })
+  }
   if (n.miles == null) {
     const field = isCandidate
       ? 'service distance'
@@ -373,11 +414,15 @@ function scoreService(make: string, shopCity: string | null, isCandidate: boolea
     })
   }
   let pts = clampScore(lin(n.miles, SERVICE_MI_ANCHORS))
-  let reason = `Nearest ${make} service: ${n.location?.location || 'Not published'}, ${n.miles} mi road (OSRM)`
+  let reason = `${n.location?.location || 'Not published'}, ${n.miles} road mi from 32960 (OSRM)`
+  if (/rivian/i.test(make)) {
+    reason = `Nearest Rivian service: ${n.location?.location || 'Not published'}, ${n.miles} road mi from 32960 (OSRM)`
+  }
   if (n.mobile?.available) {
     pts = Math.min(10, pts + 2)
-    reason += ` · ${make} Mobile Service available (+2)`
+    reason += ` · Rivian Mobile Service available (+2)`
   }
+  if (n.reasonExtra) reason += ` · ${n.reasonExtra}`
   return cell(pts, { reason, url: n.url })
 }
 
@@ -391,9 +436,11 @@ function scoreLongevity(opts: {
   powerMi: number | null
   make: string
   model: string
-  warrantyProgram: 'consumer' | 'commercial' | null
+  warrantyType: WarrantyType | null
   oemWrittenConfirmation: boolean
   warrantyUrl: string | null
+  upfit: UpfitKind
+  fleetAccount?: boolean
 }) {
   if (opts.miles == null) {
     return cell(null, {
@@ -402,15 +449,41 @@ function scoreLongevity(opts: {
       counted: false,
     })
   }
-  const exclusion = lookupCommercialExclusion(opts.make, opts.model)
-  const commercialOk =
-    opts.warrantyProgram === 'commercial' || opts.oemWrittenConfirmation === true
 
-  if (exclusion && !commercialOk) {
+  // Amazon EDV
+  if (/rivian/i.test(opts.make) && /\bedv\b/i.test(opts.model)) {
+    return cell(null, {
+      status: 'Not scored: EDV warranty terms not published',
+      reason: 'Not scored: EDV warranty terms not published',
+      counted: false,
+    })
+  }
+
+  const exclusion = lookupCommercialExclusion(opts.make, opts.model)
+  const isRivianWork =
+    Boolean(exclusion) &&
+    opts.warrantyType !== 'commercial_fleet' &&
+    !opts.oemWrittenConfirmation
+
+  // Warranty start = Jan 1 of model year (INFERENCE)
+  const start = new Date(`${opts.year}-01-01T00:00:00Z`)
+  const end = new Date(`${SCORE_DATE}T00:00:00Z`)
+  const yearsUsed = Math.max(0, yearsBetween(start, end))
+
+  if (isRivianWork) {
+    const wYr = opts.battYr ?? RIVIAN_CONSUMER_WARRANTY.battWarrantyYr
+    const wMi = opts.battMi ?? RIVIAN_CONSUMER_WARRANTY.battWarrantyMi
+    const yearsLeft = Math.max(0, wYr - yearsUsed)
+    const milesLeft = Math.max(0, wMi - opts.miles)
+    const floor = lookupCapacityFloor(opts.make, opts.model, opts.year)
+    let reason = `At risk, not counted: Rivian consumer warranty does not apply if "used primarily for business or commercial purposes" (NVLW Guide Rev ${RIVIAN_CONSUMER_WARRANTY.revision}, eff. ${RIVIAN_CONSUMER_WARRANTY.effective}, p${RIVIAN_CONSUMER_WARRANTY.pageExclusion}). Nominal consumer coverage left: ${yearsLeft.toFixed(2)} yr / ${(milesLeft / 1000).toFixed(1)}k mi. Counts only on Rivian Commercial warranty or written Rivian confirmation.`
+    if (floor) {
+      reason += ` · Battery capacity floor ${floor.pct}% (${floor.label})`
+    }
     return cell(0, {
       atRisk: true,
-      reason: `At risk: ${opts.make} consumer warranty excludes vehicles used primarily for business or commercial purposes (Warranty Guide eff. ${exclusion.effective}, Exclusions). 0 warranty points unless on Rivian Commercial warranty or Rivian confirms in writing.`,
-      url: exclusion.url,
+      reason,
+      url: exclusion?.url || RIVIAN_CONSUMER_WARRANTY.url,
       counted: true,
     })
   }
@@ -418,11 +491,24 @@ function scoreLongevity(opts: {
   let wYr = opts.isEv ? opts.battYr : opts.powerYr
   let wMi = opts.isEv ? opts.battMi : opts.powerMi
   let url = opts.warrantyUrl
+  let programNote = ''
 
-  if (opts.warrantyProgram === 'commercial' && /rivian/i.test(opts.make)) {
+  if (opts.warrantyType === 'commercial_fleet' && /rivian/i.test(opts.make)) {
     wYr = RIVIAN_COMMERCIAL_WARRANTY.battWarrantyYr
     wMi = RIVIAN_COMMERCIAL_WARRANTY.battWarrantyMi
     url = RIVIAN_COMMERCIAL_WARRANTY.url
+    programNote = 'Commercial 8 yr/100k'
+  }
+
+  // GM qualifying fleet powertrain 5/100k
+  if (
+    !opts.isEv &&
+    opts.fleetAccount &&
+    /chevrolet|gmc|gm/i.test(opts.make)
+  ) {
+    wYr = GM_FLEET_POWERTRAIN.yr
+    wMi = GM_FLEET_POWERTRAIN.mi
+    programNote = 'GM fleet powertrain 5 yr/100k'
   }
 
   if (wYr == null || wMi == null) {
@@ -434,20 +520,52 @@ function scoreLongevity(opts: {
     })
   }
 
-  // Warranty start = Jan 1 of model year (INFERENCE)
-  const start = new Date(`${opts.year}-01-01T00:00:00Z`)
-  const end = new Date(`${SCORE_DATE}T00:00:00Z`)
-  const yearsUsed = Math.max(0, yearsBetween(start, end))
   const yearsLeft = Math.max(0, wYr - yearsUsed)
   const milesLeft = Math.max(0, wMi - opts.miles)
   const frac = Math.min(yearsLeft / wYr, milesLeft / wMi)
   let pts = clampScore(10 * frac)
 
-  // Degradation modifier: only model-specific FACT — none in A/B today (class/anecdote never trigger)
-  // Gas/diesel over 150k → −2
+  // Upfit deduction for Rivian commercial_fleet
+  if (
+    opts.warrantyType === 'commercial_fleet' &&
+    /rivian/i.test(opts.make) &&
+    (opts.upfit === 'other' || opts.upfit === 'unknown')
+  ) {
+    pts = clampScore(pts - RIVIAN_COMMERCIAL_WARRANTY.upfitDeduction)
+    programNote +=
+      opts.upfit === 'unknown'
+        ? '; upfit −3 (installer not documented)'
+        : '; upfit −3 (not Rivian Preferred Upfit Partner)'
+  }
+
+  // Degradation modifier: only model-specific FACT — none in A/B today
   if (!opts.isEv && opts.miles > 150000) pts = clampScore(pts - 2)
 
-  const reason = `${opts.isEv ? 'battery/drivetrain' : 'powertrain'} ${wYr} yr/${(wMi / 1000).toFixed(0)}k · start Jan 1 ${opts.year} (INFERENCE) · ${yearsLeft.toFixed(2)} yr left, ${(milesLeft / 1000).toFixed(1)}k mi left`
+  const floor = opts.isEv
+    ? lookupCapacityFloor(opts.make, opts.model, opts.year)
+    : null
+
+  let reason =
+    programNote ||
+    `${opts.isEv ? 'battery/drivetrain' : 'powertrain'} ${wYr} yr/${(wMi / 1000).toFixed(0)}k`
+  if (opts.warrantyType === 'commercial_fleet' && /rivian/i.test(opts.make)) {
+    reason = `Commercial ${wYr} yr/${(wMi / 1000).toFixed(0)}k: min(${yearsLeft.toFixed(2)}/${wYr} = ${(yearsLeft / wYr).toFixed(2)}, ${(milesLeft / 1000).toFixed(1)}k/${(wMi / 1000).toFixed(0)}k = ${(milesLeft / wMi).toFixed(2)})`
+    if (opts.upfit === 'none') reason += '; no upfit'
+    else if (opts.upfit === 'other' || opts.upfit === 'unknown') {
+      reason +=
+        opts.upfit === 'unknown'
+          ? '; upfit −3 (installer not documented)'
+          : '; upfit −3 (not Rivian Preferred Upfit Partner)'
+    }
+  } else {
+    reason = `${opts.isEv ? 'battery/drivetrain' : 'powertrain'} ${wYr} yr/${(wMi / 1000).toFixed(0)}k · start Jan 1 ${opts.year} (INFERENCE) · ${yearsLeft.toFixed(2)} yr left, ${(milesLeft / 1000).toFixed(1)}k mi left`
+    if (!opts.isEv && yearsLeft <= 0) {
+      reason = `powertrain ${wYr} yr/${(wMi / 1000).toFixed(0)}k expired; ≤150k mi, no modifier`
+    }
+  }
+  if (floor) {
+    reason += ` · Battery capacity floor ${floor.pct}% (${floor.label})`
+  }
   return cell(pts, { reason, url })
 }
 
@@ -651,8 +769,11 @@ export function parseCurrentFromIntake(
         engine: engine || parsed.engine,
         drivetrain: drivetrain || parsed.drivetrain,
         miles,
-        warrantyProgram: (cur.warrantyProgram as 'consumer' | 'commercial') || null,
+        cab: (cur.cab as string) || (intake?.cab as string) || null,
+        warrantyType:
+          normalizeWarrantyType(cur.warrantyType ?? cur.warrantyProgram) || null,
         oemWrittenConfirmation: Boolean(cur.oemWrittenConfirmation),
+        fleetAccount: Boolean(cur.fleetAccount),
       }
     }
   }
@@ -664,8 +785,11 @@ export function parseCurrentFromIntake(
     engine,
     drivetrain,
     miles,
-    warrantyProgram: (cur.warrantyProgram as 'consumer' | 'commercial') || null,
+    cab: (cur.cab as string) || (intake?.cab as string) || null,
+    warrantyType:
+      normalizeWarrantyType(cur.warrantyType ?? cur.warrantyProgram) || null,
     oemWrittenConfirmation: Boolean(cur.oemWrittenConfirmation),
+    fleetAccount: Boolean(cur.fleetAccount),
   }
 }
 
@@ -779,7 +903,12 @@ export function scoreReplacementV2(
     seats: num(merged.seats),
     battWarrantyYr: num(merged.battWarrantyYr),
     battWarrantyMi: num(merged.battWarrantyMi),
-    warrantyProgram: (merged.warrantyProgram as 'consumer' | 'commercial') || 'consumer',
+    warrantyProgram:
+      normalizeWarrantyType(
+        merged.warrantyType ?? merged.warrantyProgram,
+      ) === 'commercial_fleet'
+        ? 'commercial'
+        : 'consumer',
     retained3yrPct: [],
     recallCampaignsMy: num(merged.recallCampaignsMy),
     recallUrl: null,
@@ -836,32 +965,88 @@ export function scoreReplacementV2(
   )
   const p1 = pairCells(c1curFinal, c1cand)
 
-  // 2 Payload
+  // 2 Payload — section F low-end rule for baselines; listing/OEM low for candidates
+  const curCab = currentIn.cab || (intake?.cab as string) || null
+  const listingPayload = num(merged.payload) ?? num(merged.payloadLb)
+  const baselinePayloadHit = baseline
+    ? lookupBaselinePayload({
+        year: baseline.year,
+        make: baseline.make,
+        model: baseline.model,
+        engine: baseline.engine,
+        drivetrain: baseline.drivetrain,
+        cab: curCab,
+      })
+    : null
   const c2cur = baseline
-    ? scorePayload(baseline.payloadLb, job.loadLb, null, job.cargoCuFt, null, isVanCur)
-    : cell(null, { status: STATUS.notScored('current payload'), reason: STATUS.notScored('current payload'), counted: false })
-  // Force gap message for gas pickup with null payload
-  const c2curFixed =
-    baseline && baseline.payloadLb == null
-      ? cell(null, {
-          status: STATUS.notScored('current payload'),
-          reason: STATUS.notScored('current payload'),
-          counted: false,
-        })
-      : c2cur
+    ? scorePayload(
+        baselinePayloadHit?.payloadLb ?? baseline.payloadLb,
+        job.loadLb,
+        null,
+        job.cargoCuFt,
+        baselinePayloadHit?.url ?? null,
+        isVanCur,
+        baselinePayloadHit?.reasonLabel ?? null,
+      )
+    : cell(null, {
+        status: STATUS.notScored('current payload'),
+        reason: STATUS.notScored('current payload'),
+        counted: false,
+      })
+  // Candidate: explicit listing/VIN payload wins; else CSV/OEM (low figure)
+  const unitListingPayload =
+    num(unit.payload) ??
+    num((unit as { payloadLb?: unknown }).payloadLb) ??
+    null
+  const candPayload = unitListingPayload ?? cand.payloadLb ?? listingPayload ?? null
+  const candPayloadLabel =
+    unitListingPayload != null
+      ? `${unitListingPayload.toLocaleString()} lb (listing)`
+      : candPayload != null
+        ? `${candPayload.toLocaleString()} lb`
+        : null
   const c2cand = scorePayload(
-    cand.payloadLb ?? null,
+    candPayload,
     job.loadLb,
     num(merged.cargoCuFt),
     job.cargoCuFt,
     cand.payloadSourceUrl ?? null,
     isVanCand,
+    candPayloadLabel,
   )
-  const p2 = pairCells(c2curFixed, c2cand)
+  const p2 = pairCells(c2cur, c2cand)
 
-  // 3 Cab
-  const c3cur = scoreCab(baseline?.seats ?? null, job.crew)
-  const c3cand = scoreCab(cand.seats ?? null, job.crew)
+  // 3 Cab / seats — f_seat_counts.csv
+  const curSeatHit = baseline
+    ? lookupSeats({
+        year: baseline.year,
+        make: baseline.make,
+        model: baseline.model,
+        cab: curCab,
+        listingSeats: null,
+        side: 'current',
+      })
+    : null
+  const candSeatHit = lookupSeats({
+    year: num(merged.year) || cand.year || 0,
+    make: String(cand.make || merged.make),
+    model: String(cand.model || merged.model),
+    cab: (merged.cab as string) || null,
+    listingSeats: num(merged.seats),
+    side: 'candidate',
+  })
+  const c3cur = scoreCab(
+    curSeatHit?.seats ?? baseline?.seats ?? null,
+    job.crew,
+    curSeatHit?.reasonLabel ?? null,
+    baseline ? isGasCargoVanModel(baseline.make, baseline.model) : false,
+  )
+  const c3cand = scoreCab(
+    candSeatHit?.seats ?? cand.seats ?? null,
+    job.crew,
+    candSeatHit?.reasonLabel ?? null,
+    isGasCargoVanModel(String(cand.make || merged.make), String(cand.model || merged.model)),
+  )
   const p3 = pairCells(c3cur, c3cand)
 
   // 4 Tow
@@ -917,19 +1102,29 @@ export function scoreReplacementV2(
   )
   const p6 = pairCells(c6cur, c6cand)
 
-  // 7 Service
+  // 7 Service — f_service_distance.csv at Vero Beach
   const c7cur = baseline
-    ? scoreService(baseline.make, job.shopCity, false)
+    ? scoreService(baseline.make, job.shopCity, false, baseline.model)
     : cell(null, {
         status: STATUS.notScored('current service distance'),
         reason: STATUS.notScored('current service distance'),
         counted: false,
       })
-  const c7cand = scoreService(String(cand.make || merged.make), job.shopCity, true)
+  const c7cand = scoreService(
+    String(cand.make || merged.make),
+    job.shopCity,
+    true,
+    String(cand.model || merged.model),
+  )
   const p7 = pairCells(c7cur, c7cand)
 
-  // 8 Longevity — current miles used for BOTH (candidate uses its own listing miles)
+  // 8 Longevity — warrantyType consumer | commercial_fleet
   const candMiles = num(merged.mileage)
+  const candWarrantyType: WarrantyType =
+    normalizeWarrantyType(
+      merged.warrantyType ?? merged.warrantyProgram ?? cand.warrantyProgram,
+    ) || (/rivian/i.test(String(cand.make || merged.make)) ? 'consumer' : 'consumer')
+  const candUpfit = normalizeUpfit(merged.upfit ?? 'none')
   const c8cur = baseline
     ? scoreLongevity({
         isEv: false,
@@ -941,9 +1136,11 @@ export function scoreReplacementV2(
         powerMi: baseline.powertrainWarrantyMi,
         make: baseline.make,
         model: baseline.model,
-        warrantyProgram: null,
+        warrantyType: currentIn.warrantyType || null,
         oemWrittenConfirmation: false,
         warrantyUrl: baseline.warrantySourceUrl,
+        upfit: 'none',
+        fleetAccount: Boolean(currentIn.fleetAccount),
       })
     : cell(null, { status: STATUS.notScored('warranty terms'), reason: STATUS.notScored('warranty terms'), counted: false })
   const c8cand = scoreLongevity({
@@ -956,14 +1153,12 @@ export function scoreReplacementV2(
     powerMi: null,
     make: String(cand.make || merged.make),
     model: String(cand.model || merged.model),
-    warrantyProgram: (merged.warrantyProgram as 'consumer' | 'commercial') || cand.warrantyProgram || 'consumer',
+    warrantyType: candWarrantyType,
     oemWrittenConfirmation: Boolean(merged.oemWrittenConfirmation),
     warrantyUrl: cand.warrantySourceUrl ?? null,
+    upfit: candUpfit,
   })
-  // Longevity: if current miles missing, both drop; if candidate miles missing for cand — still need pair rule
-  let p8 = pairCells(c8cur, c8cand)
-  // Special: At risk stays counted — pairCells already keeps both if both counted
-  // If current expired at 0 and candidate At risk at 0, both counted ✓
+  const p8 = pairCells(c8cur, c8cand)
 
   // 9 Energy
   const c9cur = baseline
@@ -1092,8 +1287,11 @@ export function rankUnitsByScoreV2(
     })
 }
 
-/** §6 validation helper */
-export function scoreV2ValidationExample() {
+/** §6 validation helper — section F re-run */
+export function scoreV2ValidationExample(
+  warrantyType: WarrantyType = 'consumer',
+  upfit: UpfitKind = 'none',
+) {
   const intake = {
     job: {
       dailyMiles: 120,
@@ -1109,6 +1307,7 @@ export function scoreV2ValidationExample() {
       engine: 'EcoBoost 3.5L',
       drivetrain: '4x4',
       miles: 120000,
+      // cab not entered
     },
     rolePreset: 'Supervisor / team lead',
   }
@@ -1121,7 +1320,8 @@ export function scoreV2ValidationExample() {
     mileage: 41446,
     askPrice: 53343,
     bodyType: 'truck',
-    warrantyProgram: 'consumer',
+    warrantyType,
+    upfit,
   }
   return scoreReplacementV2(unit, { intake })
 }

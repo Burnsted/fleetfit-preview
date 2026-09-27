@@ -2,12 +2,31 @@
 
 **Ted:** ~8:18 AM ET + ~8:32 AM ET (numeric-only lock) via Jarvis: `ROLE-FIT-MIDSIZE-REDLINE-2026-09-27.md`
 **Rubric draft:** `SCORE-V2-RUBRIC-DRAFT-2026-09-27.md` (~8:50 AM ET). This file supersedes it.
-**Sources:** Sherlock `SOURCES-V2-2026-09-27.md` + `data-v2/*.csv`. A (R1T), B (preview EVs), C (gas baselines) and D (FL prices) are all merged as of ~8:55 AM ET.
+**Sources:** Sherlock `SOURCES-V2-2026-09-27.md` + `data-v2/*.csv`. A (R1T), B (preview EVs), C (gas baselines), D (FL prices) and F (gap fill, ~9:15 AM ET) are all merged. Also `RIVIAN-COMMERCIAL-WARRANTY-2026-09-27.md` + `data-v2/rivian_warranty_compare.csv`.
 **Host:** `Burnsted/fleetfit-preview` PR #1 draft · **no merge**
 **Replaces:** v1 weighted model (`CLEARED-FOR-WOZ.md` weights, `REPLACEMENT-SCORE-PRODUCT-BAR.md`, the `specUnknown` cap, the v1 category list in `SCORE-CATEGORIES-DRAFT.md`).
 **Keeps:** `CLEARED-FOR-WOZ-SCORE-UI.md` (dial right of price) · `CLEARED-FOR-WOZ-SCORE-DIAL-TAP.md` (tap → readout) · `oem-specs/CLEARED-FOR-WOZ-OEM-SPECS.md` ("Not published", never dashes; `src/data/oemSpecs.ts`).
 
 All point anchors below are **INFERENCE** (Steve's thresholds) until Ted overrides them. The data values they read are FACT or INF exactly as labeled in SOURCES-V2.
+
+
+## Addendum 2026-09-27 (section F) · Steve · ~9:25 AM ET
+**Ted:** ~9:17 AM ET follow-up. **Inputs:** SOURCES-V2 §F + `data-v2/f_baseline_payload.csv`, `f_seat_counts.csv`, `f_service_distance.csv`, `f_warranty_commercial_use.csv`, `f_gm_capacity_floor.csv`; `RIVIAN-COMMERCIAL-WARRANTY-2026-09-27.md` + `data-v2/rivian_warranty_compare.csv`. Pre-F copy: `notes/CLEARED-FOR-WOZ-SCORE-V2.pre-F.bak.md`.
+
+**Changelog**
+1. **Cat 2 payload** now reads `f_baseline_payload.csv`. Order of use: the listing's trim/VIN payload, then the **low end** of the matching per-trim/config range (labeled), then the OEM range minimum. An OEM **max-only** row (e.g. F-150 3.5EB 3,230 lb) is a best-case ceiling and is never scored. Ted lock: this low-end rule applies to both columns and overrides the global conflict rule for payload.
+2. **Cat 3 seats** now read `f_seat_counts.csv`. R1T and the preview pickups are 5 (FACT, third party). BrightDrop 600 and ProMaster EV are 2 (INFERENCE, labeled). Gas cargo-van seats are UNKNOWN unless the listing or VIN states them, so those rows show `Not scored`. If the cab is not entered, the lowest seat count across matching cabs is used.
+3. **Cat 7 service** now reads `f_service_distance.csv` (road miles from ZIP 32960; OSRM = INFERENCE, addresses FACT): Ford 4.1 · Ram 4.9 · Chevrolet 2.6 · Toyota 5.1 · Tesla 65.0 · Rivian 107.2. Mobile service still adds +2, and only Rivian has it sourced. GM EV candidates show `Not scored` until an EV-certified dealer is sourced, because GM requires one for EV warranty repair (FACT).
+4. **Cat 8 warranty:**
+   - New per-listing `warrantyType` = `consumer` | `commercial_fleet`.
+   - A used R1T defaults to `consumer` unless the seller documents a fleet sale.
+   - Consumer R1T in work use = **0** and shows **"At risk, not counted"**.
+   - Fleet-sold or ex-fleet R1T and Rivian Commercial Van: remaining = min(8 yr − age, 100k − odometer), minus 3 for an upfit not done by a Rivian Preferred Upfit Partner.
+   - Rivian is the **only** OEM with a commercial-use exclusion (F.4 FACT). Ford, GM, Ram, Tesla and Toyota score normally.
+   - GM qualifying fleets get 5 yr/100k powertrain.
+   - Battery capacity floors are added to the reason line.
+5. **§6 worked example re-run** with F data. Points possible rose from 60 to 90. Result: **F-150 56.9/90 · consumer R1T 51.0/90 (−5.9) · fleet-sold R1T on Commercial warranty 55.1/90 (−1.8)**. Nothing was tuned.
+6. **§7 checklist** updated (items 5, 7, 13 revised; 15–18 added).
 
 ---
 
@@ -30,7 +49,7 @@ All point anchors below are **INFERENCE** (Steve's thresholds) until Ted overrid
    - `Not used by this job`: the job does not use this capability (e.g. Tow when the current vehicle doesn't tow). The row drops out of both totals.
    - `Not scored: <field> not published` (or `Not scored: <field> not entered` for a missing intake field): the input is missing for **either** vehicle. The row drops out of both totals, so both columns always share the same points possible.
    - `Score incomplete: key data missing`: replaces both totals and the difference when points possible < 60. Category rows still render.
-   - `At risk`: longevity only (§3 cat 8). The row stays in the totals and scores 0 warranty points.
+   - `At risk, not counted`: longevity only (§3 cat 8, consumer R1T in work use). The row stays in the totals and scores 0 warranty points.
 7. **No hard rejects.** HF-3 (salvage / title / warranty-void on listing or title FACT) stays a severe flag exactly as today. The commercial-use warranty rule (cat 8) is a scoring rule, not HF-3.
 8. **Soft taper:** every anchor is linear between points (except the two step rules in cats 3 and 4). No cliffs, nothing hidden, sidegrades stay visible and rank by total. The v1 Life Delta category is retired in v2. Wear is now carried by cat 8 (warranty miles left) and cat 6. The "Similar miles" soft label on cards stays and does not affect the score.
 9. **Unknown display:** any spec value that is null renders **"Not published"**, never `—`, on cards, stat tiles, facts and inside readout reasons.
@@ -67,16 +86,31 @@ All point anchors below are **INFERENCE** (Steve's thresholds) until Ted overrid
 - Reason template: `314 mi EPA x 0.7 = 220 mi usable vs 120 mi/day (ratio 1.83)` + EPA link.
 
 **Cat 2 — Payload / cargo fit**
-- Ratio = published payload ÷ `job.loadLb`. Anchors: ≤0.8 → 0 · 0.9 → 4 · 1.0 → 7 · ≥1.25 → 10.
-- Fields: `payloadLb` (a_r1t_specs.csv `payload_lb`, b_preview_ev_specs.csv `payload_lb`, oemSpecs.ts). Values quoted as "up to" or "as low as" (Lightning) → apply the conflict rule (candidate: "as low as" figure).
-- Vans with `job.cargoCuFt`: cu ft ratio with the same anchors, and the category score = min(payload score, volume score). If cu ft is not published → payload ratio only, and the reason says "cargo volume Not published".
-- **Gap:** SOURCES-V2 has **no payload for any 2016–2020 gas pickup** (C has mpg / tank / warranty only). Until Sherlock adds it, any gas-pickup current vehicle shows `Not scored: current payload not published`.
-- Reason template: `1,764 lb rated payload vs 1,000 lb load (ratio 1.76)` + Rivian payload link.
+- Ratio = payload used ÷ `job.loadLb`. Anchors: ≤0.8 → 0 · 0.9 → 4 · 1.0 → 7 · ≥1.25 → 10.
+- **Payload used (Ted lock, 2026-09-27 addendum). Same order for both columns:**
+  1. The listing's stated trim/VIN payload (door-jamb or window-sticker value), when the listing has one. Label: "listing".
+  2. Otherwise the **low end** of the matching `config_trim_range` / `oem_config` rows in `f_baseline_payload.csv` for year + make + model + engine + drive (+ cab when entered). Label: `lowest per-trim value for <config> (cars.com, base-equipped trim)` or `(OEM catalog)`.
+  3. Otherwise the `oem_engine_range` minimum. `proxy` rows are used only with the INFERENCE label in the reason.
+  4. An **`oem_engine_max`-only** row is a best-case ceiling (e.g. F-150 3.5EB 3,230 lb: HD Payload Pkg build) and is **never** scored. With nothing else available → `Not scored: payload for this config not published`.
+  - Candidate EVs use the same order against `payloadLb` (a_r1t_specs.csv, b_preview_ev_specs.csv, oemSpecs.ts). "Up to" and "as low as" values (Lightning) take the low figure.
+  - Conflicts flagged in F.1 use the OEM value (Colorado 2020 1,578; Silverado 2019–20 OEM range; Tacoma 2017 1,620 not used).
+- Vans with `job.cargoCuFt`: a cu ft ratio with the same anchors, and the score = min(payload score, volume score). Cu ft not published → payload ratio only, and the reason says "cargo volume Not published".
+- Remaining gaps (from F.6): Transit-250 2016 and Transit 250/350 2020 3.7L (not offered) → `Not scored`. ProMaster 2500 2016–17 uses a diesel-trim proxy → INFERENCE label.
+- Reason template: `1,485 lb (lowest per-trim value, 2018 F-150 3.5EB 4x4, cab not entered; cars.com base-equipped trim) vs 1,000 lb load (ratio 1.49)` + link.
 
 **Cat 3 — Cab / crew fit** (step rule)
 - Seats ≥ `job.crew` → 10 · one seat short → 4 · two or more short → 0. Surplus seats are neutral.
-- Field: **new** `seats` in oemSpecs.ts (OEM-sourced per year/trim/cab) and on the current-vehicle record. Do not derive seats from the cab name.
-- **Gap:** no seat counts in SOURCES-V2 for R1T, preview EVs or baselines → `Not scored: seating not published` until Sherlock adds them.
+- Field: `seats`, read from `f_seat_counts.csv` (baselines by cab; EV rows; R1T 5).
+  - The listing or VIN seat count wins when stated.
+  - Cab not entered → use the **lowest** seat count across the model's cabs for that MY (e.g. F-150: Regular 3 / SuperCab 5 / SuperCrew 5 → 3).
+  - A seat range within a cab (Silverado Crew 5–6) → use the low value.
+- **Gas cargo vans (Transit-250/350, ProMaster 2500):** seats are UNKNOWN unless the listing or VIN states them → `Not scored: seating not published for this van`. The cars.com values (1 / 3 / 5 / wagon counts) are not used.
+- **EV vans:**
+  - BrightDrop 600 = 2 (INFERENCE from the FACT equipment list: driver + passenger jump seat).
+  - ProMaster EV = 2 (INFERENCE: spec-sheet jump seat).
+  - E-Transit: C&D/Edmunds say 2 and cars.com says 1. Global conflict rule applies: as a candidate it scores on **1** unless the listing states 2, and the reason shows both.
+  - The INFERENCE label appears in the reason text.
+- Reason template: `5 seats (cars.com) vs crew 2` · `3 seats (lowest across F-150 cabs; cab not entered) vs crew 2`.
 
 **Cat 4 — Tow fit** (only if the current vehicle tows)
 - `job.tows = no` → `Not used by this job` for both. Surplus tow rating is never scored.
@@ -100,21 +134,58 @@ All point anchors below are **INFERENCE** (Steve's thresholds) until Ted overrid
 
 **Cat 7 — Service network distance (+ mobile service)**
 - Road miles from `job.shopCity` to the nearest OEM-authorized service location for that make. Anchors: ≤15 → 10 · 30 → 7 · 60 → 4 · ≥100 → 0. **+2 (cap 10)** if the OEM's mobile service covers that area (sourced FACT).
-- Fields: `serviceLocations[]` with road miles per origin + `mobileService {available, url}`. Rivian: a_r1t_service.csv (Vero Beach → Orlando 108.0 mi, Fort Pierce → Miramar 117.4, West Palm Beach → Miramar 63.1; mobile service anywhere in the US = FACT). A Rivian Space is not service.
-- **Gap:** ICE dealer distances are UNKNOWN (SOURCES-V2 E #11, "assumed local, unverified"). Until Sherlock sources them, every gas current vehicle shows `Not scored: current service distance not published`. The same applies to Ford/GM/Ram/Tesla EV candidates (EV-certified dealer distance not sourced).
-- Reason template: `Nearest Rivian service: Orlando, 108 mi road (OSRM) · Rivian Mobile Service available (+2)`.
+- **Vero Beach (ZIP 32960 centroid), `f_service_distance.csv` `road_mi`.** OSRM route = INFERENCE; address = FACT.
+
+  | Make | Nearest service | Road mi | Points |
+  |---|---|---|---|
+  | Chevrolet | Dyer Chevrolet | 2.6 | 10 |
+  | Ford | Mullinax Ford | 4.1 | 10 |
+  | Ram | Vatland CDJR | 4.9 | 10 |
+  | Toyota | Toyota of Vero Beach | 5.1 | 10 |
+  | Tesla | Merritt Island | 65.0 | 3.5 |
+  | Rivian | Orlando | 107.2 | 0 + 2 mobile = 2.0 |
+
+- Fort Pierce and West Palm Beach: only Rivian is sourced (a_r1t_service.csv: 117.4 / 63.1 mi). Other makes at those origins → `Not scored: service distance not published for <city>`.
+- Mobile service: **Rivian only** (FACT). Ford, GM, Ram, Toyota and Tesla mobile service are UNKNOWN, so no +2.
+- **EV candidates at franchised dealers:**
+  - GM EVs (Silverado EV, Sierra EV, Hummer EV, BrightDrop): the 2024 Chevrolet EV warranty requires EV warranty repairs at an EV-certified dealer (FACT), and Dyer's certification is UNKNOWN → `Not scored: EV-certified dealer distance not published`.
+  - Ford EVs (Lightning, E-Transit): score on the Mullinax distance. The reason says "EV certification not verified".
+- A Rivian Space (West Palm Beach) is retail, not service. The planned Tesla Port St. Lucie site is not open (INFERENCE) and is not used.
+- Reason template: `Nearest Rivian service: Orlando, 107.2 road mi from 32960 (OSRM) · Rivian Mobile Service available (+2)` · `Mullinax Ford, Vero Beach: 4.1 road mi (OSRM)`.
 
 **Cat 8 — Longevity (warranty remaining + degradation modifier)**
-- Warranty points = 10 x min(years left ÷ original years, miles left ÷ original miles). EVs use the battery/drivetrain warranty; gas/diesel use the powertrain warranty.
-- Warranty start = the in-service date if the listing or VIN states it. Otherwise **Jan 1 of the model year** (INFERENCE), labeled in the reason. Years left are computed to the scoring date.
-- Modifiers: EV with **model-specific FACT** capacity data at this mileage 80–90% → −2, <80% → −4. Anecdotes, class-level data and listing SOH never trigger it, and SOH is never shown (internal-only lock stands). Gas/diesel over 150k mi → −2. Floor 0.
-- **Commercial-use exclusion rule (NEW, Sherlock FACT, Rivian warranty guide):** the Rivian R1T/R1S consumer New Vehicle Limited Warranty (guide effective 2026-08-13, Exclusions) does not apply if "the vehicle or product is used primarily for business or commercial purposes." For a consumer R1T going into fleet work:
-  - Warranty-remaining points = **0**. The cell shows `At risk` next to the number (e.g. `0.0 · At risk`).
-  - Reason: `At risk: Rivian consumer warranty excludes vehicles used primarily for business or commercial purposes (Warranty Guide eff. 2026-08-13, Exclusions). 0 warranty points unless on Rivian Commercial warranty or Rivian confirms in writing.` + guide link.
-  - Exceptions (score normally): `warrantyProgram = 'commercial'` (Rivian Commercial guide eff. 2024-12-31: 8 yr / 100k mi, 70% floor), or `oemWrittenConfirmation = true` (set only from a document Ted/ops attaches; default false).
-  - Unit program unknown → treat as consumer (used R1T listings are consumer units).
-  - **Generalized:** any OEM consumer warranty with a **sourced** commercial-use exclusion gets the same treatment for candidates and current vehicles. Data: per-OEM warranty entry `commercialUseExclusion {excluded: true, quote, url, effective}`. Today only Rivian is sourced. Ford/GM/Ram/Tesla warranties score normally until Sherlock sources an exclusion (no assumption either way).
-- Fields: `battWarrantyYr/Mi`, `powertrainWarrantyYr/Mi`, `warrantyProgram`, `oemWrittenConfirmation`, `commercialUseExclusion`. Files: a_r1t_warranty.csv, b_preview_ev_specs.csv (`batt_warranty_*`), c_baseline_warranty.csv, a_r1t_degradation.csv / b_degradation_class.csv (context only; class-level data never triggers the modifier).
+- Warranty points = 10 x min(years left ÷ original years, miles left ÷ original miles). EVs use battery/drivetrain; gas/diesel use powertrain. Floor 0.
+- Warranty start = the in-service / first-delivery date if the listing or VIN states it. Otherwise **Jan 1 of the model year** (INFERENCE), labeled. Years left are computed to the scoring date.
+- Modifiers: EV with **model-specific FACT** capacity data at this mileage 80–90% → −2, <80% → −4. Anecdotes, class-level data and listing SOH never trigger it, and SOH is never shown. Gas/diesel over 150k mi → −2.
+- **Per-listing `warrantyType` (new): `consumer` | `commercial_fleet`.**
+  - A used R1T defaults to **`consumer`** unless the seller documents a Rivian Fleet Sales / commercial sale (invoice, warranty record or listing text naming the Commercial warranty).
+  - Rivian Commercial Van 500/700 is always `commercial_fleet` (fleet-only product, FACT).
+  - Amazon-DSP EDVs → `Not scored: EDV warranty terms not published` (DSP guide not retrieved).
+- **Consumer R1T in work use** (every FleetFit job counts as work use):
+  - Warranty points = **0**. The cell shows **`0.0 · At risk, not counted`**. The row stays in both totals.
+  - Reason: `At risk, not counted: Rivian consumer warranty does not apply if "used primarily for business or commercial purposes" (NVLW Guide Rev 15, eff. 2026-08-13, p16). Nominal consumer coverage left: <yr> yr / <mi> mi. Counts only on Rivian Commercial warranty or written Rivian confirmation.` + guide link.
+  - Exception: `oemWrittenConfirmation = true`, set only from a document Ted/ops attaches (default false). Then score the consumer terms normally.
+- **Fleet-sold / ex-fleet R1T, Rivian Commercial Van** (`commercial_fleet`):
+  - Terms: Rivian Commercial NVLW Guide Rev 3, eff. 2024-12-31, p11. 8 yr / 100,000 mi battery + drivetrain, 70% floor (FACT; the van's floor is INFERENCE via the same guide).
+  - Remaining = min(8 yr − age, 100k − odometer). Age runs from the first commercial delivery date, or Jan 1 of MY if unstated (INFERENCE).
+  - Points = 10 x min((8 − age) ÷ 8, (100,000 − odometer) ÷ 100,000).
+  - **Upfit deduction (INFERENCE amount): −3** when the listing shows an upfit/modification not done by a Rivian Preferred Upfit Partner. The guide (p13) does not cover damage from such mods. Upfit not mentioned → no deduction. Upfit present but installer unknown → −3 and the reason says "installer not documented".
+  - Field `upfit` = `none` | `preferred_partner` | `other` | `unknown`.
+- **Other OEMs score normally.** F.4 (FACT) found **no** express-warranty commercial-use exclusion for Ford, GM (Chevy/GMC), Ram/FCA, Tesla or Toyota. Ford and Ram disclaim only *implied* warranties for business use, which is not scored. Rivian is the only OEM with `commercialUseExclusion`. The ProMaster EV booklet was not located; it scores normally per Ted.
+- **GM qualifying fleets:** a GM gas current vehicle or candidate documented as bought under a qualifying fleet account uses **5 yr / 100k** powertrain (FACT, GM 2019 Chevrolet and 2023 GMC booklets) instead of 5/60k. All 2016–20 units are past 5 years, so they still score 0.
+- **Battery capacity floor** (shown in the reason line, not scored separately). Field `capacityFloorPct` + label:
+
+  | OEM / models | Floor | Label / source |
+  |---|---|---|
+  | Rivian consumer and Commercial | 70% | FACT |
+  | Ford BEV | 70% (65% cutaway / chassis cab) | FACT, Ford BEV guide |
+  | Chevrolet EV (2024 MY booklet) | 75% | FACT, `f_gm_capacity_floor.csv` |
+  | 2026 Silverado EV | 75% | INFERENCE (2024 booklet carried forward; F.5 lists it UNKNOWN) |
+  | GMC Sierra EV, HUMMER EV, BrightDrop 600 | 75% | INFERENCE |
+  | Tesla | 70% | FACT |
+  | Ram ProMaster EV | Not published | — |
+
+- Fields: `battWarrantyYr/Mi`, `powertrainWarrantyYr/Mi`, `warrantyType`, `upfit`, `oemWrittenConfirmation`, `commercialUseExclusion`, `capacityFloorPct`. Files: a_r1t_warranty.csv, rivian_warranty_compare.csv, f_warranty_commercial_use.csv, f_gm_capacity_floor.csv, b_preview_ev_specs.csv, c_baseline_warranty.csv.
 - 2025 R1T "Large Plus": warranty UNKNOWN → `Not scored: warranty terms not published`.
 
 **Cat 9 — Energy ¢/mi (FL prices)**
@@ -148,73 +219,107 @@ All point anchors below are **INFERENCE** (Steve's thresholds) until Ted overrid
 - No adjectives and no comparisons in words. The difference column does the comparing.
 
 ### 5. Data wiring (no new sources; everything from SOURCES-V2)
-- Extend `src/data/oemSpecs.ts` entries (candidates) with: `epaKwhPer100mi`, `seats` (null until sourced), `towLbNoWdh`, `battWarrantyYr/Mi`, `warrantyProgram`, `retained3yrPct[]`, `recallCampaignsMy`, `failurePatterns[]`, `maintClass`.
-- New `src/data/baselineVehicles.ts` (current vehicles, from C): `epaCombMpg`, `epaFuel`, `fuelTankGal`, `powertrainWarrantyYr/Mi`, `retained3yrPct[]`, `recallCampaignsMy`, `failurePatterns[]`, `maintClass`; `payloadLb`, `towLb`, `seats`, service distance = null (render "Not published").
-- New `src/data/serviceNetwork.ts` (a_r1t_service.csv), `src/data/warrantyRules.ts` (commercial-use exclusion entries), `src/data/flEnergyPrices.ts` (D), `src/data/scoreV2Rubric.ts` (anchors above as constants, each tagged `INFERENCE`).
+- Extend `src/data/oemSpecs.ts` entries (candidates) with: `epaKwhPer100mi`, `seats` (f_seat_counts.csv), `towLbNoWdh`, `battWarrantyYr/Mi`, `capacityFloorPct`, `retained3yrPct[]`, `recallCampaignsMy`, `failurePatterns[]`, `maintClass`.
+- New `src/data/baselineVehicles.ts` (current vehicles, from C): `epaCombMpg`, `epaFuel`, `fuelTankGal`, `powertrainWarrantyYr/Mi`, `retained3yrPct[]`, `recallCampaignsMy`, `failurePatterns[]`, `maintClass`; `payloadLb` / `payloadBasis` (from f_baseline_payload.csv per §3 cat 2), `seats` (f_seat_counts.csv), `towLb` = null (render "Not published").
+- New `src/data/serviceNetwork.ts` (f_service_distance.csv for Vero Beach 32960, all makes; a_r1t_service.csv for Rivian from Fort Pierce and WPB), `src/data/warrantyRules.ts` (commercial-use exclusion: Rivian only per f_warranty_commercial_use.csv; Rivian consumer vs Commercial terms per rivian_warranty_compare.csv; GM fleet 5/100k; capacity floors per f_gm_capacity_floor.csv), `src/data/flEnergyPrices.ts` (D), `src/data/scoreV2Rubric.ts` (anchors above as constants, each tagged `INFERENCE`).
+- Per-listing fields (listing overlay, not oemSpecs): `warrantyType` (`consumer` | `commercial_fleet`, R1T default `consumer`), `upfit`, `oemWrittenConfirmation`, and the listing payload/seats when stated.
 - Every value carries a `url` in the data file; the readout links it.
 
 ---
 
-## 6. Validation worked example — R1T vs typical 2016–20 gas half-ton (computed from SOURCES-V2, not tuned)
+## 6. Validation worked example — R1T vs typical 2016–20 gas half-ton (re-run with section F, not tuned)
 
-**Job (example intake):** supervisor / team lead · crew 2 · no tow · 120 mi/day · load 1,000 lb · shop Vero Beach · scored 2026-09-27.
-**Current:** 2018 Ford F-150 3.5L EcoBoost 4x4, 10-spd (EPA id 39252: 19 mpg comb, Regular) · 23 gal tank (cars.com default trim) · 120,000 mi.
-**Candidate:** 2022 Rivian R1T Quad Large (the most-listed R1T in our sample, n=10; median 41,446 mi, median ask $53,343). EPA id 44462: 314 mi, 48.1 kWh/100 mi · payload 1,764 lb · 8 yr / 175k battery warranty (consumer). The Quad Large config mapping is INF per A1.
+**Job (example intake, unchanged):** supervisor / team lead · crew 2 · no tow · 120 mi/day · load 1,000 lb · shop Vero Beach 32960 · scored 2026-09-27.
 
-| # | Category | Current: 2018 F-150 3.5EB | Candidate: 2022 R1T Quad Large | Diff |
-|---|---|---|---|---|
-| 1 | Range fit | **10.0**: 23 gal x 19 mpg = 437 mi x 0.7 = 306 mi vs 120 (2.55) | **10.0**: 314 mi EPA x 0.7 = 220 mi vs 120 (1.83) | 0.0 |
-| 2 | Payload / cargo | Not scored: current payload not published | Not scored (R1T 1,764 lb vs 1,000 = 1.76 → would be 10) | drops out |
-| 3 | Cab / crew | Not scored: seating not published | Not scored | drops out |
-| 4 | Tow | Not used by this job | Not used by this job | drops out |
-| 5 | Resale 3-yr | **10.0**: iSeeCars 81.1% (model-level) | **4.4**: Black Book 46.3% (36-mo, % MSRP) · iSeeCars 66.0%; lower used | −5.6 |
-| 6 | Reliability | **0.0**: 19 NHTSA campaigns MY2018 (all engines/bodies; open status not checked) · CSP 21N03 cam phaser | **0.0**: 12 NHTSA campaigns MY2022 (open status not checked) · TSBs RCA-30-22-001-1, RSB-60-22-001-1 | 0.0 |
-| 7 | Service network | Not scored: current service distance not published | Not scored (R1T: Orlando 108 mi → 0 + mobile 2 = 2.0) | drops out |
-| 8 | Longevity | **0.0**: powertrain 5 yr/60k expired (MY2018, 120k mi); ≤150k, no modifier | **0.0 · At risk**: consumer warranty commercial-use exclusion (would be 4.1: 3.26 of 8 yr left, 133.6k of 175k mi left) | 0.0 |
-| 9 | Energy ¢/mi | **2.8**: $4.3679 ÷ 19 = 23.0¢/mi | **9.7**: 48.1 kWh/100 x 11.37¢ = 5.5¢/mi | +6.9 |
-| 10 | Maintenance ¢/mi | **4.1**: AAA 2026 half-ton 11.82¢ (class-level) | **4.9**: AAA 2026 EV pickup 10.79¢ (class-level) | +0.8 |
-| | **Total** | **26.9 / 60** | **29.0 / 60** | **+2.1** |
+**Current:** 2018 Ford F-150 3.5L EcoBoost 4x4, 10-spd (EPA 39252: 19 mpg comb, Regular) · 23 gal tank (cars.com default trim) · 120,000 mi. Cab not entered.
 
-Points possible = 60 (6 scored categories), which exactly meets the 60 floor. One more missing input would make this pair show "Score incomplete". The parentheticals in "Not scored" rows are for Ted/Steve only; they are **not** rendered in the UI.
+**Candidates:**
+- **A:** 2022 Rivian R1T Quad Large, `warrantyType = consumer` (the default). Most-listed R1T in our sample (n=10), 41,446 mi. EPA 44462: 314 mi, 48.1 kWh/100 mi · payload 1,764 lb · 5 seats · 8 yr / 175k consumer battery warranty. The Quad Large mapping is INF per A1.
+- **B:** the same unit spec, fleet-sold: `warrantyType = commercial_fleet` (seller documents a Rivian Fleet Sales sale), `upfit = none`. Everything but cat 8 is identical to A, so B isolates the warranty rule.
 
-**Variant, same job:** 2023 R1T Dual Large 21" (EPA 47000: 352 mi, 43.2 kWh/100 mi; 23,188 median mi) = range 10.0, resale 4.4, reliability 0.0 (8 campaigns), longevity 0.0 At risk, energy 10.0 (4.9¢), maintenance 4.9 → **29.3 / 60 vs 26.9 / 60, +2.4**.
+| # | Category | Current: 2018 F-150 3.5EB | A: R1T consumer | B: R1T fleet-sold (Commercial) | Diff A | Diff B |
+|---|---|---|---|---|---|---|
+| 1 | Range fit | **10.0**: 23 gal x 19 = 437 mi x 0.7 = 306 vs 120 (2.55) | **10.0**: 314 x 0.7 = 220 vs 120 (1.83) | **10.0** | 0.0 | 0.0 |
+| 2 | Payload / cargo | **10.0**: 1,485 lb (lowest per-trim value, 2018 3.5EB 4x4, cab not entered; cars.com) vs 1,000 (1.49). OEM max 3,230 not used (ceiling) | **10.0**: 1,764 lb vs 1,000 (1.76) | **10.0** | 0.0 | 0.0 |
+| 3 | Cab / crew | **10.0**: 3 seats (lowest across F-150 cabs) vs crew 2 | **10.0**: 5 seats (cars.com) vs crew 2 | **10.0** | 0.0 | 0.0 |
+| 4 | Tow | Not used by this job | Not used by this job | Not used by this job | drops out | drops out |
+| 5 | Resale 3-yr | **10.0**: iSeeCars 81.1% | **4.4**: Black Book 46.3% · iSeeCars 66.0%; lower used | **4.4** | −5.6 | −5.6 |
+| 6 | Reliability | **0.0**: 19 NHTSA campaigns MY2018 (open status not checked) · CSP 21N03 | **0.0**: 12 campaigns MY2022 · 2 TSBs | **0.0** | 0.0 | 0.0 |
+| 7 | Service network | **10.0**: Mullinax Ford 4.1 road mi | **2.0**: Rivian Orlando 107.2 mi → 0 + mobile 2 | **2.0** | −8.0 | −8.0 |
+| 8 | Longevity | **0.0**: powertrain 5 yr/60k expired; ≤150k mi, no modifier | **0.0 · At risk, not counted**: consumer exclusion (nominal 3.26 yr / 133.6k mi left) | **4.1**: Commercial 8 yr/100k: min(3.26/8 = 0.41, 58.6k/100k = 0.59); no upfit | 0.0 | +4.1 |
+| 9 | Energy ¢/mi | **2.8**: $4.3679 ÷ 19 = 23.0¢ | **9.7**: 48.1 x 11.37¢ = 5.5¢ | **9.7** | +6.9 | +6.9 |
+| 10 | Maintenance ¢/mi | **4.1**: AAA half-ton 11.82¢ (class-level) | **4.9**: AAA EV pickup 10.79¢ (class-level) | **4.9** | +0.8 | +0.8 |
+| | **Total** | **56.9 / 90** | **51.0 / 90** | **55.1 / 90** | **−5.9** | **−1.8** |
 
-**Honest read (numbers only, for Ted):** under strict sourcing the R1T leads by +2.1 of 60. Energy (+6.9) carries it, and resale (−5.6) offsets most of that. Longevity is 0 for both (the commercial-use exclusion zeroes the R1T's 4.1). Reliability is 0 for both (the no-VIN campaign-count fallback floors both). How the pending inputs would move it:
-- **Service (largest swing):** R1T at Vero Beach = 2.0. If Sherlock sources a Ford dealer ≤15 road mi (unverified today), F-150 = 10 → both /70 → **31.0 vs 36.9, −5.9**. At West Palm Beach the R1T scores 5.7 (Miramar 63.1 mi + mobile).
-- **Resale same basis** (iSeeCars for both: R1T 66.0% → 9.2): +4.8 → **+6.9**.
-- **Rivian Commercial warranty or written OK:** longevity 4.1 → **+6.2**.
-- **Payload / cab:** R1T scores 10 on both; the F-150 also scores 10 if its published payload is ≥1,250 lb and it seats ≥2, which leaves the difference unchanged.
-- **Residential electricity (15.03¢)** instead of commercial: R1T energy 8.7 → −1.0. **EIA weekly gas ($4.217)** instead of AAA: F-150 energy 3.1 → −0.3. **F-150 4x2 (21 mpg):** energy 3.7 → −0.9.
+Nothing is "Not scored" in this pair. Only Tow drops out (Not used by this job), so points possible = 90.
+
+**Extra line, not a table column (same job, sourced inputs):** a fleet-sold **2024 R1T Dual Large 21"** (EPA 47868: 352 mi, 43.2 kWh/100 mi; 2024 median 16,856 mi; 7 campaigns MY2024) scores:
+
+| Range | Payload | Cab | Resale | Reliability | Service | Longevity | Energy | Maintenance | Total | Diff |
+|---|---|---|---|---|---|---|---|---|---|---|
+| 10 | 10 | 10 | 4.4 | 0 | 2.0 | 6.6 (min(5.26/8, 83.1k/100k)) | 10 (4.9¢) | 4.9 | **57.9 / 90** | **+1.0** |
+
+The same 2024 unit on a consumer warranty scores 51.3 / 90 (−5.6). Caveat: Rivian Commercial guide Rev 1 is dated 2023-11-27, so a Commercial-warranty 2022 unit (candidate B) may be rare. Which warranty applied to a 2022 fleet sale is UNKNOWN; B is shown to isolate the rule.
+
+**Honest read (numbers only, for Ted):**
+- With F data the F-150 leads a consumer R1T by 5.9 of 90 and a fleet-sold 2022 R1T by 1.8.
+- Energy (+6.9) is still the R1T's largest category gain.
+- Service (−8.0 at Vero Beach, 107.2 mi to Orlando) and resale (−5.6) outweigh it.
+- The Commercial warranty recovers 4.1 on a 2022 unit and 6.6 on a 2024 unit.
+
+Moves (each applied alone, from the A/B totals):
+- **Resale same basis** (iSeeCars for both, R1T 66.0% → 9.2): +4.8 → A −1.1 · B +3.0.
+- **Shop at West Palm Beach:** R1T service 5.7 (Miramar 63.1 mi + mobile), but Ford WPB distance is not sourced → that pair would show service Not scored.
+- **Residential electricity** (15.03¢): R1T energy 8.7 → −1.0. **EIA weekly gas** ($4.217): F-150 energy 3.1 → −0.3. **Argonne maintenance pair** (6.1 vs 10.1¢): +2.2.
+- **F-150 cab entered as SuperCab 4x4** (2,071 lb, 5 seats): no change (both already 10).
 
 ## 7. Acceptance checklist — Steve Pages bar (live site, hard refresh, record script hash)
 1. [ ] Dial tap opens the v2 readout with **10 category rows** in §3 order, columns **Category | Current | Candidate**.
 2. [ ] The Current column names the current vehicle (year / make / model / engine) from intake or the package. No current vehicle → "Score incomplete: current vehicle not entered", no totals.
 3. [ ] Every number has a one-line reason with the input value(s), arithmetic and a working source link. Spot-check 3 links (EPA, Rivian warranty guide, AAA/EIA).
 4. [ ] Totals row shows `NN.N / PP` for both columns with **the same PP**. Difference is signed (`+`/`−`) to 1 decimal and equals candidate − current of the displayed rounded values.
-5. [ ] Non-towing job: Tow row reads "Not used by this job" in both columns and PP drops by 10 (e.g. `/ 90` when nothing else is missing).
+5. [ ] Non-towing pickup job with section F wired: Tow reads "Not used by this job" in both columns and the totals read **`/ 90`** (no other drop-outs for F-150 / R1T at Vero Beach).
 6. [ ] A missing input reads "Not scored: <field> …" in **both** columns and drops out. With PP < 60 → "Score incomplete: key data missing" and no totals/difference.
-7. [ ] R1T in any package: Longevity shows `0.0 · At risk` with the commercial-use exclusion reason + guide link. HF-3 is not triggered by it, and the unit stays listed.
+7. [ ] R1T with `warrantyType = consumer` (the default): Longevity shows **`0.0 · At risk, not counted`** with the p16 exclusion quote, the nominal coverage left and the guide link. HF-3 is not triggered, and the unit stays listed.
 8. [ ] R1T resale reason shows **both** 46.3% (Black Book) and 66.0% (iSeeCars), with 46.3% used (4.4 pts).
 9. [ ] Energy reasons show the FL price with its as-of date (EIA Jul 2026 commercial 11.37¢; AAA 9/27/26 regular $4.3679), or "Not scored: FL energy price not loaded" if unwired. Vans: Fuelly row labeled INF / not EPA-rated. Transit-350 and non-EPA EVs show Not scored.
 10. [ ] Maintenance reasons include the words "class-level, not model-specific". Vans show Not scored.
 11. [ ] Card: dial right of price shows `NN.N / PP` plus `±N.N vs current` beneath. Candidates are ordered by total (normalized when PP differs). Sidegrades are still visible.
 12. [ ] Zero occurrences on the page of: Best, Worst, Best fit, Worst fit, Worth it, SOH, battery health, FACT pill, better, worse, good, bad, strong, weak. Zero `—` dashes in spec or score cells (text search the DOM).
-13. [ ] Supervisor preset + R1T vs 2018 F-150 3.5EB 4x4 at 120 mi/day, Vero Beach, no tow → **26.9 / 60 vs 29.0 / 60, +2.1** (matches §6 while the §6 gaps stay open).
+13. [ ] Supervisor preset + 2018 F-150 3.5EB 4x4 (cab not entered, 120k mi) at 120 mi/day, 1,000 lb, Vero Beach, no tow:
+    - vs consumer 2022 R1T Quad Large → **56.9 / 90 vs 51.0 / 90, −5.9**
+    - vs the same R1T set to `commercial_fleet` → **55.1 / 90, −1.8**
 14. [ ] PR #1 still **draft**, not merged. The ship note lists the script hash and the per-category R1T vs current points.
+15. [ ] Payload reason for a gas F-150 names the **lowest per-trim** value and its config. The OEM max (3,230 lb for 3.5EB) never appears as the scored value. A listing with a stated payload uses the listing value.
+16. [ ] Service reasons at Vero Beach show the F-row miles: Ford 4.1 · Ram 4.9 · Chevrolet 2.6 · Toyota 5.1 · Tesla 65.0 · Rivian 107.2 (+2 mobile). GM EV candidates show "Not scored: EV-certified dealer distance not published".
+17. [ ] Seats: a gas cargo van without listing/VIN seats shows "Not scored: seating not published for this van". BrightDrop 600 / ProMaster EV reasons show 2 seats with "INFERENCE".
+18. [ ] Longevity reason for Ford / GM / Tesla EVs shows the capacity floor with its label (Ford 70% FACT; Chevrolet 75% FACT; Sierra EV / Hummer / BrightDrop 75% INFERENCE). No "At risk" appears on any non-Rivian unit.
 
 ## Woz
 Quote **this** file in the cloud ship prompt, plus `CLEARED-FOR-WOZ-SCORE-UI.md`, `CLEARED-FOR-WOZ-SCORE-DIAL-TAP.md`, `oem-specs/CLEARED-FOR-WOZ-OEM-SPECS.md`, and SOURCES-V2 + data-v2 as the only data inputs. Ship to `Burnsted/fleetfit-preview` **PR #1 draft only**. Put the data files with source URLs in the diff so Steve can spot-check them. Do not tune anchors. If the §6 numbers don't reproduce, report the per-category points rather than adjusting. Ping Steve + Jarvis with the hard-refresh URL + script hash when live. **No merge.**
 
 ## Open for Ted (override any; defaults above ship until then)
 1. Anchors in cats 1–10 are Steve INFERENCE.
-2. Conflict rule = shrink the candidate's lead (R1T resale 46.3%, not 66.0%).
+2. Conflict rule = shrink the candidate's lead (R1T resale 46.3%, not 66.0%). **Payload and seats use your low-end rule for both columns instead** (2026-09-27 addendum).
 3. Maintenance same-basis = AAA 2026 for both columns (Argonne shown, not scored).
-4. Energy uses FL **commercial** electricity (not residential) and AAA daily gas (not EIA weekly).
-5. Gas vans use Fuelly INF mpg (not "Not scored"). Transit-350 stays Not scored.
+4. Energy uses FL **commercial** electricity and AAA daily gas.
+5. Gas vans use Fuelly INF mpg; Transit-350 stays Not scored.
 6. No-VIN reliability fallback (−2 per MY campaign) floors nearly every truck at 0. A VIN open-recall lookup is the fix.
 7. Unknown warranty start = Jan 1 of the model year.
-8. The 60-point floor is borderline for current gas vehicles until Sherlock adds baseline payload, seats, tow and dealer distance.
-9. Life Delta retired as a category.
-10. Rank normalizes by points possible when PP differs.
+8. Life Delta retired as a category.
+9. Rank normalizes by points possible when PP differs.
+10. **Upfit deduction = −3** (amount is INFERENCE; also applied when the installer is not documented).
+11. **E-Transit seats** score on 1 (cars.com) as a candidate unless the listing says 2.
+12. **GM EV candidates** show service Not scored until an EV-certified dealer is sourced. Ford EVs are scored on the dealer distance with "EV certification not verified".
+13. **2026 Silverado EV 75% floor** is labeled INFERENCE, not FACT. The FACT source is the 2024 Chevrolet EV booklet, and F.5 lists 2026 as UNKNOWN.
 
-**Sherlock asks (to close the §6 gaps):** 2016–20 baseline payload + tow + seats by cab · R1T + preview EV seats · Ford/GM/Ram/Toyota dealer road miles from Vero Beach / Fort Pierce / WPB (plus EV-certified for Lightning/Silverado/Sierra) · commercial-use exclusion check for Ford, GM, Ram, Tesla consumer warranties · FL midgrade price · van-class maintenance ¢/mi.
+**Sherlock asks (remaining):**
+- Ford/Chevy/Ram/Toyota/Tesla service miles from Fort Pierce and West Palm Beach
+- EV-certified status for Dyer Chevrolet and Mullinax Ford
+- OEM mobile service (Ford Pro, GM, Tesla)
+- Gas cargo-van OEM seat counts
+- Tow ratings for the 2016–20 baselines (needed for towing jobs)
+- FL midgrade price
+- Van-class maintenance ¢/mi
+- EDV (DSP) warranty terms
+- ProMaster EV warranty booklet
