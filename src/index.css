@@ -2903,23 +2903,28 @@ img { max-width: 100%; display: block; }
   padding: 4px 8px;
 }
 
-/* CLEARED Score UI dial — right of pricing */
+/* CLEARED Score UI dial — right of pricing (G-final: readable at 390px mobile) */
 .score-dial {
   position: relative;
-  width: 64px;
-  height: 56px;
+  width: 72px;
+  min-height: 72px;
+  height: auto;
   flex: 0 0 auto;
-  display: grid;
-  place-items: center;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: flex-start;
+  padding: 2px 0 0;
   pointer-events: none;
   filter: drop-shadow(0 2px 6px rgba(0, 0, 0, 0.45));
   appearance: none;
   border: 0;
   background: transparent;
-  padding: 0;
   margin: 0;
   color: inherit;
   font: inherit;
+  overflow: visible;
+  z-index: 2;
 }
 .score-dial.is-tappable {
   pointer-events: auto;
@@ -2937,18 +2942,18 @@ img { max-width: 100%; display: block; }
   transform: scale(0.97);
 }
 .score-dial.is-hero {
-  width: 76px;
-  height: 66px;
+  width: 80px;
+  min-height: 80px;
 }
 .score-dial.is-compare {
-  width: 52px;
-  height: 46px;
+  width: 56px;
+  min-height: 56px;
 }
 .score-dial-svg {
-  position: absolute;
-  inset: 0;
-  width: 100%;
-  height: 100%;
+  position: relative;
+  width: 44px;
+  height: 40px;
+  flex: 0 0 auto;
 }
 .score-dial-track {
   stroke: rgba(255, 255, 255, 0.22);
@@ -2971,28 +2976,42 @@ img { max-width: 100%; display: block; }
   align-items: baseline;
   justify-content: center;
   gap: 1px;
-  margin-top: 4px;
+  margin-top: -18px;
   color: #fff;
   text-shadow: 0 1px 2px rgba(0, 0, 0, 0.65);
 }
+.score-dial-readout.is-incomplete-msg {
+  margin-top: -22px;
+  max-width: 70px;
+  padding: 0 2px;
+}
+.score-dial-incomplete {
+  display: block;
+  font-size: 0.48rem;
+  font-weight: 700;
+  line-height: 1.15;
+  text-align: center;
+  color: rgba(255, 255, 255, 0.92);
+  white-space: normal;
+}
 .score-dial-value {
-  font-size: 1.05rem;
+  font-size: 0.98rem;
   font-weight: 800;
   letter-spacing: -0.02em;
   font-variant-numeric: tabular-nums;
   line-height: 1;
 }
-.score-dial.is-hero .score-dial-value { font-size: 1.25rem; }
-.score-dial.is-compare .score-dial-value { font-size: 0.88rem; }
+.score-dial.is-hero .score-dial-value { font-size: 1.15rem; }
+.score-dial.is-compare .score-dial-value { font-size: 0.84rem; }
 .score-dial-max {
-  font-size: 0.62rem;
+  font-size: 0.58rem;
   font-weight: 700;
   color: rgba(255, 255, 255, 0.78);
 }
 .score-dial-rank {
   position: absolute;
   right: -2px;
-  bottom: -2px;
+  top: 0;
   z-index: 2;
   min-width: 1.35rem;
   padding: 1px 5px;
@@ -3000,7 +3019,7 @@ img { max-width: 100%; display: block; }
   background: rgba(15, 20, 25, 0.88);
   border: 1px solid rgba(255, 255, 255, 0.28);
   color: #fff;
-  font-size: 0.62rem;
+  font-size: 0.58rem;
   font-weight: 800;
   text-align: center;
   line-height: 1.25;
@@ -3008,22 +3027,54 @@ img { max-width: 100%; display: block; }
 .score-dial-diff {
   display: block;
   margin-top: 2px;
-  font-size: 0.58rem;
+  font-size: 0.56rem;
   font-weight: 700;
   line-height: 1.2;
-  color: rgba(255, 255, 255, 0.88);
+  color: rgba(255, 255, 255, 0.92);
   text-align: center;
   white-space: nowrap;
+  max-width: 76px;
+  overflow: visible;
 }
 .score-dial-current {
   display: block;
   margin-top: 1px;
-  font-size: 0.52rem;
+  font-size: 0.5rem;
   font-weight: 600;
   line-height: 1.2;
-  color: rgba(255, 255, 255, 0.55);
+  color: rgba(255, 255, 255, 0.62);
   text-align: center;
   white-space: nowrap;
+  max-width: 76px;
+  overflow: visible;
+}
+@media (max-width: 420px) {
+  .unit-photo-price-band {
+    align-items: flex-end;
+    gap: 6px;
+  }
+  .unit-photo-ask {
+    max-width: 48%;
+    font-size: 0.78rem;
+    padding: 5px 9px;
+  }
+  .score-dial {
+    width: 78px;
+    min-height: 78px;
+  }
+  .score-dial-value {
+    font-size: 0.92rem;
+  }
+  .score-dial-diff {
+    font-size: 0.54rem;
+    letter-spacing: -0.01em;
+  }
+  .score-dial-current {
+    font-size: 0.48rem;
+  }
+  .score-dial-incomplete {
+    font-size: 0.46rem;
+  }
 }
 .replacement-score-banner {
   margin: 0 0 10px;

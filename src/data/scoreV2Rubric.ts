@@ -1,9 +1,9 @@
 /**
- * Score v2 anchors — CLEARED-FOR-WOZ-SCORE-V2.md §3
+ * Score v2 anchors — CLEARED-FOR-WOZ-SCORE-V2.md G-final §3
  * Every anchor tagged INFERENCE (Steve thresholds). Do not tune.
  */
 
-export const SCORE_V2_BUILD = 'score-v2-f-pages-20260927-1515'
+export const SCORE_V2_BUILD = 'score-v2-g-final-20260927-1600'
 export const SCORE_DATE = '2026-09-27' // scoring date for warranty years-left
 
 export type AnchorPoint = { x: number; y: number; tag: 'INFERENCE' }
@@ -57,8 +57,14 @@ export const MAINT_CPM_ANCHORS: AnchorPoint[] = [
 ]
 
 export const RANGE_BUFFER = 0.7 // INFERENCE — heat/load/AC; same for EV and gas
-export const POINTS_FLOOR = 60 // incomplete if PP < 60
+
+/** Max points: cats 1–7,9–10 = 10; cat 8 warranty = 20 → 110. Tow not used → 100. */
 export const CAT_MAX = 10
+export const WARRANTY_MAX = 20
+/** Job-applicable when tow Not used = 100; incomplete threshold = 2/3 → 66.7 */
+export const JOB_APPLICABLE_NO_TOW = 100
+export const INCOMPLETE_FRACTION = 2 / 3
+export const POINTS_FLOOR = JOB_APPLICABLE_NO_TOW * INCOMPLETE_FRACTION // 66.666…
 
 export const CATEGORY_KEYS = [
   'range',
@@ -106,14 +112,15 @@ export function lin(x: number, anchors: AnchorPoint[]): number {
 }
 
 export function round1(n: number): number {
-  return Math.round(n * 10) / 10
+  // Guard float noise (e.g. 9.05 → 9.049999999999999) so half-up stays correct.
+  return Math.round(n * 10 + 1e-8) / 10
 }
 
-export function clampScore(n: number): number {
-  return Math.max(0, Math.min(CAT_MAX, n))
+export function clampScore(n: number, max = CAT_MAX): number {
+  return Math.max(0, Math.min(max, n))
 }
 
-/** Status strings — exact text from CLEARED Score v2 §1.6 */
+/** Status strings — exact text from CLEARED Score v2 §1.6 G-final */
 export const STATUS = {
   NOT_USED: 'Not used by this job',
   notScored: (field: string, kind: 'published' | 'entered' = 'published') =>
@@ -123,5 +130,6 @@ export const STATUS = {
   NOT_ENTERED: 'Not entered',
   ADD_CURRENT_BANNER: 'Add your current vehicle to compare',
   AT_RISK: 'At risk, not counted',
+  WARRANTY_UNCONFIRMED: 'Commercial warranty status not confirmed',
   FL_PRICE: 'Not scored: FL energy price not loaded',
 } as const

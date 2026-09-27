@@ -106,7 +106,21 @@ export function lookupSeats(opts: {
     }
   }
 
+  // G-final: 2018 Transit-250 cargo = 2 seats FACT (Ford brochure / g_gaps item 3)
   if (isGasCargoVan(make, model)) {
+    if (
+      year === 2018 &&
+      /ford/i.test(make) &&
+      /transit-?250/i.test(model)
+    ) {
+      return {
+        seats: 2,
+        reasonLabel: '2 seats (Ford 2018 Transit brochure, FACT)',
+        url: 'https://cdn.dealereprocess.org/cdn/brochures/ford/2018-transit.pdf',
+        label: 'FACT',
+        inference: false,
+      }
+    }
     return null // Not scored: seating not published for this van
   }
 

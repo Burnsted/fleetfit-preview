@@ -1,5 +1,8 @@
 import { LISTINGS } from '../data/listings'
 
+import { lookupBaselinePayload } from '../data/baselinePayload'
+import { lookupSeats } from '../data/seatCounts'
+
 /** CLEARED OEM specs: unknown = plain "Not published", never em dash. */
 export const NOT_PUBLISHED = 'Not published'
 /** @deprecated use NOT_PUBLISHED for vehicle specs */
@@ -240,6 +243,35 @@ export function currentWorkVehicle(intake, pkg) {
     role = 'Service van'
   }
 
+  // G-final polish: Example current Transit chip = Payload 3,571 lb (matches readout)
+  let seedPayload = empty
+  let seedCab = empty
+  let seedTow = empty
+  if (useSeed && seed?.year && seed?.make && seed?.model) {
+    const payloadHit = lookupBaselinePayload({
+      year: Number(seed.year),
+      make: String(seed.make),
+      model: String(seed.model),
+      engine: seed.engine || null,
+      drivetrain: seed.drivetrain || null,
+    })
+    if (payloadHit?.payloadLb != null) {
+      seedPayload = factField(payloadHit.payloadLb, formatLb)
+    }
+    const seatHit = lookupSeats({
+      year: Number(seed.year),
+      make: String(seed.make),
+      model: String(seed.model),
+      side: 'current',
+    })
+    if (seatHit?.seats != null) {
+      seedCab = factField(`${seatHit.seats} seats`)
+    }
+    if (/transit-?250/i.test(String(seed.model)) && Number(seed.year) === 2018) {
+      seedTow = factField(6200, formatLb)
+    }
+  }
+
   return {
     heading,
     role,
@@ -253,11 +285,11 @@ export function currentWorkVehicle(intake, pkg) {
         : 'truck',
     mileage: mileage.value,
     spec: {
-      payload: empty,
+      payload: seedPayload,
       bed: empty,
-      cab: empty,
-      cabBed: empty,
-      tow: empty,
+      cab: seedCab,
+      cabBed: seedCab,
+      tow: seedTow,
       energy,
       ask: empty,
       mpg: energy,

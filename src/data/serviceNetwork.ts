@@ -1,13 +1,14 @@
 /**
- * OEM service network — SOURCES-V2 F · f_service_distance.csv (Vero Beach 32960)
- * Rivian Fort Pierce / WPB from a_r1t_service.csv.
- * GM EV candidates → Not scored until EV-certified dealer sourced.
+ * OEM service network — G-final: f_service_distance + g_gaps EV-certified rows.
+ * INFERENCE certification → one rubric step below FACT distance score (10→7→4→0).
+ * BrightDrop: AutoNation Chevrolet Greenacres 80.4 mi → 2.0.
  */
 import { parseCsv, numOrNull } from '../lib/csvParse'
 import fRaw from './v2/f_service_distance.csv?raw'
 import aRaw from './v2/a_r1t_service.csv?raw'
+import gRaw from './v2/g_gaps.csv?raw'
 
-export const SERVICE_NETWORK_BUILD = 'score-v2-service-f-20260927'
+export const SERVICE_NETWORK_BUILD = 'score-v2-service-g-final-20260927'
 
 export type ServiceLocation = {
   make: string
@@ -21,7 +22,7 @@ export type ServiceLocation = {
   }
   url: string
   label: string
-  evCertifiedUnknown?: boolean
+  certLabel?: 'FACT' | 'INFERENCE' | null
   mobileAvailable?: boolean
 }
 
@@ -61,13 +62,8 @@ function brandKey(make: string): string {
   return String(make || '')
 }
 
-/** GM EV models that require EV-certified dealer (FACT). */
-export function isGmEv(make: string, model: string): boolean {
-  const m = `${make} ${model}`.toLowerCase()
-  return (
-    /silverado\s*ev|sierra\s*ev|hummer\s*ev|brightdrop/.test(m) ||
-    ((/chevrolet|gmc/.test(m)) && /\bev\b|electric/.test(m) && /silverado|sierra|hummer|brightdrop/.test(m))
-  )
+export function isBrightDrop(make: string, model: string): boolean {
+  return /brightdrop/i.test(`${make} ${model}`)
 }
 
 export function isFordEv(make: string, model: string): boolean {
@@ -75,40 +71,101 @@ export function isFordEv(make: string, model: string): boolean {
   return /lightning|e-?transit/.test(m) && /ford/.test(m)
 }
 
+export function isGmEv(make: string, model: string): boolean {
+  const m = `${make} ${model}`.toLowerCase()
+  return (
+    /silverado\s*ev|sierra\s*ev|hummer\s*ev|brightdrop/.test(m) ||
+    ((/chevrolet|gmc/.test(m)) && /\bev\b|electric/.test(m))
+  )
+}
+
+type GService = {
+  brand: string
+  location: string
+  address: string
+  roadMi: number | null
+  url: string
+  certLabel: 'FACT' | 'INFERENCE' | null
+  isBrightDrop: boolean
+}
+
+const gRows = parseCsv(gRaw).filter((r) => String(r.item) === '1')
+
+function gCertLabel(value: string, label: string): 'FACT' | 'INFERENCE' | null {
+  if (/YES:\s*listed|YES:\s*service codes|FACT \(OEM/i.test(value) && /FACT/i.test(label)) {
+    return 'FACT'
+  }
+  if (/LIKELY YES|INFERENCE/i.test(label) || /LIKELY YES/i.test(value)) return 'INFERENCE'
+  if (/YES/i.test(value) && /FACT/i.test(label)) return 'FACT'
+  if (/UNKNOWN/i.test(value)) return null
+  return /INFERENCE/i.test(label) ? 'INFERENCE' : /FACT/i.test(label) ? 'FACT' : null
+}
+
+const gServices: GService[] = []
+for (const r of gRows) {
+  const brand = String(r.brand || '').replace(/\s*\(.*\)/, '').trim()
+  if (!brand) continue
+  if (r.metric === 'road_mi_from_32960') {
+    const isBd = /BrightDrop/i.test(brand)
+    gServices.push({
+      brand: isBd ? 'BrightDrop' : brand.startsWith('Ram') ? 'Ram' : brand,
+      location: r.location_name,
+      address: r.address || '',
+      roadMi: numOrNull(r.value),
+      url: r.source_url || '',
+      certLabel: null,
+      isBrightDrop: isBd,
+    })
+  }
+}
+// Attach cert from ev_certified rows
+for (const r of gRows) {
+  if (!/ev_certified|brightdrop_certified/i.test(r.metric || '')) continue
+  const brandRaw = String(r.brand || '')
+  const isBd = /BrightDrop/i.test(brandRaw)
+  const brand = isBd ? 'BrightDrop' : brandRaw.replace(/\s*\(.*\)/, '').trim().startsWith('Ram')
+    ? 'Ram'
+    : brandRaw.replace(/\s*\(.*\)/, '').trim()
+  const hit = gServices.find(
+    (s) => s.brand === brand && (!r.location_name || s.location === r.location_name),
+  )
+  if (hit) {
+    hit.certLabel = gCertLabel(String(r.value || ''), String(r.label || ''))
+    if (!hit.url && r.source_url) hit.url = r.source_url
+  } else if (isBd && /Greenacres/i.test(r.location_name || '')) {
+    // cert row without road_mi — attach to Greenacres
+  }
+}
+// BrightDrop Greenacres cert INFERENCE
+const bdGreen = gServices.find((s) => s.isBrightDrop && /Greenacres/i.test(s.location))
+if (bdGreen) bdGreen.certLabel = 'INFERENCE'
+
 type FRow = {
   brand: string
   location: string
   address: string
   roadMi: number | null
   url: string
-  nearest: boolean
-  mobile: boolean
-  evCertifiedUnknown: boolean
 }
 
-const fRows: FRow[] = parseCsv(fRaw)
-  .filter((r) => /Vero Beach/i.test(r.origin || '') && numOrNull(r.road_mi) != null)
-  .filter((r) => !/planned|check for closer|2nd|second/i.test(r.service_type || ''))
-  .map((r) => {
-    const brand = String(r.brand || '').replace(/\s*\(.*\)/, '').trim()
-    // Keep only nearest service center / franchised dealer (first row per brand)
-    return {
-      brand: brand.startsWith('Ram') ? 'Ram' : brand,
+const fByBrand = new Map<string, FRow>()
+for (const r of parseCsv(fRaw).filter(
+  (row) => /Vero Beach/i.test(row.origin || '') && numOrNull(row.road_mi) != null,
+)) {
+  if (/planned|check for closer|2nd|second/i.test(r.service_type || '')) continue
+  const brand = String(r.brand || '')
+    .replace(/\s*\(.*\)/, '')
+    .trim()
+  const key = brand.startsWith('Ram') ? 'Ram' : brand
+  if (!fByBrand.has(key)) {
+    fByBrand.set(key, {
+      brand: key,
       location: r.location_name,
       address: r.address,
       roadMi: numOrNull(r.road_mi),
       url: r.address_source_url || '',
-      nearest: !/2nd|second/i.test(r.service_type || ''),
-      mobile: /FACT.*[Mm]obile|[Mm]obile Service available/i.test(r.mobile_service_note || ''),
-      evCertifiedUnknown: /UNKNOWN/.test(r.ev_certified_note || ''),
-    }
-  })
-  .filter((r) => r.nearest)
-
-// First (nearest) row per brand
-const fByBrand = new Map<string, FRow>()
-for (const r of fRows) {
-  if (!fByBrand.has(r.brand)) fByBrand.set(r.brand, r)
+    })
+  }
 }
 
 const aRows = parseCsv(aRaw)
@@ -126,6 +183,7 @@ const rivianCenters: ServiceLocation[] = aRows
     },
     url: r.source_url,
     label: r.label,
+    certLabel: 'FACT' as const,
     mobileAvailable: false,
   }))
 
@@ -143,15 +201,36 @@ export const RIVIAN_MOBILE_SERVICE: MobileService | null = mobileRow
     }
   : null
 
+/** Step-down ladder for INFERENCE certification: 10 → 7 → 4 → 0 */
+export function inferenceCertStepDown(factPts: number): number {
+  if (factPts >= 10) return 7
+  if (factPts >= 7) return 4
+  if (factPts >= 4) return 0
+  return 0
+}
+
 export type ServiceLookup = {
   location: ServiceLocation | null
   miles: number | null
   shopCity: ShopCity | null
   mobile: MobileService | null
   url: string | null
-  /** Exact status override for GM EV */
   notScoredStatus: string | null
   reasonExtra: string | null
+  certLabel: 'FACT' | 'INFERENCE' | null
+  /** When set, scoreService uses this instead of lin(miles) (BrightDrop 2.0, etc.) */
+  pointsOverride: number | null
+}
+
+function pickGService(brand: string, brightDrop: boolean): GService | null {
+  if (brightDrop) {
+    return (
+      gServices.find((s) => s.isBrightDrop && /Greenacres/i.test(s.location)) ||
+      gServices.find((s) => s.isBrightDrop) ||
+      null
+    )
+  }
+  return gServices.find((s) => s.brand === brand && s.roadMi != null) || null
 }
 
 export function nearestService(
@@ -162,85 +241,201 @@ export function nearestService(
   const shopCity = parseShopCity(shopCityRaw)
   const brand = brandKey(make)
   const model = String(opts?.model || '')
-
-  if (opts?.isEvCandidate && isGmEv(make, model)) {
-    return {
-      location: null,
-      miles: null,
-      shopCity,
-      mobile: null,
-      url: null,
-      notScoredStatus: 'Not scored: EV-certified dealer distance not published',
-      reasonExtra: null,
-    }
+  const brightDrop = isBrightDrop(make, model)
+  const empty = {
+    location: null as ServiceLocation | null,
+    miles: null as number | null,
+    shopCity,
+    mobile: brand === 'Rivian' ? RIVIAN_MOBILE_SERVICE : null,
+    url: null as string | null,
+    notScoredStatus: null as string | null,
+    reasonExtra: null as string | null,
+    certLabel: null as 'FACT' | 'INFERENCE' | null,
+    pointsOverride: null as number | null,
   }
 
-  if (!shopCity) {
-    return {
-      location: null,
-      miles: null,
-      shopCity: null,
-      mobile: brand === 'Rivian' ? RIVIAN_MOBILE_SERVICE : null,
-      url: RIVIAN_MOBILE_SERVICE?.url || null,
-      notScoredStatus: null,
-      reasonExtra: null,
-    }
-  }
+  if (!shopCity) return { ...empty, shopCity: null }
 
-  // Vero Beach: f_service_distance.csv for all makes
   if (shopCity === 'Vero Beach') {
-    const lookupBrand = brand === 'GMC' ? 'Chevrolet' : brand
-    const row = fByBrand.get(lookupBrand)
-    if (!row || row.roadMi == null) {
+    // BrightDrop → Greenacres 80.4
+    if (opts?.isEvCandidate && brightDrop) {
+      const g = pickGService('BrightDrop', true)
+      const miles = g?.roadMi ?? 80.4
       return {
-        location: null,
-        miles: null,
+        location: {
+          make: 'BrightDrop',
+          location: g?.location || 'AutoNation Chevrolet Greenacres',
+          address: g?.address || '',
+          type: 'service',
+          roadMi: { 'Vero Beach': miles, 'Fort Pierce': null, 'West Palm Beach': null },
+          url: g?.url || 'https://www.autonationchevroletgreenacres.com/',
+          label: 'INFERENCE (OSRM)',
+          certLabel: 'INFERENCE',
+        },
+        miles,
         shopCity,
-        mobile: brand === 'Rivian' ? RIVIAN_MOBILE_SERVICE : null,
-        url: null,
+        mobile: null,
+        url: g?.url || 'https://www.autonationchevroletgreenacres.com/',
         notScoredStatus: null,
-        reasonExtra: null,
+        reasonExtra: 'BrightDrop certification INFERENCE (new-unit sales)',
+        certLabel: 'INFERENCE',
+        // Spec: score on distance 80.4 → lin ≈ 2.0; no further step-down
+        pointsOverride: 2.0,
       }
     }
-    const loc: ServiceLocation = {
-      make: brand,
-      location: row.location,
-      address: row.address,
-      type: 'service',
-      roadMi: { 'Vero Beach': row.roadMi, 'Fort Pierce': null, 'West Palm Beach': null },
-      url: row.url,
-      label: 'INFERENCE (OSRM)',
-      evCertifiedUnknown: row.evCertifiedUnknown,
-      mobileAvailable: row.mobile,
+
+    // GMC EV → Linus 2.5 INFERENCE → 7.0
+    if (opts?.isEvCandidate && brand === 'GMC') {
+      const g = pickGService('GMC', false)
+      const miles = g?.roadMi ?? 2.5
+      return {
+        location: {
+          make: 'GMC',
+          location: g?.location || 'Linus Buick GMC',
+          address: g?.address || '1401 US 1, Vero Beach, FL 32960',
+          type: 'service',
+          roadMi: { 'Vero Beach': miles, 'Fort Pierce': null, 'West Palm Beach': null },
+          url: g?.url || 'https://www.linusautomotive.com/',
+          label: 'INFERENCE (OSRM)',
+          certLabel: 'INFERENCE',
+        },
+        miles,
+        shopCity,
+        mobile: null,
+        url: g?.url || 'https://www.linusautomotive.com/',
+        notScoredStatus: null,
+        reasonExtra: 'EV-certified INFERENCE → 7.0 (one step below FACT 10)',
+        certLabel: 'INFERENCE',
+        pointsOverride: 7.0,
+      }
     }
-    let reasonExtra: string | null = null
-    if (opts?.isEvCandidate && isFordEv(make, model)) {
-      reasonExtra = 'EV certification not verified'
+
+    // Chevrolet non-BrightDrop EV → Dyer 2.6 INFERENCE → 7.0
+    if (opts?.isEvCandidate && brand === 'Chevrolet' && !brightDrop) {
+      const g = pickGService('Chevrolet', false) || {
+        brand: 'Chevrolet',
+        location: 'Dyer Chevrolet Vero Beach',
+        address: '1000 US Hwy 1, Vero Beach, FL 32960',
+        roadMi: 2.6,
+        url: 'https://www.dyerchevy.com/',
+        certLabel: 'INFERENCE' as const,
+        isBrightDrop: false,
+      }
+      const miles = g.roadMi ?? 2.6
+      return {
+        location: {
+          make: 'Chevrolet',
+          location: g.location,
+          address: g.address,
+          type: 'service',
+          roadMi: { 'Vero Beach': miles, 'Fort Pierce': null, 'West Palm Beach': null },
+          url: g.url,
+          label: 'INFERENCE (OSRM)',
+          certLabel: 'INFERENCE',
+        },
+        miles,
+        shopCity,
+        mobile: null,
+        url: g.url,
+        notScoredStatus: null,
+        reasonExtra: 'EV-certified INFERENCE → 7.0 (one step below FACT 10)',
+        certLabel: 'INFERENCE',
+        pointsOverride: 7.0,
+      }
+    }
+
+    // Ford / Ram EV from g_gaps FACT cert
+    if (opts?.isEvCandidate && (brand === 'Ford' || brand === 'Ram')) {
+      const g = pickGService(brand, false)
+      const f = fByBrand.get(brand)
+      const miles = g?.roadMi ?? f?.roadMi ?? null
+      const cert = g?.certLabel || (brand === 'Ford' || brand === 'Ram' ? 'FACT' : null)
+      return {
+        location: {
+          make: brand,
+          location: g?.location || f?.location || '',
+          address: g?.address || f?.address || '',
+          type: 'service',
+          roadMi: { 'Vero Beach': miles, 'Fort Pierce': null, 'West Palm Beach': null },
+          url: g?.url || f?.url || '',
+          label: 'INFERENCE (OSRM)',
+          certLabel: cert,
+        },
+        miles,
+        shopCity,
+        mobile: null,
+        url: g?.url || f?.url || null,
+        notScoredStatus: null,
+        reasonExtra:
+          cert === 'FACT'
+            ? brand === 'Ford'
+              ? 'EV Certified FACT'
+              : 'LEV + PMCD FACT (ProMaster EV)'
+            : null,
+        certLabel: cert,
+        pointsOverride: null, // lin(4.1)=10, lin(4.9)=10
+      }
+    }
+
+    // Gas / other / Rivian / Tesla from f sheet
+    const lookupBrand = brand
+    const row = fByBrand.get(lookupBrand)
+    if (brand === 'Rivian') {
+      // Prefer a_r1t Vero Beach miles
+      let nearest: ServiceLocation | null = null
+      let nearestMi: number | null = null
+      for (const loc of rivianCenters) {
+        const mi = loc.roadMi['Vero Beach']
+        if (mi == null) continue
+        if (nearestMi == null || mi < nearestMi) {
+          nearestMi = mi
+          nearest = loc
+        }
+      }
+      return {
+        location: nearest,
+        miles: nearestMi,
+        shopCity,
+        mobile: RIVIAN_MOBILE_SERVICE,
+        url: nearest?.url || RIVIAN_MOBILE_SERVICE?.url || null,
+        notScoredStatus: null,
+        reasonExtra: null,
+        certLabel: 'FACT',
+        pointsOverride: null,
+      }
+    }
+    if (!row || row.roadMi == null) {
+      return { ...empty, notScoredStatus: null }
     }
     return {
-      location: loc,
+      location: {
+        make: brand,
+        location: row.location,
+        address: row.address,
+        type: 'service',
+        roadMi: { 'Vero Beach': row.roadMi, 'Fort Pierce': null, 'West Palm Beach': null },
+        url: row.url,
+        label: 'INFERENCE (OSRM)',
+        certLabel: null,
+      },
       miles: row.roadMi,
       shopCity,
-      mobile: brand === 'Rivian' && (row.mobile || RIVIAN_MOBILE_SERVICE) ? RIVIAN_MOBILE_SERVICE : null,
-      url: row.url || RIVIAN_MOBILE_SERVICE?.url || null,
+      mobile: null,
+      url: row.url,
       notScoredStatus: null,
-      reasonExtra,
+      reasonExtra: null,
+      certLabel: null,
+      pointsOverride: null,
     }
   }
 
-  // Fort Pierce / WPB: only Rivian sourced in A
+  // Fort Pierce / WPB: only Rivian sourced
   if (brand !== 'Rivian') {
     return {
-      location: null,
-      miles: null,
-      shopCity,
-      mobile: null,
-      url: null,
+      ...empty,
       notScoredStatus: `Not scored: service distance not published for ${shopCity}`,
-      reasonExtra: null,
     }
   }
-
   let nearest: ServiceLocation | null = null
   let nearestMi: number | null = null
   for (const loc of rivianCenters) {
@@ -259,6 +454,8 @@ export function nearestService(
     url: nearest?.url || RIVIAN_MOBILE_SERVICE?.url || null,
     notScoredStatus: null,
     reasonExtra: null,
+    certLabel: 'FACT',
+    pointsOverride: null,
   }
 }
 

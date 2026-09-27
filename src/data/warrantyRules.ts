@@ -1,15 +1,17 @@
 /**
- * Warranty rules — SOURCES-V2 F
- * f_warranty_commercial_use.csv · rivian_warranty_compare.csv · f_gm_capacity_floor.csv
+ * Warranty rules — G-final
+ * used_ev_commercial_warranty.csv · f_warranty_commercial_use.csv · rivian_warranty_compare.csv
  */
 import { parseCsv, numOrNull } from '../lib/csvParse'
 import exclusionRaw from './v2/f_warranty_commercial_use.csv?raw'
 import rivianCompareRaw from './v2/rivian_warranty_compare.csv?raw'
 import gmFloorRaw from './v2/f_gm_capacity_floor.csv?raw'
+import usedEvRaw from './v2/used_ev_commercial_warranty.csv?raw'
 
-export const WARRANTY_RULES_BUILD = 'score-v2-warranty-f-20260927'
+export const WARRANTY_RULES_BUILD = 'score-v2-warranty-g-final-20260927'
 
-export type WarrantyType = 'consumer' | 'commercial_fleet'
+/** G-final enum: commercial | consumer | unconfirmed */
+export type WarrantyType = 'commercial' | 'consumer' | 'unconfirmed'
 
 export type CommercialUseExclusion = {
   make: string
@@ -23,10 +25,12 @@ export type CommercialUseExclusion = {
 }
 
 export type CapacityFloor = {
-  pct: number
-  label: string // FACT | INFERENCE
+  pct: number | null
+  label: string // FACT | INFERENCE | NONE
   source: string
   url: string | null
+  /** Candidate gets −2 when NONE or INFERENCE (shrink-the-lead). */
+  deductCandidate: boolean
 }
 
 export type UpfitKind = 'none' | 'preferred_partner' | 'other' | 'unknown'
@@ -34,8 +38,8 @@ export type UpfitKind = 'none' | 'preferred_partner' | 'other' | 'unknown'
 const exclusionRows = parseCsv(exclusionRaw)
 const rivianCompare = parseCsv(rivianCompareRaw)
 const gmFloors = parseCsv(gmFloorRaw)
+const usedEvRows = parseCsv(usedEvRaw)
 
-/** Rivian is the only OEM with express commercial-use exclusion (F.4 FACT). */
 export const COMMERCIAL_USE_EXCLUSIONS: CommercialUseExclusion[] = exclusionRows
   .filter((r) => /^Y/i.test(r.express_warranty_commercial_use_exclusion || ''))
   .map((r) => ({
@@ -49,7 +53,6 @@ export const COMMERCIAL_USE_EXCLUSIONS: CommercialUseExclusion[] = exclusionRows
     page: r.page || '',
   }))
 
-// Ensure Rivian R1T/R1S present even if CSV make cell is "Rivian"
 if (!COMMERCIAL_USE_EXCLUSIONS.some((e) => /rivian/i.test(e.make))) {
   const rivianRow = exclusionRows.find((r) => /rivian/i.test(r.make || ''))
   if (rivianRow) {
@@ -103,32 +106,41 @@ export const RIVIAN_COMMERCIAL_WARRANTY = {
     'https://assets.rivian.com/2md5qhoeajym/7ru4KaOCgjEP7FfT8QT7jE/ece18b4b636928b05eb06938645890fa/commercial-new-vehicle-limited-warranty-guide-us-en-us-20241231.pdf',
   effective: '2024-12-31',
   label: 'FACT' as const,
-  upfitDeduction: 3, // INFERENCE amount per CLEARED §3 cat 8
+  /** G-final: −6 of 20 */
+  upfitDeduction: 6,
 }
 
-/** GM qualifying fleets: 5 yr / 100k powertrain (FACT from f_warranty_commercial_use). */
 export const GM_FLEET_POWERTRAIN = {
   yr: 5,
   mi: 100000,
   label: 'FACT' as const,
 }
 
+/** Capacity-floor modifier −2 of 20 (G-final). */
+export const CAPACITY_FLOOR_DEDUCTION = 2
+
 export function lookupCommercialExclusion(make: string, model: string) {
   return lookupCommercialExclusionSimple(make, model)
 }
 
-export function normalizeWarrantyType(
-  raw: unknown,
-): WarrantyType | null {
+export function normalizeWarrantyType(raw: unknown): WarrantyType {
   const s = String(raw || '')
     .trim()
     .toLowerCase()
-  if (!s) return null
   if (s === 'commercial_fleet' || s === 'commercial' || s === 'fleet') {
-    return 'commercial_fleet'
+    return 'commercial'
   }
   if (s === 'consumer') return 'consumer'
-  return null
+  return 'unconfirmed'
+}
+
+/** warranty_type only matters for Rivian R1T, Hummer Edition 1, VW MY2025 EV HV, Tesla note. */
+export function warrantyTypeMatters(make: string, model: string): boolean {
+  const m = `${make} ${model}`.toLowerCase()
+  if (/rivian/.test(m) && /r1t|r1s/.test(m)) return true
+  if (/hummer/.test(m) && /edition\s*1|edition1/.test(m)) return true
+  if (/volkswagen|vw/.test(m)) return true
+  return false
 }
 
 export function normalizeUpfit(raw: unknown): UpfitKind {
@@ -139,7 +151,6 @@ export function normalizeUpfit(raw: unknown): UpfitKind {
   if (s === 'preferred_partner' || s === 'preferred') return 'preferred_partner'
   if (s === 'other') return 'other'
   if (s === 'unknown') return 'unknown'
-  // Listing text mentioning upfit without partner → other
   if (/upfit|modif|service.?body|ladder|rack|toolbox/i.test(s)) return 'other'
   return 'none'
 }
@@ -150,10 +161,6 @@ function norm(s: string): string {
     .replace(/[^a-z0-9]/g, '')
 }
 
-/**
- * Battery capacity floor for reason line (not scored separately).
- * Reads f_gm_capacity_floor + rivian_warranty_compare + Ford/Tesla from exclusion CSV quotes.
- */
 export function lookupCapacityFloor(
   make: string,
   model: string,
@@ -162,77 +169,89 @@ export function lookupCapacityFloor(
   const m = `${make} ${model}`
   const nm = norm(m)
 
-  if (/rivian|r1t|r1s|commercial van/i.test(m)) {
+  // ProMaster EV: NONE (FACT) → deduct candidate
+  if (/promaster/.test(nm) && /ev/.test(nm)) {
+    const row = usedEvRows.find((r) => /promaster/i.test(r.model || ''))
     return {
-      pct: RIVIAN_COMMERCIAL_WARRANTY.capacityFloorPct,
+      pct: null,
+      label: 'NONE',
+      source: row?.warranty_doc || 'Ram Heavy Duty Gas/Diesel/EV Warranty',
+      url: row?.doc_url || null,
+      deductCandidate: true,
+    }
+  }
+
+  if (/rivian|r1t|r1s/.test(nm) && !/commercial|edv|van/.test(nm)) {
+    return {
+      pct: RIVIAN_CONSUMER_WARRANTY.capacityFloorPct,
       label: 'FACT',
-      source: 'Rivian NVLW / Commercial guide',
+      source: 'Rivian NVLW',
       url: RIVIAN_CONSUMER_WARRANTY.url,
+      deductCandidate: false,
+    }
+  }
+  if (/rivian/.test(nm) && /commercial|van|edv/.test(nm)) {
+    return {
+      pct: 70,
+      label: 'INFERENCE',
+      source: 'Rivian Commercial guide (van floor INFERENCE)',
+      url: RIVIAN_COMMERCIAL_WARRANTY.url,
+      deductCandidate: true,
     }
   }
 
-  // GM CSV
-  const gmHits = gmFloors.filter((r) => {
-    const rm = norm(`${r.make} ${r.model}`)
-    if (nm.includes('silveradoev') && rm.includes('silveradoev')) return true
-    if (nm.includes('sierraev') && rm.includes('sierraev')) return true
-    if (nm.includes('hummer') && rm.includes('hummer')) return true
-    if (nm.includes('brightdrop') && rm.includes('brightdrop')) return true
-    return false
-  })
-  for (const r of gmHits) {
-    const pct = numOrNull(r.capacity_floor_pct)
-    const yrs = String(r.model_years || '')
-    if (year && yrs && !yrs.includes(String(year)) && !/^unknown$/i.test(yrs)) {
-      // prefer year match but fall through
-    }
-    if (pct != null) {
-      return {
-        pct,
-        label: /FACT/i.test(r.label) ? 'FACT' : r.label || 'FACT',
-        source: r.doc || 'GM EV warranty',
-        url: r.source_url || null,
-      }
-    }
-  }
-  // UNKNOWN rows with INFERENCE 75% in note (CLEARED §3 table)
-  if (/sierra\s*ev|hummer\s*ev|brightdrop|silverado\s*ev/i.test(m)) {
-    const noteHit = gmHits.find((r) => /75/.test(r.note || '') || /UNKNOWN/i.test(r.capacity_floor_pct || ''))
-    if (noteHit || /sierra|hummer|brightdrop|2026.*silverado/i.test(m)) {
-      return {
-        pct: 75,
-        label: 'INFERENCE',
-        source: 'GM EV template (f_gm_capacity_floor note)',
-        url: gmHits[0]?.source_url || null,
-      }
-    }
-  }
-
-  // Ford BEV from f_warranty_commercial_use quote (70%)
+  // Ford BEV FACT 70%
   if (/ford/i.test(make) && /lightning|e-?transit/i.test(model)) {
-    const ford = exclusionRows.find((r) => /BEV|E-Transit|Lightning/i.test(r.powertrain || ''))
     return {
       pct: /cutaway|chassis cab/i.test(model) ? 65 : 70,
       label: 'FACT',
-      source: ford?.doc_title || 'Ford BEV Warranty Guide',
-      url: ford?.source_url || null,
+      source: 'Ford BEV Warranty Guide',
+      url:
+        usedEvRows.find((r) => /Lightning|E-Transit/i.test(r.model || ''))?.doc_url || null,
+      deductCandidate: false,
     }
   }
 
-  // Tesla 70% FACT from exclusion CSV note
+  // Silverado EV 2024 FACT 75%; 2026 INFERENCE
+  if (/silveradoev/.test(nm)) {
+    if (year != null && year >= 2026) {
+      return {
+        pct: 75,
+        label: 'INFERENCE',
+        source: 'GM EV template (2026 Silverado EV)',
+        url: null,
+        deductCandidate: true,
+      }
+    }
+    return {
+      pct: 75,
+      label: 'FACT',
+      source: '2024 Chevrolet EV Limited Warranty',
+      url:
+        usedEvRows.find((r) => /Silverado/i.test(r.model || ''))?.doc_url || null,
+      deductCandidate: false,
+    }
+  }
+
+  // Sierra / Hummer / BrightDrop → 75% INFERENCE → deduct candidate
+  if (/sierraev|hummer|brightdrop/.test(nm)) {
+    return {
+      pct: 75,
+      label: 'INFERENCE',
+      source: 'GMC/BrightDrop EV booklet not retrieved (INFERENCE 75%)',
+      url: gmFloors[0]?.source_url || null,
+      deductCandidate: true,
+    }
+  }
+
   if (/tesla/i.test(make)) {
-    const tesla = exclusionRows.find((r) => /tesla/i.test(r.make || ''))
     return {
       pct: 70,
       label: 'FACT',
-      source: tesla?.doc_title || 'Tesla Cybertruck NVLW',
-      url: tesla?.source_url || null,
+      source: 'Tesla Cybertruck NVLW',
+      url: usedEvRows.find((r) => /tesla/i.test(r.make || ''))?.doc_url || null,
+      deductCandidate: false,
     }
-  }
-
-  // Chevrolet non-EV skip; Chevrolet EV covered above
-  if (/chevrolet/i.test(make) && /ev|brightdrop/i.test(model)) {
-    return { pct: 75, label: 'FACT', source: '2024 Chevrolet EV warranty', url: null }
   }
 
   return null
@@ -243,8 +262,19 @@ export function lookupCommercialExclusionSimple(make: string, model: string) {
   const mod = String(model || '').toLowerCase()
   if (!/rivian/i.test(m)) return null
   if (!/r1t|r1s/.test(mod) && mod.length > 0) return null
-  const row =
-    COMMERCIAL_USE_EXCLUSIONS.find((e) => /rivian/i.test(e.make)) ||
-    null
-  return row
+  return COMMERCIAL_USE_EXCLUSIONS.find((e) => /rivian/i.test(e.make)) || null
+}
+
+/** Default batt warranty terms for preview EVs (8/100k) when OEM merge lacks them. */
+export function defaultEvBattTerms(make: string, model: string): {
+  yr: number
+  mi: number
+} | null {
+  const m = `${make} ${model}`.toLowerCase()
+  if (/tesla|cybertruck/.test(m)) return { yr: 8, mi: 150000 }
+  if (/rivian/.test(m) && /r1t|r1s/.test(m)) return { yr: 8, mi: 175000 }
+  if (/lightning|e-?transit|silverado\s*ev|sierra\s*ev|brightdrop|promaster\s*ev|hummer/.test(m)) {
+    return { yr: 8, mi: 100000 }
+  }
+  return null
 }

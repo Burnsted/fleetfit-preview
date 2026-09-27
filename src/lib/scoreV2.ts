@@ -15,6 +15,7 @@ import {
   MAINT_CPM_ANCHORS,
   RANGE_BUFFER,
   POINTS_FLOOR,
+  WARRANTY_MAX,
   SCORE_V2_BUILD,
   SCORE_DATE,
   STATUS,
@@ -26,6 +27,7 @@ import {
 import {
   lookupBaseline,
   MAINT_CLASS_AAA,
+  ARGONNE_VAN_MAINT_CPM,
   type BaselineVehicle,
 } from '../data/baselineVehicles'
 import { lookupCandidate, type CandidateVehicle } from '../data/candidateVehicles'
@@ -41,6 +43,9 @@ import {
   normalizeWarrantyType,
   normalizeUpfit,
   lookupCapacityFloor,
+  warrantyTypeMatters,
+  CAPACITY_FLOOR_DEDUCTION,
+  defaultEvBattTerms,
   GM_FLEET_POWERTRAIN,
   type WarrantyType,
   type UpfitKind,
@@ -138,6 +143,7 @@ function cell(
     url?: string | null
     counted?: boolean
     atRisk?: boolean
+    unconfirmed?: boolean
   },
 ): CellResult {
   const counted = opts.counted !== false && points != null && !opts.status?.startsWith('Not ')
@@ -145,26 +151,42 @@ function cell(
   if (opts.status === STATUS.NOT_USED) display = STATUS.NOT_USED
   else if (opts.status?.startsWith('Not scored')) display = opts.status
   else if (points == null) display = opts.status || STATUS.notScored('data')
-  else if (opts.atRisk) display = `${round1(points).toFixed(1)} · ${STATUS.AT_RISK}`
+  else if (opts.unconfirmed) {
+    display = `${round1(points).toFixed(1)} · ${STATUS.WARRANTY_UNCONFIRMED}`
+  } else if (opts.atRisk) display = `${round1(points).toFixed(1)} · ${STATUS.AT_RISK}`
   else display = round1(points).toFixed(1)
+  // Polish: Not scored / Not used — reason only when it adds information
+  let reason = opts.reason
+  if (
+    (opts.status === STATUS.NOT_USED || opts.status?.startsWith('Not scored')) &&
+    reason === opts.status
+  ) {
+    reason = ''
+  }
   return {
     points: points == null ? null : round1(points),
-    status: opts.status || (opts.atRisk ? STATUS.AT_RISK : null),
+    status:
+      opts.status ||
+      (opts.unconfirmed
+        ? STATUS.WARRANTY_UNCONFIRMED
+        : opts.atRisk
+          ? STATUS.AT_RISK
+          : null),
     display,
-    reason: opts.reason,
+    reason,
     url: opts.url || null,
     counted: Boolean(counted && !opts.status?.startsWith('Not ')),
   }
 }
 
-function bothNotUsed(reason = STATUS.NOT_USED): { current: CellResult; candidate: CellResult } {
-  const c = cell(null, { status: STATUS.NOT_USED, reason, counted: false })
+function bothNotUsed(): { current: CellResult; candidate: CellResult } {
+  const c = cell(null, { status: STATUS.NOT_USED, reason: '', counted: false })
   return { current: c, candidate: { ...c } }
 }
 
 function bothNotScored(field: string, kind: 'published' | 'entered' = 'published', url: string | null = null) {
   const status = STATUS.notScored(field, kind)
-  const c = cell(null, { status, reason: status, url, counted: false })
+  const c = cell(null, { status, reason: '', url, counted: false })
   return { current: c, candidate: { ...c } }
 }
 
@@ -209,6 +231,17 @@ function scoreRange(
   const usable = publishedRange * RANGE_BUFFER
   const ratio = usable / dailyMiles
   const pts = clampScore(lin(ratio, RANGE_ANCHORS))
+  // G-final Transit polish reason when Fuelly tank range
+  if (
+    publishedRange === 340 &&
+    /13\.6/.test(basisNote) &&
+    /Fuelly|mpg/i.test(basisNote)
+  ) {
+    return cell(pts, {
+      reason: `13.6 mpg × 25 gal = 340 mi × 0.7 = 238 mi usable (mpg is an estimate)`,
+      url,
+    })
+  }
   return cell(pts, {
     reason: `${publishedRange} mi ${basisNote} × ${RANGE_BUFFER} = ${round1(usable)} mi usable vs ${dailyMiles} mi/day (ratio ${ratio.toFixed(2)})`,
     url,
@@ -393,7 +426,7 @@ function scoreService(
   if (!shopCity) {
     return cell(null, {
       status: STATUS.notScored('shop location', 'entered'),
-      reason: STATUS.notScored('shop location', 'entered'),
+      reason: '',
       counted: false,
     })
   }
@@ -404,7 +437,7 @@ function scoreService(
   if (n.notScoredStatus) {
     return cell(null, {
       status: n.notScoredStatus,
-      reason: n.notScoredStatus,
+      reason: '',
       counted: false,
       url: n.url,
     })
@@ -415,11 +448,14 @@ function scoreService(
       : 'current service distance'
     return cell(null, {
       status: STATUS.notScored(field),
-      reason: STATUS.notScored(field),
+      reason: '',
       counted: false,
     })
   }
-  let pts = clampScore(lin(n.miles, SERVICE_MI_ANCHORS))
+  let pts =
+    n.pointsOverride != null
+      ? n.pointsOverride
+      : clampScore(lin(n.miles, SERVICE_MI_ANCHORS))
   let reason = `${n.location?.location || 'Not published'}, ${n.miles} road mi from 32960 (OSRM)`
   if (/rivian/i.test(make)) {
     reason = `Nearest Rivian service: ${n.location?.location || 'Not published'}, ${n.miles} road mi from 32960 (OSRM)`
@@ -442,50 +478,71 @@ function scoreLongevity(opts: {
   powerMi: number | null
   make: string
   model: string
-  warrantyType: WarrantyType | null
+  warrantyType: WarrantyType
   oemWrittenConfirmation: boolean
   warrantyUrl: string | null
   upfit: UpfitKind
   fleetAccount?: boolean
+  /** true = candidate column (INFERENCE floor → −2) */
+  isCandidate?: boolean
 }) {
   if (opts.miles == null) {
     return cell(null, {
       status: STATUS.notScored('current miles', 'entered'),
-      reason: STATUS.notScored('current miles', 'entered'),
+      reason: '',
       counted: false,
     })
   }
 
-  // Amazon EDV
   if (/rivian/i.test(opts.make) && /\bedv\b/i.test(opts.model)) {
     return cell(null, {
       status: 'Not scored: EDV warranty terms not published',
-      reason: 'Not scored: EDV warranty terms not published',
+      reason: '',
       counted: false,
     })
   }
 
-  const exclusion = lookupCommercialExclusion(opts.make, opts.model)
-  const isRivianWork =
-    Boolean(exclusion) &&
-    opts.warrantyType !== 'commercial_fleet' &&
-    !opts.oemWrittenConfirmation
-
-  // Warranty start = Jan 1 of model year (INFERENCE)
   const start = new Date(`${opts.year}-01-01T00:00:00Z`)
   const end = new Date(`${SCORE_DATE}T00:00:00Z`)
   const yearsUsed = Math.max(0, yearsBetween(start, end))
+  const matters = warrantyTypeMatters(opts.make, opts.model)
+  const exclusion = lookupCommercialExclusion(opts.make, opts.model)
 
-  if (isRivianWork) {
+  // Rivian R1T: consumer / unconfirmed → 0 of 20
+  const rivianAtRisk =
+    matters &&
+    Boolean(exclusion) &&
+    !opts.oemWrittenConfirmation &&
+    opts.warrantyType !== 'commercial'
+
+  if (rivianAtRisk) {
     const wYr = opts.battYr ?? RIVIAN_CONSUMER_WARRANTY.battWarrantyYr
     const wMi = opts.battMi ?? RIVIAN_CONSUMER_WARRANTY.battWarrantyMi
     const yearsLeft = Math.max(0, wYr - yearsUsed)
     const milesLeft = Math.max(0, wMi - opts.miles)
+    const commercialPts = clampScore(
+      WARRANTY_MAX *
+        Math.min(
+          Math.max(0, RIVIAN_COMMERCIAL_WARRANTY.battWarrantyYr - yearsUsed) /
+            RIVIAN_COMMERCIAL_WARRANTY.battWarrantyYr,
+          Math.max(0, RIVIAN_COMMERCIAL_WARRANTY.battWarrantyMi - opts.miles) /
+            RIVIAN_COMMERCIAL_WARRANTY.battWarrantyMi,
+        ),
+      WARRANTY_MAX,
+    )
     const floor = lookupCapacityFloor(opts.make, opts.model, opts.year)
-    let reason = `At risk, not counted: Rivian consumer warranty does not apply if "used primarily for business or commercial purposes" (NVLW Guide Rev ${RIVIAN_CONSUMER_WARRANTY.revision}, eff. ${RIVIAN_CONSUMER_WARRANTY.effective}, p${RIVIAN_CONSUMER_WARRANTY.pageExclusion}). Nominal consumer coverage left: ${yearsLeft.toFixed(2)} yr / ${(milesLeft / 1000).toFixed(1)}k mi. Counts only on Rivian Commercial warranty or written Rivian confirmation.`
-    if (floor) {
-      reason += ` · Battery capacity floor ${floor.pct}% (${floor.label})`
+    if (opts.warrantyType === 'unconfirmed') {
+      let reason = `${STATUS.WARRANTY_UNCONFIRMED}. Scores as consumer (lower case). Nominal consumer coverage left: ${yearsLeft.toFixed(2)} yr / ${(milesLeft / 1000).toFixed(1)}k mi. On Rivian Commercial terms this unit would score ${commercialPts.toFixed(1)} of ${WARRANTY_MAX}.`
+      if (floor?.pct != null) reason += ` · Battery capacity floor ${floor.pct}% (${floor.label})`
+      return cell(0, {
+        unconfirmed: true,
+        reason,
+        url: exclusion?.url || RIVIAN_CONSUMER_WARRANTY.url,
+        counted: true,
+      })
     }
+    let reason = `At risk, not counted: Rivian consumer warranty does not apply if "used primarily for business or commercial purposes" (NVLW Guide Rev ${RIVIAN_CONSUMER_WARRANTY.revision}, eff. ${RIVIAN_CONSUMER_WARRANTY.effective}, p${RIVIAN_CONSUMER_WARRANTY.pageExclusion}). Nominal consumer coverage left: ${yearsLeft.toFixed(2)} yr / ${(milesLeft / 1000).toFixed(1)}k mi.`
+    if (floor?.pct != null) reason += ` · Battery capacity floor ${floor.pct}% (${floor.label})`
     return cell(0, {
       atRisk: true,
       reason,
@@ -497,16 +554,21 @@ function scoreLongevity(opts: {
   let wYr = opts.isEv ? opts.battYr : opts.powerYr
   let wMi = opts.isEv ? opts.battMi : opts.powerMi
   let url = opts.warrantyUrl
-  let programNote = ''
 
-  if (opts.warrantyType === 'commercial_fleet' && /rivian/i.test(opts.make)) {
+  if (opts.warrantyType === 'commercial' && /rivian/i.test(opts.make)) {
     wYr = RIVIAN_COMMERCIAL_WARRANTY.battWarrantyYr
     wMi = RIVIAN_COMMERCIAL_WARRANTY.battWarrantyMi
     url = RIVIAN_COMMERCIAL_WARRANTY.url
-    programNote = 'Commercial 8 yr/100k'
   }
 
-  // GM qualifying fleet powertrain 5/100k
+  if (opts.isEv && (wYr == null || wMi == null)) {
+    const d = defaultEvBattTerms(opts.make, opts.model)
+    if (d) {
+      wYr = wYr ?? d.yr
+      wMi = wMi ?? d.mi
+    }
+  }
+
   if (
     !opts.isEv &&
     opts.fleetAccount &&
@@ -514,13 +576,12 @@ function scoreLongevity(opts: {
   ) {
     wYr = GM_FLEET_POWERTRAIN.yr
     wMi = GM_FLEET_POWERTRAIN.mi
-    programNote = 'GM fleet powertrain 5 yr/100k'
   }
 
   if (wYr == null || wMi == null) {
     return cell(null, {
       status: STATUS.notScored('warranty terms'),
-      reason: STATUS.notScored('warranty terms'),
+      reason: '',
       url,
       counted: false,
     })
@@ -529,69 +590,83 @@ function scoreLongevity(opts: {
   const yearsLeft = Math.max(0, wYr - yearsUsed)
   const milesLeft = Math.max(0, wMi - opts.miles)
   const frac = Math.min(yearsLeft / wYr, milesLeft / wMi)
-  let pts = clampScore(10 * frac)
+  let pts = clampScore(WARRANTY_MAX * frac, WARRANTY_MAX)
 
-  // Upfit deduction for Rivian commercial_fleet
   if (
-    opts.warrantyType === 'commercial_fleet' &&
+    opts.warrantyType === 'commercial' &&
     /rivian/i.test(opts.make) &&
     (opts.upfit === 'other' || opts.upfit === 'unknown')
   ) {
-    pts = clampScore(pts - RIVIAN_COMMERCIAL_WARRANTY.upfitDeduction)
-    programNote +=
-      opts.upfit === 'unknown'
-        ? '; upfit −3 (installer not documented)'
-        : '; upfit −3 (not Rivian Preferred Upfit Partner)'
+    pts = clampScore(pts - RIVIAN_COMMERCIAL_WARRANTY.upfitDeduction, WARRANTY_MAX)
   }
 
-  // Degradation modifier: only model-specific FACT — none in A/B today
-  if (!opts.isEv && opts.miles > 150000) pts = clampScore(pts - 2)
+  // Gas over 150k → −4 of 20
+  if (!opts.isEv && opts.miles > 150000) {
+    pts = clampScore(pts - 4, WARRANTY_MAX)
+  }
 
   const floor = opts.isEv
     ? lookupCapacityFloor(opts.make, opts.model, opts.year)
     : null
+  if (floor && opts.isCandidate && floor.deductCandidate) {
+    pts = clampScore(pts - CAPACITY_FLOOR_DEDUCTION, WARRANTY_MAX)
+  }
 
-  let reason =
-    programNote ||
-    `${opts.isEv ? 'battery/drivetrain' : 'powertrain'} ${wYr} yr/${(wMi / 1000).toFixed(0)}k`
-  if (opts.warrantyType === 'commercial_fleet' && /rivian/i.test(opts.make)) {
-    reason = `Commercial ${wYr} yr/${(wMi / 1000).toFixed(0)}k: min(${yearsLeft.toFixed(2)}/${wYr} = ${(yearsLeft / wYr).toFixed(2)}, ${(milesLeft / 1000).toFixed(1)}k/${(wMi / 1000).toFixed(0)}k = ${(milesLeft / wMi).toFixed(2)})`
-    if (opts.upfit === 'none') reason += '; no upfit'
-    else if (opts.upfit === 'other' || opts.upfit === 'unknown') {
+  let reason: string
+  if (opts.warrantyType === 'commercial' && /rivian/i.test(opts.make)) {
+    reason = `Commercial ${wYr} yr/${(wMi / 1000).toFixed(0)}k: 20 × min(${yearsLeft.toFixed(2)}/${wYr}, ${(milesLeft / 1000).toFixed(1)}k/${(wMi / 1000).toFixed(0)}k) = ${(WARRANTY_MAX * frac).toFixed(1)}`
+    if (opts.upfit === 'other' || opts.upfit === 'unknown') {
       reason +=
         opts.upfit === 'unknown'
-          ? '; upfit −3 (installer not documented)'
-          : '; upfit −3 (not Rivian Preferred Upfit Partner)'
+          ? `; upfit −${RIVIAN_COMMERCIAL_WARRANTY.upfitDeduction} (installer not documented)`
+          : `; upfit −${RIVIAN_COMMERCIAL_WARRANTY.upfitDeduction} (not Rivian Preferred Upfit Partner)`
+    } else {
+      reason += '; no upfit'
     }
+  } else if (!opts.isEv && yearsLeft <= 0) {
+    reason = `powertrain ${wYr} yr/${(wMi / 1000).toFixed(0)}k expired; ≤150k mi, no modifier`
   } else {
-    reason = `${opts.isEv ? 'battery/drivetrain' : 'powertrain'} ${wYr} yr/${(wMi / 1000).toFixed(0)}k · start Jan 1 ${opts.year} (INFERENCE) · ${yearsLeft.toFixed(2)} yr left, ${(milesLeft / 1000).toFixed(1)}k mi left`
-    if (!opts.isEv && yearsLeft <= 0) {
-      reason = `powertrain ${wYr} yr/${(wMi / 1000).toFixed(0)}k expired; ≤150k mi, no modifier`
-    }
+    reason = `${opts.isEv ? 'battery/drivetrain' : 'powertrain'} ${wYr} yr/${(wMi / 1000).toFixed(0)}k · start Jan 1 ${opts.year} (INFERENCE) · ${yearsLeft.toFixed(2)} yr left, ${(milesLeft / 1000).toFixed(1)}k mi left · 20 × min = ${(WARRANTY_MAX * frac).toFixed(1)}`
   }
   if (floor) {
-    reason += ` · Battery capacity floor ${floor.pct}% (${floor.label})`
+    if (floor.label === 'NONE') {
+      reason += ` · Battery capacity floor None (FACT)${opts.isCandidate ? ` · −${CAPACITY_FLOOR_DEDUCTION}` : ''}`
+    } else {
+      reason += ` · Battery capacity floor ${floor.pct}% (${floor.label})${
+        opts.isCandidate && floor.deductCandidate
+          ? ` · −${CAPACITY_FLOOR_DEDUCTION}`
+          : ''
+      }`
+    }
   }
   return cell(pts, { reason, url })
 }
 
-function scoreEnergyEv(kwhPer100: number | null, url: string | null) {
+function scoreEnergyEv(
+  kwhPer100: number | null,
+  url: string | null,
+  energyBasis: string | null = null,
+) {
   if (!FL_COMMERCIAL_ELECTRICITY || FL_COMMERCIAL_ELECTRICITY.value == null) {
-    return cell(null, { status: STATUS.FL_PRICE, reason: STATUS.FL_PRICE, counted: false })
+    return cell(null, { status: STATUS.FL_PRICE, reason: '', counted: false })
   }
   if (kwhPer100 == null) {
     return cell(null, {
       status: STATUS.notScored('EPA efficiency'),
-      reason: STATUS.notScored('EPA efficiency'),
+      reason: '',
       url,
       counted: false,
     })
   }
   const cpm = (kwhPer100 / 100) * FL_COMMERCIAL_ELECTRICITY.value
   const pts = clampScore(lin(cpm, ENERGY_CPM_ANCHORS))
+  const basis =
+    energyBasis && !/^EPA$/i.test(energyBasis)
+      ? energyBasis
+      : 'EPA'
   return cell(pts, {
-    reason: `${kwhPer100} kWh/100 mi (EPA) × ${FL_COMMERCIAL_ELECTRICITY.value}¢/kWh FL commercial (EIA, Jul 2026) = ${cpm.toFixed(1)}¢/mi`,
-    url: FL_COMMERCIAL_ELECTRICITY.url || url,
+    reason: `${kwhPer100} kWh/100 mi (${basis}) × ${FL_COMMERCIAL_ELECTRICITY.value}¢/kWh FL commercial (EIA, Jul 2026) = ${cpm.toFixed(1)}¢/mi`,
+    url: url || FL_COMMERCIAL_ELECTRICITY.url,
   })
 }
 
@@ -641,11 +716,23 @@ function scoreEnergyGas(
   return cell(pts, { reason, url: price.url || mpgUrl })
 }
 
-function scoreMaint(maintClass: string | null, isVan: boolean) {
+function scoreMaint(
+  maintClass: string | null,
+  isVan: boolean,
+  opts?: { argonVanCurrent?: boolean },
+) {
+  // G-final: Transit current can score Argonne $0.31/mi; pair drops if candidate lacks same basis
   if (isVan || maintClass === 'van') {
+    if (opts?.argonVanCurrent) {
+      const pts = clampScore(lin(ARGONNE_VAN_MAINT_CPM.cpm, MAINT_CPM_ANCHORS))
+      return cell(pts, {
+        reason: ARGONNE_VAN_MAINT_CPM.detail,
+        url: ARGONNE_VAN_MAINT_CPM.url,
+      })
+    }
     return cell(null, {
       status: STATUS.notScored('van maintenance cost'),
-      reason: STATUS.notScored('van maintenance cost'),
+      reason: '',
       counted: false,
     })
   }
@@ -951,9 +1038,7 @@ export function scoreReplacementV2(
   }
   // Gas vans: use Fuelly for range via mpg × tank
   if (!missingCurrent && baseline && isVanCur && baseline.fuellyMpg != null && baseline.fuelTankGal != null) {
-    const fuellyLabel = /INF/i.test(baseline.fuellyLabel || '')
-      ? 'Fuelly crowd-sourced mpg (INF, not EPA-rated: GVWR >8,500)'
-      : 'Fuelly INF tank'
+    const fuellyLabel = `${baseline.fuellyMpg} mpg Fuelly (INF)`
     c1curFinal = scoreRange(
       baseline.fuellyMpg * baseline.fuelTankGal,
       job.dailyMiles,
@@ -1027,18 +1112,23 @@ export function scoreReplacementV2(
           reason: STATUS.notScored('current payload'),
           counted: false,
         })
-  // Candidate: explicit listing/VIN payload wins; else CSV/OEM (low figure)
-  const unitListingPayload =
+  // Candidate: G-final shrink-the-lead low (cand.payloadLb) when present; else OEM/listing
+  const oemOrListingPayload =
     num(unit.payload) ??
     num((unit as { payloadLb?: unknown }).payloadLb) ??
-    null
-  const candPayload = unitListingPayload ?? cand.payloadLb ?? listingPayload ?? null
+    listingPayload
+  const candPayload =
+    cand.payloadLb != null
+      ? cand.payloadLb
+      : oemOrListingPayload ?? null
   const candPayloadLabel =
-    unitListingPayload != null
-      ? `${unitListingPayload.toLocaleString()} lb (listing)`
-      : candPayload != null
-        ? `${candPayload.toLocaleString()} lb`
-        : null
+    candPayload != null
+      ? cand.payloadLb != null &&
+        oemOrListingPayload != null &&
+        cand.payloadLb < oemOrListingPayload
+        ? `${candPayload.toLocaleString()} lb (lowest config)`
+        : `${candPayload.toLocaleString()} lb`
+      : null
   const c2cand = scorePayload(
     candPayload,
     job.loadLb,
@@ -1181,19 +1271,23 @@ export function scoreReplacementV2(
         c7cand,
       )
 
-  // 8 Longevity — warrantyType consumer | commercial_fleet
-  const candMiles = num(merged.mileage)
-  const candWarrantyType: WarrantyType =
-    normalizeWarrantyType(
-      merged.warrantyType ?? merged.warrantyProgram ?? cand.warrantyProgram,
-    ) || 'consumer'
+  // 8 Longevity — G-final: 20 points; warranty_type commercial|consumer|unconfirmed
+  const candMiles =
+    num((unit as { scoreMileage?: unknown }).scoreMileage) ?? num(merged.mileage)
+  const candWarrantyType: WarrantyType = normalizeWarrantyType(
+    merged.warrantyType ?? merged.warrantyProgram ?? cand.warrantyProgram,
+  )
   const candUpfit = normalizeUpfit(merged.upfit ?? 'none')
+  const defaultsBatt = defaultEvBattTerms(
+    String(cand.make || merged.make),
+    String(cand.model || merged.model),
+  )
   const c8cand = scoreLongevity({
     isEv: true,
     year: num(merged.year) || cand.year || 0,
     miles: candMiles,
-    battYr: cand.battWarrantyYr ?? null,
-    battMi: cand.battWarrantyMi ?? null,
+    battYr: cand.battWarrantyYr ?? defaultsBatt?.yr ?? null,
+    battMi: cand.battWarrantyMi ?? defaultsBatt?.mi ?? null,
     powerYr: null,
     powerMi: null,
     make: String(cand.make || merged.make),
@@ -1202,6 +1296,7 @@ export function scoreReplacementV2(
     oemWrittenConfirmation: Boolean(merged.oemWrittenConfirmation),
     warrantyUrl: cand.warrantySourceUrl ?? null,
     upfit: candUpfit,
+    isCandidate: true,
   })
   const p8 = missingCurrent
     ? { current: notEntered(), candidate: c8cand }
@@ -1217,22 +1312,27 @@ export function scoreReplacementV2(
               powerMi: baseline.powertrainWarrantyMi,
               make: baseline.make,
               model: baseline.model,
-              warrantyType: currentIn?.warrantyType || null,
+              warrantyType: currentIn?.warrantyType || 'unconfirmed',
               oemWrittenConfirmation: false,
               warrantyUrl: baseline.warrantySourceUrl,
               upfit: 'none',
               fleetAccount: Boolean(currentIn?.fleetAccount),
+              isCandidate: false,
             })
           : cell(null, {
               status: STATUS.notScored('warranty terms'),
-              reason: STATUS.notScored('warranty terms'),
+              reason: '',
               counted: false,
             }),
         c8cand,
       )
 
   // 9 Energy
-  const c9cand = scoreEnergyEv(cand.epaKwhPer100mi ?? null, cand.epaSourceUrl ?? null)
+  const c9cand = scoreEnergyEv(
+    cand.epaKwhPer100mi ?? null,
+    cand.energyUrl ?? cand.epaSourceUrl ?? null,
+    cand.energyBasis ?? null,
+  )
   const p9 = missingCurrent
     ? { current: notEntered(), candidate: c9cand }
     : pairCells(
@@ -1258,14 +1358,22 @@ export function scoreReplacementV2(
         c9cand,
       )
 
-  // 10 Maintenance
+  // 10 Maintenance — same-basis rule (G-final: Transit Argonne; EV vans lack it → drop)
   const c10cand = scoreMaint(cand.maintClass ?? null, Boolean(isVanCand))
+  const c10cur = missingCurrent
+    ? notEntered()
+    : isVanCur
+      ? scoreMaint('van', true, { argonVanCurrent: true })
+      : scoreMaint(baseline?.maintClass ?? null, Boolean(isVanCur))
   const p10 = missingCurrent
     ? { current: notEntered(), candidate: c10cand }
-    : pairCells(
-        scoreMaint(baseline?.maintClass ?? null, Boolean(isVanCur)),
-        c10cand,
-      )
+    : isVanCur && !isVanCand
+      ? // Transit Argonne vs EV pickup AAA — different basis → both drop
+        bothNotScored('van maintenance cost')
+      : isVanCur && isVanCand
+        ? // EV van lacks Argonne → both Not scored
+          bothNotScored('van maintenance cost')
+        : pairCells(c10cur, c10cand)
 
   const pairs = [p1, p2, p3, p4, p5, p6, p7, p8, p9, p10]
   const categories: CategoryRow[] = CATEGORY_KEYS.map((key, i) => ({
@@ -1279,22 +1387,23 @@ export function scoreReplacementV2(
   let candidateTotal = 0
   let pp = 0
   for (const row of categories) {
+    const catMax = row.key === 'longevity' ? WARRANTY_MAX : 10
     if (missingCurrent) {
-      // Candidate-only: score each counted candidate cell; no pair-drop / no difference.
       if (row.candidate.counted) {
         candidateTotal += row.candidate.points || 0
-        pp += 10
+        pp += catMax
       }
     } else if (row.current.counted && row.candidate.counted) {
       currentTotal += row.current.points || 0
       candidateTotal += row.candidate.points || 0
-      pp += 10
+      pp += catMax
     }
   }
   currentTotal = round1(currentTotal)
   candidateTotal = round1(candidateTotal)
   const difference = missingCurrent ? null : round1(candidateTotal - currentTotal)
 
+  // §1.6 G-final: incomplete when PP < 2/3 of job-applicable (66.7 with tow not used)
   const incomplete = pp < POINTS_FLOOR
   const incompleteLabel = incomplete ? STATUS.INCOMPLETE_KEY : null
   const banner =
@@ -1304,24 +1413,28 @@ export function scoreReplacementV2(
   const hardReject = hf3.status === 'reject'
   const hardFlag = hf3.status === 'flag'
 
-  // Similar miles soft label (does not affect score)
   const sidegrade =
     !missingCurrent &&
     curMiles != null &&
     candMiles != null &&
     Math.abs(curMiles - candMiles) / Math.max(curMiles, 1) < 0.15
 
-  // Rank by candidate total ÷ PP even when PP < 60 (floor only affects readout footer copy).
-  const sortKey = hardReject ? -1 : pp > 0 ? candidateTotal / pp : 0
+  const sortKey = hardReject
+    ? -1
+    : incomplete
+      ? 0
+      : pp > 0
+        ? candidateTotal / pp
+        : 0
 
-  // Card dial always shows scored NN.N / PP when any category counted.
-  // Readout footer still uses incompleteLabel when PP < 60 (scoring rule unchanged).
-  const dialTotal = pp > 0 ? `${candidateTotal.toFixed(1)} / ${pp}` : null
+  // Polish 2 / §1.6: incomplete → no total, no difference on card or readout
+  const dialTotal = incomplete || pp <= 0 ? null : `${candidateTotal.toFixed(1)} / ${pp}`
   const dialDiff =
-    missingCurrent || difference == null
+    incomplete || missingCurrent || difference == null
       ? null
       : `${difference > 0 ? '+' : ''}${difference.toFixed(1)} vs current`
-  const dialCurrent = missingCurrent ? null : `Current ${currentTotal.toFixed(1)}`
+  const dialCurrent =
+    incomplete || missingCurrent ? null : `Current ${currentTotal.toFixed(1)}`
 
   return {
     build: SCORE_V2_BUILD,
@@ -1329,10 +1442,10 @@ export function scoreReplacementV2(
     currentName,
     candidateName,
     categories,
-    currentTotal: missingCurrent ? null : currentTotal,
-    candidateTotal: pp > 0 ? candidateTotal : null,
+    currentTotal: incomplete || missingCurrent ? null : currentTotal,
+    candidateTotal: incomplete ? null : candidateTotal,
     pointsPossible: pp,
-    difference: missingCurrent ? null : difference,
+    difference: incomplete || missingCurrent ? null : difference,
     incomplete,
     incompleteLabel,
     missingCurrent,
@@ -1344,7 +1457,7 @@ export function scoreReplacementV2(
     hardReject,
     hardFlag,
     sidegrade,
-    total: pp > 0 ? candidateTotal : null,
+    total: incomplete ? null : candidateTotal,
     helps: [],
     watchOuts: [],
   }

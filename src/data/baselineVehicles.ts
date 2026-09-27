@@ -13,7 +13,7 @@ import vansRaw from './v2/c_baseline_vans.csv?raw'
 import maintRaw from './v2/c_maintenance.csv?raw'
 import warrantyRaw from './v2/c_baseline_warranty.csv?raw'
 
-export const BASELINE_VEHICLES_BUILD = 'score-v2-baseline-f-pages-20260927'
+export const BASELINE_VEHICLES_BUILD = 'score-v2-baseline-g-final-20260927'
 
 export type RetainedEntry = {
   value: number
@@ -312,8 +312,14 @@ const VAN_BASELINES: BaselineVehicle[] = vans.flatMap((v) => {
       failurePatterns: failuresFor(year, make, model, engine),
       maintClass: 'van' as const,
       payloadLb: numOrNull(v.payload_lb),
-      towLb: null,
-      seats: null,
+      // G-final g_gaps item 5: 2018 Transit-250 LWB HR = 6,200 lb
+      towLb:
+        /transit-?250/i.test(model) && year === 2018
+          ? 6200
+          : null,
+      // G-final: 2018 Transit-250 = 2 seats FACT
+      seats:
+        /transit-?250/i.test(model) && year === 2018 ? 2 : null,
       serviceDistanceMi: null,
       bodyType: 'van' as const,
       fuellyMpg: fuelly.mpg,
@@ -324,7 +330,38 @@ const VAN_BASELINES: BaselineVehicle[] = vans.flatMap((v) => {
   })
 })
 
-export const BASELINE_VEHICLES: BaselineVehicle[] = [...SPEC_BASELINES, ...VAN_BASELINES]
+/** G-final: overlay Transit KBB −50% retained (value-lost basis) onto van rows. */
+function withTransitResale(v: BaselineVehicle): BaselineVehicle {
+  if (v.year !== 2018 || !/transit-?250/i.test(v.model)) return v
+  return {
+    ...v,
+    retained3yrPct: [
+      {
+        value: 50,
+        source: 'KBB',
+        basis:
+          'last-3-yr private-party −50% ($35,079 → $17,500); retained 50% used (value lost next 3 yr basis)',
+        url: 'https://www.kbb.com/ford/transit-250-van/2018/extended-length-high-roof-w-sliding-side-door-w-lwb-van-3d/',
+        label: 'FACT (KBB dollars) / INFERENCE (retained %)',
+        horizonYr: 3,
+      },
+    ],
+  }
+}
+
+export const BASELINE_VEHICLES: BaselineVehicle[] = [
+  ...SPEC_BASELINES,
+  ...VAN_BASELINES.map(withTransitResale),
+]
+
+/** G-final Argonne van M&R at year 8 — low end $0.31/mi (shrink-the-lead for current). */
+export const ARGONNE_VAN_MAINT_CPM = {
+  cpm: 31, // ¢/mi
+  url: 'https://publications.anl.gov/anlpubs/2021/05/167399.pdf',
+  label: 'INFERENCE',
+  detail:
+    'Class-level, not model-specific: Argonne 2021 Utilimarc medium-duty M&R ~$0.31/mi at year 8 (INFERENCE, low end of $0.31–0.40)',
+} as const
 
 /** AAA 2026 class maintenance ¢/mi (same-basis rule). */
 export const MAINT_CLASS_AAA = {
