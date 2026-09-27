@@ -1,0 +1,6 @@
+make,models,ref_model_year,bumper_to_bumper,powertrain_yr,powertrain_mi,remaining_2026_09,note,label,source_url,accessed
+Ford,"F-150, Transit",2019,"3/36,000",5,60000,0 (INF: MY2016-2020 all >5 yr in service),diesel 5/100k,FACT,https://www.fordservicecontent.com/Ford_Content/Catalog/owner_information/2019MYUS_Ford_LT_Truck_WTY_V4.pdf,2026-09-27
+Chevrolet,"Silverado 1500, Colorado",2019,"3/36,000",5,60000,0 (INF),some commercial/government fleet 5/100k; third-party-hosted GM PDF,FACT,https://slpattorney.com/wp-content/uploads/GM_2019_Chevrolet_Generic_Warranty.pdf,2026-09-27
+Ram,1500,2019,"3/36,000",5,60000,0 (INF),,FACT,https://vehicleinfo.mopar.com/assets/publications/en-us/Ram/2019/1500_DT/9706.pdf,2026-09-27
+Ram,ProMaster,2019,"3/36,000",5,60000,0 (INF),,FACT,https://vehicleinfo.mopar.com/assets/publications/en-us/Ram/2019/ProMaster/10348.pdf,2026-09-27
+Toyota,Tacoma,2018,"3/36,000",5,60000,0 (INF),60 mo/60k,FACT,https://assets.sia.toyota.com/publications/en/omms-s/T-MMS-18Tacoma/pdf/T-MMS-18Tacoma.pdf,2026-09-27
