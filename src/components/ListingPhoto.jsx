@@ -5,7 +5,7 @@ export function PhotoPending({ current = false, className = '' }) {
     <span className={`listing-photo-pending ${current ? 'is-current' : ''} ${className}`.trim()}>
       {current
         ? 'Not a listing — your current work vehicle'
-        : 'Photo pending — no listing image'}
+        : 'Photo pending. No listing image'}
     </span>
   )
 }

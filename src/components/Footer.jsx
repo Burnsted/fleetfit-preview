@@ -10,7 +10,7 @@ export default function Footer() {
       <div className="footer-inner">
         <div className="footer-brand">
           <Wordmark size="nav" tone={onDark ? 'dark' : 'light'} />
-          <span>— Used EV fleet packages that fit the work day.</span>
+          <span>Used EV fleet packages that fit the work day.</span>
         </div>
         <div>
           Public preview · Anonymized examples · Demo inventory · No payments · We do not hold vehicle funds

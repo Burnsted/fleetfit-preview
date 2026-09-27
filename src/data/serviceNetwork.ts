@@ -277,7 +277,7 @@ export function nearestService(
         mobile: null,
         url: g?.url || 'https://www.autonationchevroletgreenacres.com/',
         notScoredStatus: null,
-        reasonExtra: 'BrightDrop certification INFERENCE (new-unit sales)',
+        reasonExtra: 'BrightDrop certification estimate (new-unit sales)',
         certLabel: 'INFERENCE',
         // Spec: score on distance 80.4 → lin ≈ 2.0; no further step-down
         pointsOverride: 2.0,
@@ -304,7 +304,7 @@ export function nearestService(
         mobile: null,
         url: g?.url || 'https://www.linusautomotive.com/',
         notScoredStatus: null,
-        reasonExtra: 'EV-certified INFERENCE → 7.0 (one step below FACT 10)',
+        reasonExtra: 'EV-certified estimate → 7.0 (one step below confirmed 10)',
         certLabel: 'INFERENCE',
         pointsOverride: 7.0,
       }
@@ -338,7 +338,7 @@ export function nearestService(
         mobile: null,
         url: g.url,
         notScoredStatus: null,
-        reasonExtra: 'EV-certified INFERENCE → 7.0 (one step below FACT 10)',
+        reasonExtra: 'EV-certified estimate → 7.0 (one step below confirmed 10)',
         certLabel: 'INFERENCE',
         pointsOverride: 7.0,
       }
@@ -369,8 +369,8 @@ export function nearestService(
         reasonExtra:
           cert === 'FACT'
             ? brand === 'Ford'
-              ? 'EV Certified FACT'
-              : 'LEV + PMCD FACT (ProMaster EV)'
+              ? 'EV Certified'
+              : 'LEV + PMCD (ProMaster EV)'
             : null,
         certLabel: cert,
         pointsOverride: null, // lin(4.1)=10, lin(4.9)=10

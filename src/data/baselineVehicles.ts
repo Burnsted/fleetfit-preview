@@ -360,7 +360,7 @@ export const ARGONNE_VAN_MAINT_CPM = {
   url: 'https://publications.anl.gov/anlpubs/2021/05/167399.pdf',
   label: 'INFERENCE',
   detail:
-    'Class-level, not model-specific: Argonne 2021 Utilimarc medium-duty M&R ~$0.31/mi at year 8 (INFERENCE, low end of $0.31–0.40)',
+    'Class-level, not model-specific: Argonne 2021 Utilimarc medium-duty M&R ~$0.31/mi at year 8 (estimate, low end of $0.31–0.40)',
 } as const
 
 /** AAA 2026 class maintenance ¢/mi (same-basis rule). */

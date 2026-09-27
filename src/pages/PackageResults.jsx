@@ -214,7 +214,7 @@ export default function PackageResults() {
         </ul>
       </section>
 
-      <p className="package-fee-quiet">Fee at checkout — amount TBD</p>
+      <p className="package-fee-quiet">Fee at checkout. Amount TBD</p>
 
       <div className="package-cta-bar">
         <p className="package-fleet-count">

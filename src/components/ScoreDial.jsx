@@ -1,6 +1,6 @@
 import { SCORE_V2_BUILD, STATUS } from '../data/scoreV2Rubric'
 
-export const SCORE_UI_BUILD = 'score-ui-dial-v2-g-final-20260927-1600'
+export const SCORE_UI_BUILD = 'score-ui-dial-v2-g-final-20260927-1635'
 
 /**
  * CLEARED Score UI dial — right of pricing.

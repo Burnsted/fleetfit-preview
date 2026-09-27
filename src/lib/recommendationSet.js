@@ -9,8 +9,8 @@ import {
 } from './replacementScore'
 
 /** CLEARED inventory freshness + full option rank · Score v2 stamp */
-export const BODY_MIX_BUILD = 'score-v2-rank-g-final-20260927-1600'
-export const CLEARED_SHIP = 'score-v2-g-final-20260927-1600'
+export const BODY_MIX_BUILD = 'score-v2-rank-g-final-20260927-1635'
+export const CLEARED_SHIP = 'score-v2-g-final-20260927-1635'
 
 export function bodyClassOf(unit) {
   if (!unit) return null
@@ -115,9 +115,9 @@ export function composeRecommendationSet(units, ctx = {}, options = {}) {
 
   let missingBodyNote = null
   if (trucks.length && !vans.length) {
-    missingBodyNote = 'Van not in this set — none cleared fit in this pool.'
+    missingBodyNote = 'Van not in this set. None cleared fit in this pool.'
   } else if (vans.length && !trucks.length) {
-    missingBodyNote = 'Truck not in this set — none cleared fit in this pool.'
+    missingBodyNote = 'Truck not in this set. None cleared fit in this pool.'
   }
 
   const years = items.map((r) => Number(r.unit?.year)).filter((y) => Number.isFinite(y))

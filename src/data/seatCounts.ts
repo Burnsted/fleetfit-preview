@@ -115,7 +115,7 @@ export function lookupSeats(opts: {
     ) {
       return {
         seats: 2,
-        reasonLabel: '2 seats (Ford 2018 Transit brochure, FACT)',
+        reasonLabel: '2 seats (Ford 2018 Transit brochure)',
         url: 'https://cdn.dealereprocess.org/cdn/brochures/ford/2018-transit.pdf',
         label: 'FACT',
         inference: false,
@@ -171,7 +171,7 @@ export function lookupSeats(opts: {
   const fromCars =
     /cars\.com/i.test(best.label || '') || /cars\.com/i.test(best.source_url || '')
   const reasonLabel = inference
-    ? `${bestSeats} seats (INFERENCE)`
+    ? `${bestSeats} seats (estimate)`
     : `${bestSeats} seats (${fromCars ? 'cars.com' : 'sourced'}; ${cabNote})`
 
   return {

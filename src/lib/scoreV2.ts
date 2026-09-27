@@ -135,6 +135,23 @@ function num(v: unknown): number | null {
   return Number.isFinite(n) ? n : null
 }
 
+/** Public reason copy: no FACT / INF / INFERENCE labels (Ted ban on visible tags). */
+function scrubPublicReason(raw: string): string {
+  if (!raw) return raw
+  return raw
+    .replace(/\s*\(FACT\)/gi, '')
+    .replace(/\s*\(INFERENCE\)/gi, '')
+    .replace(/\bINFERENCE\b/gi, 'estimate')
+    .replace(/\bINF\b:?\s*/g, '')
+    .replace(/\bFACT\b/g, '')
+    .replace(/\s{2,}/g, ' ')
+    .replace(/\s+([.,;:])/g, '$1')
+    .replace(/\s+\)/g, ')')
+    .replace(/\(\s+/g, '(')
+    .replace(/\(\s*\)/g, '')
+    .trim()
+}
+
 function cell(
   points: number | null,
   opts: {
@@ -163,6 +180,7 @@ function cell(
   ) {
     reason = ''
   }
+  reason = scrubPublicReason(reason)
   return {
     points: points == null ? null : round1(points),
     status:
@@ -626,13 +644,13 @@ function scoreLongevity(opts: {
   } else if (!opts.isEv && yearsLeft <= 0) {
     reason = `powertrain ${wYr} yr/${(wMi / 1000).toFixed(0)}k expired; ≤150k mi, no modifier`
   } else {
-    reason = `${opts.isEv ? 'battery/drivetrain' : 'powertrain'} ${wYr} yr/${(wMi / 1000).toFixed(0)}k · start Jan 1 ${opts.year} (INFERENCE) · ${yearsLeft.toFixed(2)} yr left, ${(milesLeft / 1000).toFixed(1)}k mi left · 20 × min = ${(WARRANTY_MAX * frac).toFixed(1)}`
+    reason = `${opts.isEv ? 'battery/drivetrain' : 'powertrain'} ${wYr} yr/${(wMi / 1000).toFixed(0)}k · start Jan 1 ${opts.year} · ${yearsLeft.toFixed(2)} yr left, ${(milesLeft / 1000).toFixed(1)}k mi left · 20 × min = ${(WARRANTY_MAX * frac).toFixed(1)}`
   }
   if (floor) {
     if (floor.label === 'NONE') {
-      reason += ` · Battery capacity floor None (FACT)${opts.isCandidate ? ` · −${CAPACITY_FLOOR_DEDUCTION}` : ''}`
+      reason += ` · Battery capacity floor None${opts.isCandidate ? ` · −${CAPACITY_FLOOR_DEDUCTION}` : ''}`
     } else {
-      reason += ` · Battery capacity floor ${floor.pct}% (${floor.label})${
+      reason += ` · Battery capacity floor ${floor.pct}%${
         opts.isCandidate && floor.deductCandidate
           ? ` · −${CAPACITY_FLOOR_DEDUCTION}`
           : ''
@@ -689,7 +707,7 @@ function scoreEnergyGas(
       })
     }
     useMpg = fuelly.mpg
-    reasonMpg = `Fuelly crowd-sourced mpg (INF, not EPA-rated: GVWR >8,500)`
+    reasonMpg = `Fuelly crowd-sourced mpg (not EPA-rated: GVWR >8,500)`
     mpgUrl = fuelly.url
   }
   if (useMpg == null) {
@@ -1038,7 +1056,7 @@ export function scoreReplacementV2(
   }
   // Gas vans: use Fuelly for range via mpg × tank
   if (!missingCurrent && baseline && isVanCur && baseline.fuellyMpg != null && baseline.fuelTankGal != null) {
-    const fuellyLabel = `${baseline.fuellyMpg} mpg Fuelly (INF)`
+    const fuellyLabel = `${baseline.fuellyMpg} mpg Fuelly (estimate)`
     c1curFinal = scoreRange(
       baseline.fuellyMpg * baseline.fuelTankGal,
       job.dailyMiles,
@@ -1101,9 +1119,10 @@ export function scoreReplacementV2(
             baselinePayloadHit?.reasonLabel ?? null,
           )
           if (loadNote) {
+            const note = scrubPublicReason(loadNote)
             cell2.reason = cell2.reason
-              ? `${cell2.reason} · ${loadNote}${loadUrl ? ` (${loadUrl})` : ''}`
-              : `${loadNote}${loadUrl ? ` (${loadUrl})` : ''}`
+              ? `${cell2.reason} · ${note}${loadUrl ? ` (${loadUrl})` : ''}`
+              : `${note}${loadUrl ? ` (${loadUrl})` : ''}`
           }
           return cell2
         })()
@@ -1174,8 +1193,11 @@ export function scoreReplacementV2(
           curSeatHit?.reasonLabel ?? null,
           baseline ? isGasCargoVanModel(baseline.make, baseline.model) : false,
         )
-        if (crewNote && cell3.reason) cell3.reason += ` · ${crewNote}`
-        else if (crewNote && !cell3.reason) cell3.reason = crewNote
+        if (crewNote) {
+          const note = scrubPublicReason(crewNote)
+          if (cell3.reason) cell3.reason += ` · ${note}`
+          else cell3.reason = note
+        }
         return cell3
       })()
   const c3cand = scoreCab(

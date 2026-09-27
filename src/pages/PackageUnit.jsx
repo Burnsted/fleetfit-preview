@@ -149,7 +149,7 @@ export default function PackageUnit() {
         title="Current vs this unit"
       />
 
-      <p className="package-fee-quiet">Fee at checkout — amount TBD</p>
+      <p className="package-fee-quiet">Fee at checkout. Amount TBD</p>
       <p className="locked-foot-note">
         FleetFit has not seen these trucks · we do not hold vehicle funds
       </p>

@@ -452,7 +452,7 @@ export const PACKAGES = [
     id: DEFAULT_PACKAGE_ID,
     path: 'PRIMARY',
     label: 'Treasure Coast electrical — truck + van options',
-    headline: 'Used-EV fleet package — Treasure Coast electrical (truck + van options)',
+    headline: 'Used-EV fleet package. Treasure Coast electrical (truck + van options)',
     summary:
       'Composite example for a small trade fleet that needs matched used EVs for typical coastal service routes — including newer 2025–2026 options. Not a real shop.',
     region: 'Treasure Coast, FL',
@@ -479,11 +479,11 @@ export const PACKAGES = [
       dailyMiles: 120,
       loadLb: 543,
       loadNote:
-        'Adrian Steel ELE-FTMR148B electrical mid-roof upfit 542.73 lb → 543 lb load (FACT). Cargo weight not entered.',
+        'Adrian Steel ELE-FTMR148B electrical mid-roof upfit 542.73 lb → 543 lb load. Cargo weight not entered.',
       loadUrl:
         'https://industrialladder.com/Adrian-ELE-FTMR148B-Electrical-Package-FTM148/',
       crew: 2,
-      crewNote: 'INF: electrician plus helper',
+      crewNote: 'electrician plus helper',
       tows: false,
       shopCity: 'Vero Beach',
     },
@@ -520,7 +520,7 @@ export const PACKAGES = [
     id: 'pkg-tc-landscape-2',
     path: 'SECONDARY EXAMPLE',
     label: 'Treasure Coast landscape — trailer hauler + lead truck',
-    headline: '2-unit used-EV package — trailer hauler + lead / estimates',
+    headline: '2-unit used-EV package. Trailer hauler + lead / estimates',
     summary:
       'Composite example for a two-truck landscape day: one candidate hauler and one lighter lead truck. Not a real shop.',
     region: 'Treasure Coast, FL',

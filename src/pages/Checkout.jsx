@@ -20,7 +20,7 @@ export default function Checkout() {
         </p>
       </header>
       <p className="locked-foot-note">
-        Fee at checkout — amount TBD. FleetFit does not hold vehicle funds.
+        Fee at checkout. Amount TBD. FleetFit does not hold vehicle funds.
         Buyer pays the seller / dealer.
       </p>
       <Link to={`/package/${pkg.id}`} className="btn btn-primary">
