@@ -9,7 +9,25 @@
 import { applyListingFactsToUnit } from '../lib/vehiclePhoto'
 import { packageBatteryKwhFact } from '../lib/workSpec'
 
-export const DEFAULT_PACKAGE_ID = 'pkg-tc-electrical-4'
+import {
+  DEFAULT_TRADE_PACKAGE_ID,
+  getTradePackageDef,
+  isTradePackageId,
+  matchTradePackageIdFromIntake,
+  PACKAGE_ID_ALIASES,
+  resolvePackageId,
+  TRADE_PACKAGES,
+  tradePackageHeader,
+} from './tradePackages'
+
+/** Default PATH Add to fleet target = electrical trade package. */
+export const DEFAULT_PACKAGE_ID = DEFAULT_TRADE_PACKAGE_ID
+
+/** Legacy demo electrical seed package id (fixtures / score §6.1). */
+export const LEGACY_ELECTRICAL_PACKAGE_ID = 'pkg-tc-electrical-4'
+
+/** @deprecated alias of LEGACY_ELECTRICAL_PACKAGE_ID */
+export const LEGACY_ELECTRICAL_ID = LEGACY_ELECTRICAL_PACKAGE_ID
 
 const ELECTRICAL_UNITS = [
   {
@@ -452,7 +470,7 @@ const LANDSCAPE_UNITS = [
 
 export const PACKAGES = [
   {
-    id: DEFAULT_PACKAGE_ID,
+    id: LEGACY_ELECTRICAL_PACKAGE_ID,
     path: 'PRIMARY',
     label: 'Treasure Coast electrical — truck + van options',
     headline: 'Used-EV fleet package. Treasure Coast electrical (truck + van options)',
@@ -582,14 +600,99 @@ function withListingFacts(pkg, { includeDead = false } = {}) {
 
 /** Score / audit fixture: all seed units with listing facts (includes dead). */
 export function getPackageAllUnits(id) {
-  return withListingFacts(
-    PACKAGES.find((p) => p.id === id) || null,
-    { includeDead: true },
-  )
+  // Exact legacy seed ids keep their fixture pools (score + eligibility tests).
+  const exact = PACKAGES.find((p) => p.id === id)
+  if (exact) {
+    return withListingFacts(exact, { includeDead: true })
+  }
+  const resolved = resolvePackageId(id)
+  if (isTradePackageId(resolved)) {
+    // Trade packages share the global seed pool (all facts, including dead).
+    const byId = new Map()
+    for (const raw of PACKAGES) {
+      const pkg = withListingFacts(raw, { includeDead: true })
+      for (const unit of pkg?.units || []) {
+        if (!byId.has(unit.id)) byId.set(unit.id, unit)
+      }
+    }
+    const def = getTradePackageDef(resolved)
+    const units = [...byId.values()]
+    return {
+      ...tradePackageAsPkg(def),
+      units,
+      allUnits: units,
+      unitCount: units.length,
+    }
+  }
+  return null
+}
+
+/**
+ * Live listing pool shared by every trade package (real listings only).
+ * Deduped by unit id across legacy seed packages.
+ */
+function liveListingPool() {
+  const byId = new Map()
+  for (const raw of PACKAGES) {
+    const pkg = withListingFacts(raw)
+    for (const unit of pkg?.units || []) {
+      if (!byId.has(unit.id)) byId.set(unit.id, unit)
+    }
+  }
+  return [...byId.values()]
+}
+
+function tradePackageAsPkg(def) {
+  if (!def) return null
+  const units = liveListingPool()
+  return {
+    id: def.id,
+    path: 'TRADE',
+    label: def.label,
+    headline: tradePackageHeader(def.trade, def.sizeDefault),
+    summary: def.workDayCopy,
+    region: 'Treasure Coast, FL',
+    trade: def.trade,
+    stockMode: def.stockMode,
+    sizeDefault: def.sizeDefault,
+    sizeMax: def.sizeMax,
+    currentMileage: def.currentMileage ?? null,
+    currentVehicle: def.currentVehicle,
+    jobDefaults: def.jobDefaults,
+    workDayNote: def.workDayCopy,
+    workDayCopy: def.workDayCopy,
+    isTradePackage: true,
+    hideWhenEmpty: def.hideWhenEmpty,
+    unitCount: units.length,
+    statedCountNote: 'Fleet size from live listings only',
+    matchNote:
+      'Package matched from dealer listings with a verified seller page. Listing asks only.',
+    packageFit: {
+      band: 'Package notes',
+      detail: 'OEM pack kWh on file · recalls Not checked · live listings only',
+    },
+    openOnPackage: null,
+    allUnits: units,
+    units,
+    tradeIn: {
+      status: 'Pending dealer appraisal',
+      detail: 'Outgoing units not inventoried by FleetFit. No ACV shown.',
+    },
+    sourcedNote:
+      'Sourced from dealer listings and your fleet inputs. We have not seen these vehicles in person.',
+  }
 }
 
 export function getPackage(id) {
-  return withListingFacts(PACKAGES.find((p) => p.id === id) || null)
+  // Exact legacy seed packages stay addressable for fixtures / audit.
+  const exact = PACKAGES.find((p) => p.id === id)
+  if (exact) return withListingFacts(exact)
+
+  const resolved = resolvePackageId(id)
+  if (isTradePackageId(resolved)) {
+    return tradePackageAsPkg(getTradePackageDef(resolved))
+  }
+  return null
 }
 
 export function getUnit(packageId, unitId) {
@@ -604,18 +707,24 @@ export function findUnitAnywhere(unitId) {
     const unit = pkg.units.find((u) => u.id === unitId)
     if (unit) return { pkg: getPackage(raw.id) || pkg, unit }
   }
+  // Trade package shells share the live pool
+  for (const def of TRADE_PACKAGES) {
+    const pkg = getPackage(def.id)
+    const unit = pkg?.units?.find((u) => u.id === unitId)
+    if (unit) return { pkg, unit }
+  }
   return null
 }
 
 export function packageStickerSum(pkg) {
-  return pkg.units.reduce((sum, unit) => sum + unit.askPrice, 0)
+  return (pkg.units || []).reduce((sum, unit) => sum + (unit.askPrice || 0), 0)
 }
 
 export function matchPackageIdFromIntake(intake) {
-  const trade = intake?.trade || ''
-  if (trade.startsWith('Landscaping')) return 'pkg-tc-landscape-2'
-  return DEFAULT_PACKAGE_ID
+  return matchTradePackageIdFromIntake(intake)
 }
+
+export { PACKAGE_ID_ALIASES, TRADE_PACKAGES, isTradePackageId, resolvePackageId }
 
 export function batteryUnknownCount(pkg) {
   return pkg.units.filter((u) => u.battery.soh == null).length

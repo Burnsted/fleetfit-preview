@@ -1,8 +1,9 @@
-import { Link, useLocation, useParams } from 'react-router-dom'
+import { Link, Navigate, useLocation, useParams } from 'react-router-dom'
 import PackageTotal from '../components/PackageTotal'
 import StackCard from '../components/StackCard'
 import WorkCompare from '../components/WorkCompare'
-import { getPackage } from '../data/package'
+import { getPackage, resolvePackageId } from '../data/package'
+import TradePackageResults from './TradePackageResults'
 import { factKbbTradeIn, readBudget, spendEnvelope, unitsWithinEnvelope } from '../lib/budget'
 import { formatMoney } from '../lib/fit'
 import { fleetUnitKey, useFleetPick } from '../lib/fleetPick'
@@ -58,6 +59,17 @@ export default function PackageResults() {
   const { packageId } = useParams()
   const location = useLocation()
   const intake = location.state?.intake
+  const resolvedId = resolvePackageId(packageId)
+  // Decision 11: alias demo ids → trade packages (UI redirect).
+  if (resolvedId && resolvedId !== packageId) {
+    return (
+      <Navigate
+        to={`/package/${resolvedId}`}
+        replace
+        state={location.state}
+      />
+    )
+  }
   const pkg = getPackage(packageId)
   const fleet = useFleetPick()
 
@@ -68,6 +80,10 @@ export default function PackageResults() {
         <Link to="/intake">Back to intake</Link>
       </div>
     )
+  }
+
+  if (pkg.isTradePackage) {
+    return <TradePackageResults pkg={pkg} />
   }
 
   const current = currentWorkVehicle(intake, pkg)
