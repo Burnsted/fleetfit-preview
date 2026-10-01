@@ -127,6 +127,7 @@ img { max-width: 100%; display: block; }
 .search-input-wrap:focus-within { border-color: var(--cyan); }
 .search-input-wrap input {
   flex: 1; border: 0; outline: 0; background: transparent;
+  border-radius: 4px;
   font-size: 0.85rem; font-weight: 400;
 }
 .search-input-wrap input::placeholder { color: var(--text-dim); }
@@ -281,6 +282,7 @@ img { max-width: 100%; display: block; }
   border: 0;
   outline: 0;
   background: transparent;
+  border-radius: 4px;
   font-size: 0.9rem;
   font-weight: 400;
   padding: 6px 0;
@@ -4228,6 +4230,7 @@ img { max-width: 100%; display: block; }
   height: 44px;
   border: none;
   background: transparent;
+  border-radius: 4px;
   cursor: pointer;
   display: grid;
   place-items: center;
