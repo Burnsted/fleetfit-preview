@@ -18,7 +18,7 @@ const intake = {
   trade: 'Electrical',
   dailyMiles: '120',
   payload: 'Medium',
-  rolePreset: 'Supervisor / team lead',
+  rolePreset: 'Supervisor and team lead',
   shopCity: 'Vero Beach',
   job: { dailyMiles: 120, loadLb: 1000, crew: 2, tows: false, shopCity: 'Vero Beach' },
   current: {
@@ -45,9 +45,9 @@ await page.evaluate((state) => {
 // Prefer direct goto with playwright route injection: use page.goto then navigate via app
 await page.goto(`${BASE}?t=${Date.now()}#/intake`, { waitUntil: 'networkidle' })
 // Fill Supervisor path via UI for realism
-await page.selectOption('select', { label: 'Supervisor / team lead' }).catch(() => {})
-const role = page.locator('select').filter({ has: page.locator('option', { hasText: 'Supervisor / team lead' }) }).first()
-if (await role.count()) await role.selectOption('Supervisor / team lead')
+await page.selectOption('select', { label: 'Supervisor and team lead' }).catch(() => {})
+const role = page.locator('select').filter({ has: page.locator('option', { hasText: 'Supervisor and team lead' }) }).first()
+if (await role.count()) await role.selectOption('Supervisor and team lead')
 
 await page.fill('#intake-daily-miles', '120')
 await page.locator('input[placeholder*="1000"], input[placeholder*="payload"]').first().fill('1000').catch(async () => {

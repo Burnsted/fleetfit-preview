@@ -22,7 +22,7 @@ export function displayAnnualSavings(source) {
     }
   }
   return {
-    text: `~$${n.toLocaleString()} / yr`,
+    text: `~$${n.toLocaleString()} per year`,
     known: true,
     note: 'Annual savings vs a twin non-EV work vehicle.',
   }

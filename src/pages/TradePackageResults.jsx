@@ -1,5 +1,6 @@
 import { useCallback, useEffect, useMemo, useState } from 'react'
 import { Link, useLocation } from 'react-router-dom'
+import CrumbDivider from '../components/CrumbDivider'
 import NewCatalog from '../components/NewCatalog'
 import PackageTotal from '../components/PackageTotal'
 import StockModeToggle from '../components/StockModeToggle'
@@ -263,9 +264,9 @@ export default function TradePackageResults({ pkg }) {
     >
       <nav className="locked-crumbs" aria-label="Breadcrumb">
         <Link to="/">Home</Link>
-        <span aria-hidden="true"> / </span>
+        <CrumbDivider />
         <Link to="/#trade-packages">Trade packages</Link>
-        <span aria-hidden="true"> / </span>
+        <CrumbDivider />
         <span>{pkg.trade}</span>
       </nav>
 

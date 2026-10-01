@@ -207,7 +207,7 @@ const ELECTRICAL_UNITS = [
     },
     tradeFit: {
       label: 'Van volume',
-      detail: 'Standing height for shelving; fits wire / fixture stock.',
+      detail: 'Standing height for shelving; fits wire and fixture stock.',
     },
     fitScore: {
       band: 'not enough data',
@@ -414,14 +414,14 @@ const LANDSCAPE_UNITS = [
       'Replaces a current non-EV hauler — year of the outgoing truck is unconfirmed',
     ],
     replaceNote: 'Replaces hauler — current truck year unconfirmed (not title-checked).',
-    upfitNote: 'Stock bed — hitch / brake controller not confirmed.',
+    upfitNote: 'Stock bed — hitch and brake controller not confirmed.',
     description:
       'Placeholder hauler slot for a two-truck landscape day. FleetFit has not seen this truck or the trailer.',
   },
   {
     id: 'unit-l2',
     stockId: 'STOCK-L02',
-    role: 'Lead / estimates',
+    role: 'Lead and estimates',
     bodyType: 'truck',
     year: 2025,
     make: 'Ford',
@@ -446,10 +446,10 @@ const LANDSCAPE_UNITS = [
     },
     chargingFit: {
       label: 'Lighter day truck',
-      detail: 'XLT range + Pro Power is the estimate / lead truck — not the tow truck.',
+      detail: 'XLT range + Pro Power is the estimate and lead truck — not the tow truck.',
     },
     tradeFit: {
-      label: 'Lead / tools',
+      label: 'Lead and tools',
       detail: 'Shorter day, tools and Pro Power before claiming range for a loaded trailer.',
     },
     fitScore: {
@@ -462,7 +462,7 @@ const LANDSCAPE_UNITS = [
       'PPI recommended before close',
     ],
     replaceNote: 'Lighter day truck — not claimed as a trailer hauler.',
-    upfitNote: 'Stock bed — rack / boxes not included.',
+    upfitNote: 'Stock bed — rack and boxes not included.',
     description:
       'Placeholder lead truck. Pairing is a work-day split, not a guarantee both units close together.',
   },
@@ -541,11 +541,11 @@ export const PACKAGES = [
     id: 'pkg-tc-landscape-2',
     path: 'SECONDARY EXAMPLE',
     label: 'Treasure Coast landscape — trailer hauler + lead truck',
-    headline: '2-unit used-EV package. Trailer hauler + lead / estimates',
+    headline: '2-unit used-EV package. Trailer hauler + lead and estimates',
     summary:
       'Composite example for a two-truck landscape day: one candidate hauler and one lighter lead truck. Not a real shop.',
     region: 'Treasure Coast, FL',
-    trade: 'Landscaping / lawn',
+    trade: 'Landscaping and lawn',
     currentMileage: 52000,
     unitCount: null,
     statedCountNote: 'Fleet size from live listings only',
@@ -566,7 +566,7 @@ export const PACKAGES = [
       { label: 'Battery (OEM)', value: 'On file when listed' },
     ],
     fitShortNote:
-      'Shop already runs battery-electric tools — pairing matches the trucks to the same work. No invented GVWR / fuel $.',
+      'Shop already runs battery-electric tools — pairing matches the trucks to the same work. No invented GVWR and fuel $.',
     newVsUsed: null,
     tradeIn: {
       status: 'Pending dealer appraisal',

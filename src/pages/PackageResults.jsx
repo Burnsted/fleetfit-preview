@@ -1,5 +1,6 @@
 import { useState } from 'react'
 import { Link, Navigate, useLocation, useParams } from 'react-router-dom'
+import CrumbDivider from '../components/CrumbDivider'
 import NewCatalog from '../components/NewCatalog'
 import PackageTotal from '../components/PackageTotal'
 import StackCard from '../components/StackCard'
@@ -154,9 +155,9 @@ export default function PackageResults() {
     >
       <nav className="locked-crumbs" aria-label="Breadcrumb">
         <Link to="/">Home</Link>
-        <span aria-hidden="true"> / </span>
+        <CrumbDivider />
         <Link to="/intake">Fleet intake</Link>
-        <span aria-hidden="true"> / </span>
+        <CrumbDivider />
         <span>Package</span>
       </nav>
 

@@ -12,20 +12,20 @@ import {
 /** CLEARED Score v2 intake fields + Supervisor preset + stockMode */
 const INTAKE_BUILD = 'intake-trade-stock-20261001'
 
-/** Trade preset rectangles (mock / CLEARED). Landscaping maps to Landscaping / lawn seed. */
+/** Trade preset rectangles (mock / CLEARED). Landscaping maps to Landscaping and lawn seed. */
 const TRADE_PRESETS = ['Electrical', 'HVAC', 'Plumbing', 'Landscaping']
 
 const TRADES = [
   'Electrical',
   'HVAC',
   'Plumbing',
-  'Landscaping / lawn',
+  'Landscaping and lawn',
   'General contracting',
   'Other',
 ]
 
 function tradeToFormValue(preset) {
-  if (preset === 'Landscaping') return 'Landscaping / lawn'
+  if (preset === 'Landscaping') return 'Landscaping and lawn'
   return preset
 }
 
@@ -63,7 +63,7 @@ const TRADE_IN_OPTS = [
 const SHOP_CITIES = ['Vero Beach', 'Fort Pierce', 'West Palm Beach']
 const ROLE_PRESETS = [
   { value: '', label: 'No preset' },
-  { value: 'Supervisor / team lead', label: 'Supervisor / team lead' },
+  { value: 'Supervisor and team lead', label: 'Supervisor and team lead' },
 ]
 
 const ABRP_URL = 'https://abetterrouteplanner.com/'
@@ -185,7 +185,7 @@ export default function FleetIntake() {
   function applySupervisorPreset() {
     setForm((prev) => ({
       ...prev,
-      rolePreset: 'Supervisor / team lead',
+      rolePreset: 'Supervisor and team lead',
       crew: '2',
       tows: 'no',
       haul: 'None',
@@ -196,7 +196,7 @@ export default function FleetIntake() {
   }
 
   function onRolePreset(value) {
-    if (value === 'Supervisor / team lead') {
+    if (value === 'Supervisor and team lead') {
       applySupervisorPreset()
     } else {
       setField('rolePreset', value)
@@ -367,7 +367,7 @@ export default function FleetIntake() {
             ))}
           </select>
           <span className="intake-hint">
-            Supervisor / team lead: crew 2, no tow. Daily miles and load stay yours.
+            Supervisor and team lead: crew 2, no tow. Daily miles and load stay yours.
           </span>
         </label>
 
@@ -410,7 +410,7 @@ export default function FleetIntake() {
         </label>
 
         <label className="intake-field">
-          <span className="intake-label">Shop / home-base city</span>
+          <span className="intake-label">Shop and home-base city</span>
           <select
             value={form.shopCity}
             onChange={(e) => setField('shopCity', e.target.value)}
@@ -552,7 +552,7 @@ export default function FleetIntake() {
             onChange={(e) => setField('overnightCharge', e.target.value)}
           >
             <option value="shop-l2">Shop Level 2 available</option>
-            <option value="home-l2">Home / depot L2 mixed</option>
+            <option value="home-l2">Home and depot L2 mixed</option>
             <option value="l1-only">Level 1 only today</option>
             <option value="unknown">Not surveyed yet</option>
           </select>
@@ -598,7 +598,7 @@ export default function FleetIntake() {
           options={PAYLOAD_OPTS}
           value={form.payload}
           onChange={(v) => setField('payload', v)}
-          helper="Used when Load (lb) is blank: Light 500 / Medium 1000 / Heavy 1500."
+          helper="Used when Load (lb) is blank: Light 500, Medium 1000, and Heavy 1500."
         />
 
         <ChipRow

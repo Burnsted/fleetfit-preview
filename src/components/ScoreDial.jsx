@@ -99,7 +99,7 @@ export default function ScoreDial({
       ) : (
         <div className="score-dial-readout">
           <span className="score-dial-value">{displaySafe}</span>
-          {pp ? <span className="score-dial-max">/{pp}</span> : null}
+          {pp ? <span className="score-dial-max">out of {pp}</span> : null}
         </div>
       )}
       {diffLine ? <span className="score-dial-diff">{diffLine}</span> : null}

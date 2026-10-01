@@ -1,5 +1,6 @@
 import { useState } from 'react'
 import { Link, useNavigate } from 'react-router-dom'
+import CrumbDivider from '../components/CrumbDivider'
 import PathChrome from '../components/PathChrome'
 import { DEFAULT_PACKAGE_ID, getPackage } from '../data/package'
 import {
@@ -42,7 +43,7 @@ export default function Budget() {
 
       <nav className="locked-crumbs" aria-label="Breadcrumb">
         <Link to="/">Home</Link>
-        <span aria-hidden="true"> / </span>
+        <CrumbDivider />
         <span>Budget</span>
       </nav>
 

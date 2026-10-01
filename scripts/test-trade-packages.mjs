@@ -53,6 +53,10 @@ test('2. Intake trade maps to trade package ids', () => {
   assert.equal(matchPackageIdFromIntake({ trade: 'HVAC' }), TRADE_PACKAGE_IDS.hvac)
   assert.equal(matchPackageIdFromIntake({ trade: 'Plumbing' }), TRADE_PACKAGE_IDS.plumbing)
   assert.equal(
+    matchPackageIdFromIntake({ trade: 'Landscaping and lawn' }),
+    TRADE_PACKAGE_IDS.landscaping,
+  )
+  assert.equal(
     matchPackageIdFromIntake({ trade: 'Landscaping / lawn' }),
     TRADE_PACKAGE_IDS.landscaping,
   )
@@ -249,7 +253,21 @@ test('9. COPY strings are exact (no Customize in Intake / Size / trucks)', () =>
   assert.ok(!/Customize in Intake/.test(TRADE_PACKAGE_COPY.buildYourOwn))
 })
 
-test('10. sliceActiveSet respects size and eligibility order', () => {
+test('10. Pill/slash cleanup: cab/bed keys and dialTotal wording', async () => {
+  const { formatCabBed } = await import('../src/lib/workSpec.js')
+  const { CAB_BED_OPTIONS } = await import('../src/data/listings.js')
+  assert.equal(formatCabBed('Crew', '5.5 ft'), 'Crew and 5.5 ft')
+  assert.ok(CAB_BED_OPTIONS.length > 0)
+  assert.ok(CAB_BED_OPTIONS.every((o) => !o.includes(' / ') && /\band\b/.test(o)))
+  const pkg = getPackage(TRADE_PACKAGE_IDS.electrical)
+  const { eligible } = rankTradePool(collectCandidateUnits(), { pkg, intake: null })
+  const withDial = eligible.find((r) => r.score?.dialTotal)
+  assert.ok(withDial, 'expected a scored eligible unit')
+  assert.match(withDial.score.dialTotal, / out of /)
+  assert.ok(!withDial.score.dialTotal.includes(' / '))
+})
+
+test('11. sliceActiveSet respects size and eligibility order', () => {
   const eligible = [
     { unit: { id: 'a' }, live: true, suggestible: true, score: {}, sortKey: 0.9 },
     { unit: { id: 'b' }, live: true, suggestible: true, score: {}, sortKey: 0.8 },

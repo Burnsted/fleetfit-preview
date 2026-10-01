@@ -1,6 +1,7 @@
 import { useEffect } from 'react'
 import { Link, useLocation, useNavigate, useParams } from 'react-router-dom'
 import AddToFleetButton from '../components/AddToFleetButton'
+import CrumbDivider from '../components/CrumbDivider'
 import { OutboundListingLabel } from '../components/OutboundListingLink'
 import UnitPhoto from '../components/UnitPhoto'
 import ScoreDialControl from '../components/ScoreDialControl'
@@ -15,12 +16,12 @@ import { currentWorkVehicle, displayWorkSpec } from '../lib/workSpec'
 
 const ROWS = [
   { key: 'score', label: 'Replacement Score' },
-  { key: 'ymm', label: 'Year / model' },
+  { key: 'ymm', label: 'Year and model' },
   { key: 'role', label: 'Package role' },
   { key: 'payload', label: 'Payload' },
-  { key: 'bed', label: 'Bed / cargo' },
+  { key: 'bed', label: 'Bed and cargo' },
   { key: 'cab', label: 'Cab' },
-  { key: 'tow', label: 'Tow / pull' },
+  { key: 'tow', label: 'Tow and pull' },
   { key: 'energy', label: 'Energy' },
   { key: 'listing', label: 'Seller listing' },
   { key: 'select', label: 'Select' },
@@ -145,7 +146,7 @@ export default function FullCompare() {
     <div className="locked-page full-compare-page">
       <nav className="locked-crumbs" aria-label="Breadcrumb">
         <Link to={`/package/${pkg.id}`} state={location.state}>Package</Link>
-        <span aria-hidden="true"> / </span>
+        <CrumbDivider />
         <span>Compare</span>
       </nav>
 

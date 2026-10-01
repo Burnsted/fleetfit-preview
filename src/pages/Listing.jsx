@@ -8,10 +8,10 @@ import ListingPhoto from '../components/ListingPhoto'
 
 const GALLERY_LABELS = [
   { key: 'exterior', label: 'Exterior' },
-  { key: 'bed-upfit', label: 'Bed / upfit' },
-  { key: 'dash-range', label: 'Dash / range' },
+  { key: 'bed-upfit', label: 'Bed and upfit' },
+  { key: 'dash-range', label: 'Dash and range' },
   { key: 'charge-port', label: 'Charge port' },
-  { key: 'underbody', label: 'Underbody / frame' },
+  { key: 'underbody', label: 'Underbody and frame' },
 ]
 
 function bandClass(band) {
@@ -90,7 +90,7 @@ export default function Listing() {
             <div className="stat-tile">
               <div className="stat-label">Rated range</div>
               <div className="stat-value">{listing.ratedRange != null ? `${listing.ratedRange} mi` : 'Not published'}</div>
-              <div className="stat-hint">Displayed / sticker class</div>
+              <div className="stat-hint">Displayed and sticker class</div>
             </div>
             <div className="stat-tile">
               <div className="stat-label">Battery</div>
@@ -135,7 +135,7 @@ export default function Listing() {
             <div className="fact"><dt>Usable pack</dt><dd>{listing.usableKwh ? `${listing.usableKwh} kWh` : 'Not published'}</dd></div>
             <div className="fact"><dt>Onboard charger</dt><dd>{listing.onboardChargerKw != null ? `${listing.onboardChargerKw} kW` : 'Not published'}</dd></div>
             <div className="fact"><dt>DC fast max</dt><dd>{listing.dcFastMaxKw != null ? `${listing.dcFastMaxKw} kW` : 'Not published'}</dd></div>
-            <div className="fact"><dt>Cab / bed</dt><dd>{listing.cab || listing.bed ? `${listing.cab || 'Not published'} / ${listing.bed || 'Not published'}` : 'Not published'}</dd></div>
+            <div className="fact"><dt>Cab and bed</dt><dd>{listing.cab || listing.bed ? `${listing.cab || 'Not published'} and ${listing.bed || 'Not published'}` : 'Not published'}</dd></div>
             <div className="fact"><dt>Drivetrain</dt><dd>{listing.drivetrain || 'Not published'}</dd></div>
             <div className="fact"><dt>Payload</dt><dd>{listing.payload != null ? `${listing.payload.toLocaleString()} lb` : 'Not published'}</dd></div>
             <div className="fact"><dt>Tow</dt><dd>{(listing.tow ?? listing.towingLb) != null ? `${Number(listing.tow ?? listing.towingLb).toLocaleString()} lb` : 'Not published'}</dd></div>
@@ -160,7 +160,7 @@ export default function Listing() {
         <section className="module">
           <h2 className="module-title"><span className="num">5</span> Warranty &amp; battery docs</h2>
           <dl className="facts-strip">
-            <div className="fact"><dt>Battery / drive unit</dt><dd>{listing.warrantyBatteryMonths} mo left</dd></div>
+            <div className="fact"><dt>Battery and drive unit</dt><dd>{listing.warrantyBatteryMonths} mo left</dd></div>
             <div className="fact"><dt>Bumper-to-bumper</dt><dd>{listing.warrantyBumperMonths > 0 ? `${listing.warrantyBumperMonths} mo left` : 'Expired'}</dd></div>
             <div className="fact"><dt>How it was measured</dt><dd style={{ fontSize: '0.8rem', fontWeight: 500 }}>{listing.sohMethod || 'Not provided'}</dd></div>
           </dl>
@@ -203,7 +203,7 @@ export default function Listing() {
               <h3>{listing.sellerName}</h3>
               <p>
                 <span className={`pill pill-seller-${listing.sellerType}`}>{listing.sellerType}</span>
-                {' · '}Rating {listing.sellerRating.toFixed(1)} / 5 (demo)
+                {' · '}Rating {listing.sellerRating.toFixed(1)} out of 5 (demo)
               </p>
             </div>
           </div>
@@ -239,9 +239,9 @@ export default function Listing() {
           </div>
         </section>
 
-        {/* 10. Comps / Work Value */}
+        {/* 10. Comps and Work Value */}
         <section className="module">
-          <h2 className="module-title"><span className="num">10</span> Comps / Work Value</h2>
+          <h2 className="module-title"><span className="num">10</span> Comps and Work Value</h2>
           <div className="work-value-banner">
             <div>
               <div className="stat-label">Work Value band</div>

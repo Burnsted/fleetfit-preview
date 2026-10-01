@@ -1,4 +1,5 @@
 import { Link, useSearchParams } from 'react-router-dom'
+import CrumbDivider from '../components/CrumbDivider'
 import { DEFAULT_PACKAGE_ID, getPackage } from '../data/package'
 
 export default function Checkout() {
@@ -9,7 +10,7 @@ export default function Checkout() {
     <div className="locked-page">
       <nav className="locked-crumbs" aria-label="Breadcrumb">
         <Link to={`/package/${pkg.id}`}>Package</Link>
-        <span aria-hidden="true"> / </span>
+        <CrumbDivider />
         <span>Facilitated sale</span>
       </nav>
       <header className="locked-page-header">
@@ -21,7 +22,7 @@ export default function Checkout() {
       </header>
       <p className="locked-foot-note">
         Fee at checkout. Amount TBD. FleetFit does not hold vehicle funds.
-        Buyer pays the seller / dealer.
+        Buyer pays the seller or dealer.
       </p>
       <Link to={`/package/${pkg.id}`} className="btn btn-primary">
         Back to package
