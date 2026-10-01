@@ -8,7 +8,9 @@
     "build": "vite build",
     "lint": "oxlint",
     "preview": "vite preview",
-    "check-listings": "node scripts/check-listings.mjs"
+    "check-listings": "node scripts/check-listings.mjs",
+    "test": "npx vite-node scripts/test-suggestion-eligibility.mjs",
+    "test:score": "npx vite-node scripts/validate-score-v2-g-final.mjs"
   },
   "dependencies": {
     "react": "^19.2.8",

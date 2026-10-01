@@ -1,7 +1,7 @@
-import { getPackage } from '../src/data/package.js'
+import { getPackageAllUnits } from '../src/data/package.js'
 import { scoreReplacementV2, rankUnitsByScoreV2 } from '../src/lib/scoreV2'
 
-const pkg = getPackage('pkg-tc-electrical-4')
+const pkg = getPackageAllUnits('pkg-tc-electrical-4')
 if (!pkg) throw new Error('package missing')
 
 const ranked = rankUnitsByScoreV2(pkg.units, { intake: null, pkg })

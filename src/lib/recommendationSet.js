@@ -2,15 +2,23 @@
  * CLEARED Inventory freshness + full option rank · 2026-09-26 ~11:40
  * Full available truck + van options, Replacement Score high → low.
  * Dial + order only — no ordinal chrome labels.
+ *
+ * 2026-10-01 Ted override: suggest only real listing + good score (dial is-high).
+ * Do not pad one-of-each-body with unreal or weak picks.
  */
 import {
   rankUnitsByReplacementScore,
   SCORE_BUILD,
 } from './replacementScore'
+import {
+  GOOD_SCORE_RATIO,
+  isSuggestibleUnit,
+  noBodyRealGood,
+} from './suggestionEligibility'
 
 /** CLEARED inventory freshness + full option rank · Score v2 stamp */
-export const BODY_MIX_BUILD = 'score-v2-rank-g-final-20260927-1635'
-export const CLEARED_SHIP = 'score-v2-g-final-20260927-1635'
+export const BODY_MIX_BUILD = 'listing-audit-suggest-20261001'
+export const CLEARED_SHIP = 'listing-audit-suggest-20261001'
 
 export function bodyClassOf(unit) {
   if (!unit) return null
@@ -51,15 +59,22 @@ function compareBoosted(a, b, intake) {
 }
 
 /**
- * Full option coverage after HF-1 / HF-3.
- * One slot per distinct listing identity (unit id) — all eligible truck + van options.
+ * Full option coverage after HF-1 / HF-3, then Ted real-listing + good-score gate.
+ * One slot per distinct listing identity (unit id).
  * Ordered Replacement Score high → low.
+ * maxSlots truncates by score only — never injects a weak/unreal body to fill a slot.
  */
 export function composeRecommendationSet(units, ctx = {}, options = {}) {
   const intake = ctx.intake
   const ranked = rankUnitsByReplacementScore(units, ctx)
-  const eligible = ranked.filter((r) => !r.score?.hardReject)
+  const afterHard = ranked.filter((r) => !r.score?.hardReject)
   const rejected = ranked.filter((r) => r.score?.hardReject)
+
+  // Ted: real verified listing + dial is-high (GOOD_SCORE_RATIO). Drop the rest.
+  const eligible = afterHard.filter((r) => isSuggestibleUnit(r.unit, r.score))
+  const droppedWeakOrUnreal = afterHard.filter(
+    (r) => !isSuggestibleUnit(r.unit, r.score),
+  )
 
   const trucks = eligible.filter((r) => bodyClassOf(r.unit) === 'truck')
   const vans = eligible.filter((r) => bodyClassOf(r.unit) === 'van')
@@ -83,41 +98,18 @@ export function composeRecommendationSet(units, ctx = {}, options = {}) {
     .sort((a, b) => compareBoosted(a, b, intake))
     .map((it, index) => ({ ...it, rank: index + 1 }))
 
-  // Optional maxSlots still must keep both classes when both available
+  // Truncate by score order only — do not force a second body class into the window
   let items = ordered
   const maxSlots = Number(options.maxSlots)
   if (Number.isFinite(maxSlots) && maxSlots > 0 && ordered.length > maxSlots) {
-    const pref = String(intake?.body || '')
-    const keep = []
-    const rest = []
-    // Ensure ≥1 of each available class in the truncated window
-    const firstTruck = ordered.find((r) => r.bodyClass === 'truck')
-    const firstVan = ordered.find((r) => r.bodyClass === 'van')
-    if (firstTruck && firstVan) {
-      // Prefer preferred body earlier but keep both
-      const pair =
-        pref === 'Van' ? [firstVan, firstTruck] : [firstTruck, firstVan]
-      for (const p of pair) {
-        if (!keep.find((k) => k.unit.id === p.unit.id)) keep.push(p)
-      }
-    } else if (firstTruck) keep.push(firstTruck)
-    else if (firstVan) keep.push(firstVan)
-
-    for (const row of ordered) {
-      if (keep.find((k) => k.unit.id === row.unit.id)) continue
-      rest.push(row)
-    }
-    items = [...keep, ...rest].slice(0, Math.max(maxSlots, keep.length))
-    items = items
-      .sort((a, b) => compareBoosted(a, b, intake))
-      .map((it, index) => ({ ...it, rank: index + 1 }))
+    items = ordered.slice(0, maxSlots).map((it, index) => ({ ...it, rank: index + 1 }))
   }
 
   let missingBodyNote = null
   if (trucks.length && !vans.length) {
-    missingBodyNote = 'Van not in this set. None cleared fit in this pool.'
+    missingBodyNote = noBodyRealGood('vans')
   } else if (vans.length && !trucks.length) {
-    missingBodyNote = 'Truck not in this set. None cleared fit in this pool.'
+    missingBodyNote = noBodyRealGood('trucks')
   }
 
   const years = items.map((r) => Number(r.unit?.year)).filter((y) => Number.isFinite(y))
@@ -126,9 +118,11 @@ export function composeRecommendationSet(units, ctx = {}, options = {}) {
   return {
     build: BODY_MIX_BUILD,
     scoreBuild: SCORE_BUILD,
+    goodScoreRatio: GOOD_SCORE_RATIO,
     items,
     eligible,
     rejected,
+    droppedWeakOrUnreal,
     hasTruck: trucks.length > 0,
     hasVan: vans.length > 0,
     bothClasses: trucks.length > 0 && vans.length > 0,

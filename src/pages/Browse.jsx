@@ -136,10 +136,15 @@ export default function Browse() {
     }
   }, [filtersOpen])
 
+  const liveListings = useMemo(
+    () => LISTINGS.filter((l) => l.listingLive === true),
+    [],
+  )
+
   const results = useMemo(() => {
-    const filtered = applyFilters(LISTINGS, filters, q)
+    const filtered = applyFilters(liveListings, filters, q)
     return sortListings(filtered, sort)
-  }, [filters, q, sort])
+  }, [filters, q, sort, liveListings])
 
   const sortLabel = SORTS.find((s) => s.id === sort)?.label || 'Recommended'
 
@@ -211,15 +216,23 @@ export default function Browse() {
       <section>
         <div className="results-toolbar">
           <div className="results-count">
-            <span className="results-count-em">{results.length}</span> of {LISTINGS.length} trucks
+            <span className="results-count-em">{results.length}</span> of {liveListings.length} trucks
             {q ? <> matching “{q}”</> : null}
           </div>
         </div>
 
         {results.length === 0 ? (
           <div className="empty-state">
-            <p>No trucks match these filters.</p>
-            <p style={{ fontSize: '0.85rem' }}>Try lowering pack report min, payload, or clearing transparent pricing.</p>
+            <p>
+              {liveListings.length === 0
+                ? 'No trucks with a real seller listing right now.'
+                : 'No trucks match these filters.'}
+            </p>
+            {liveListings.length > 0 ? (
+              <p style={{ fontSize: '0.85rem' }}>
+                Try lowering pack report min, payload, or clearing transparent pricing.
+              </p>
+            ) : null}
           </div>
         ) : (
           <div className="listing-grid">

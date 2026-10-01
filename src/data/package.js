@@ -2,8 +2,12 @@
  * Anonymized composite packages for the PUBLIC friend-preview.
  * Considered-unit photos + year/make/model/price/miles/dealer come from
  * FACT Hot Deals listing rows. No invented VIN / price / miles / dealer.
+ *
+ * 2026-10-01: getPackage drops units without a verified live seller listing.
+ * Good-score filtering for suggestions is in composeRecommendationSet.
  */
 import { applyListingFactsToUnit } from '../lib/vehiclePhoto'
+import { packageBatteryKwhFact } from '../lib/workSpec'
 
 export const DEFAULT_PACKAGE_ID = 'pkg-tc-electrical-4'
 
@@ -67,7 +71,6 @@ const ELECTRICAL_UNITS = [
     model: 'Silverado EV',
     trim: 'WT',
     mileage: 9800,
-    scoreMileage: 4170,
     scoreMileage: 4170,
     location: { city: 'Port St. Lucie', state: 'FL' },
     askPrice: 54900,
@@ -487,19 +490,19 @@ export const PACKAGES = [
       tows: false,
       shopCity: 'Vero Beach',
     },
-    unitCount: 7,
-    statedCountNote: '~4 vans stated',
+    unitCount: null,
+    statedCountNote: 'Fleet size from live listings only',
     workDayNote:
       'Typical day: 80–120 mi across coastal jobsites; overnight Level 2 at shop; occasional DC fast on longer runs.',
     matchNote:
-      'Package matched from placeholder stock to the intake profile. Vehicle prices shown are listing asks only — buyer’s fee appears only at checkout.',
+      'Package matched from dealer listings with a verified seller page to the intake profile. Vehicle prices shown are listing asks only — buyer’s fee appears only at checkout.',
     packageFit: {
       band: 'Package notes',
-      detail:
-        'OEM pack kWh on file · recalls Not checked per stock ID · ~4 vans stated',
+      detail: 'OEM pack kWh on file · recalls Not checked per stock ID · live listings only',
     },
-    openOnPackage:
-      'OEM usable packs on this package: Battery 68 / 205 / 98 / 110 / 120 / 102.4 kWh. Recalls Not checked (no NHTSA lookup in this preview). Confirm before close.',
+    openOnPackage: null,
+    /** Full seed pool (includes dead) — score fixtures / audit. UI uses getPackage filter. */
+    allUnits: ELECTRICAL_UNITS,
     units: ELECTRICAL_UNITS,
     newVsUsed: {
       usedLabel: 'This used package',
@@ -526,24 +529,23 @@ export const PACKAGES = [
     region: 'Treasure Coast, FL',
     trade: 'Landscaping / lawn',
     currentMileage: 52000,
-    unitCount: 2,
-    statedCountNote: '~2 trucks stated',
+    unitCount: null,
+    statedCountNote: 'Fleet size from live listings only',
     workDayNote:
       'Typical day: trailer + crew to coastal jobs; overnight L2 if the shop already has it; tow rating is the open item, not a promise.',
     matchNote:
-      'Package matched from placeholder stock. Listing asks only — buyer’s fee appears only at checkout. No fee $ or % on this screen.',
+      'Package matched from dealer listings with a verified seller page. Listing asks only — buyer’s fee appears only at checkout. No fee $ or % on this screen.',
     packageFit: {
       band: 'Package notes',
       detail:
-        'OEM pack kWh on file · tow rating for dual-axle enclosed cargo must be verified · no fee $',
+        'OEM pack kWh on file · tow rating for dual-axle enclosed cargo must be verified · live listings only',
     },
-    openOnPackage:
-      'OEM usable packs on this package: Battery 205 / 98 kWh. Trailer tow rating for dual-axle enclosed cargo must be verified on the Silverado EV WT before close. Recalls Not checked. Confirm before close.',
+    openOnPackage: null,
+    allUnits: LANDSCAPE_UNITS,
     units: LANDSCAPE_UNITS,
     fitShort: [
-      { label: 'WT + XLT split', value: 'Matches two roles' },
       { label: 'Tow (dual-axle enclosed)', value: 'Not published · confirm' },
-      { label: 'Battery (OEM)', value: '205 / 98 kWh' },
+      { label: 'Battery (OEM)', value: 'On file when listed' },
     ],
     fitShortNote:
       'Shop already runs battery-electric tools — pairing matches the trucks to the same work. No invented GVWR / fuel $.',
@@ -558,9 +560,32 @@ export const PACKAGES = [
   },
 ]
 
-function withListingFacts(pkg) {
+function batteryOpenNote(units) {
+  const fact = packageBatteryKwhFact(units)
+  if (!fact?.known) {
+    return 'OEM usable packs on this package: Not published for remaining live units. Recalls Not checked (no NHTSA lookup in this preview). Confirm before close.'
+  }
+  return `OEM usable packs on this package: Battery ${fact.text}. Recalls Not checked (no NHTSA lookup in this preview). Confirm before close.`
+}
+
+function withListingFacts(pkg, { includeDead = false } = {}) {
   if (!pkg) return null
-  return { ...pkg, units: pkg.units.map(applyListingFactsToUnit) }
+  const pool = (pkg.allUnits || pkg.units || []).map(applyListingFactsToUnit)
+  const units = includeDead ? pool : pool.filter((u) => u.listingLive === true)
+  return {
+    ...pkg,
+    units,
+    unitCount: units.length,
+    openOnPackage: batteryOpenNote(units),
+  }
+}
+
+/** Score / audit fixture: all seed units with listing facts (includes dead). */
+export function getPackageAllUnits(id) {
+  return withListingFacts(
+    PACKAGES.find((p) => p.id === id) || null,
+    { includeDead: true },
+  )
 }
 
 export function getPackage(id) {
@@ -574,9 +599,10 @@ export function getUnit(packageId, unitId) {
 
 export function findUnitAnywhere(unitId) {
   for (const raw of PACKAGES) {
-    const pkg = withListingFacts(raw)
+    // Resolve deep links even for removed (dead) units — page can show unavailable.
+    const pkg = withListingFacts(raw, { includeDead: true })
     const unit = pkg.units.find((u) => u.id === unitId)
-    if (unit) return { pkg, unit }
+    if (unit) return { pkg: getPackage(raw.id) || pkg, unit }
   }
   return null
 }
