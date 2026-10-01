@@ -1,0 +1,7 @@
+class,metric,value_cents_per_mi,label,source_url,source_published,accessed
+"half-ton pickup (new, 5 yr)",AAA 2026 maintenance,11.82,FACT (class-level),https://newsroom.aaa.com/wp-content/uploads/2026/09/8-YDC-Brochure_2026-1.pdf,2026-09,2026-09-27
+"midsize pickup (new, 5 yr)",AAA 2026 maintenance,11.26,FACT (class-level),https://newsroom.aaa.com/wp-content/uploads/2026/09/8-YDC-Brochure_2026-1.pdf,2026-09,2026-09-27
+gas pickup at 15k mi/yr,"AAA 2026 $1,788/yr / 15,000",11.92,INF (division of FACT),https://newsroom.aaa.com/wp-content/uploads/2026/09/8-YDC-Brochure_2026-1.pdf,2026-09,2026-09-27
+LDV ICEV,Argonne 2021 scheduled maintenance,10.1,INF (class-level),https://publications.anl.gov/anlpubs/2021/05/167399.pdf,2021-05,2026-09-27
+pickup ICEV,Argonne 2021 repair multiplier vs gasoline car = 0.70,n/a,INF (class-level),https://publications.anl.gov/anlpubs/2021/05/167399.pdf,2021-05,2026-09-27
+"cargo van 8,500+ lb GVWR",van-specific maintenance,UNKNOWN,UNKNOWN (AAA has no van class; Argonne MHDV van figure not extracted),,,2026-09-27
