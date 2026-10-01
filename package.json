@@ -8,6 +8,8 @@
     "build": "vite build",
     "lint": "oxlint",
     "preview": "vite preview",
+    "test": "node scripts/test-package-total.mjs",
+    "test:package-total": "node scripts/test-package-total.mjs",
     "check-listings": "node scripts/check-listings.mjs"
   },
   "dependencies": {

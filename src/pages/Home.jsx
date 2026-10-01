@@ -21,7 +21,8 @@ export default function Home() {
             <Wordmark size="nav" tone="light" decorative />
           </Link>
           <div className="locked-topnav-links">
-            <Link to="/intake">Intake</Link>
+            <Link to="/" className="is-active">Home</Link>
+            <Link to="/intake">Fleet intake</Link>
             <Link to="/shop">Shop</Link>
             <span className="badge-demo">Demo</span>
           </div>

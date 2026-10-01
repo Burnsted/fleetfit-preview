@@ -1,4 +1,5 @@
 import { Link, useLocation, useParams } from 'react-router-dom'
+import PackageTotal from '../components/PackageTotal'
 import StackCard from '../components/StackCard'
 import WorkCompare from '../components/WorkCompare'
 import { getPackage } from '../data/package'
@@ -20,6 +21,9 @@ import {
   NOT_PUBLISHED,
   packageBatteryKwhFact,
 } from '../lib/workSpec'
+
+/** Stamp for Package total + Home link CLEARED build. */
+export const PACKAGE_TOTAL_BUILD = 'package-total-home-20261001'
 
 const DAY_NEED = {
   'under-60': 'Under 60 mi',
@@ -105,6 +109,7 @@ export default function PackageResults() {
       data-cleared-ship={CLEARED_SHIP}
       data-oem-specs={OEM_SPECS_BUILD}
       data-outbound-listing={OUTBOUND_LISTING_BUILD}
+      data-package-total={PACKAGE_TOTAL_BUILD}
       data-score-v2={SCORE_V2_BUILD}
     >
       <nav className="locked-crumbs" aria-label="Breadcrumb">
@@ -214,13 +219,13 @@ export default function PackageResults() {
         </ul>
       </section>
 
-      <p className="package-fee-quiet">Fee at checkout. Amount TBD</p>
+      <PackageTotal units={ranked.map((row) => row.unit)} />
 
       <div className="package-cta-bar">
         <p className="package-fleet-count">
           {selectedInPackage} of {visibleUnits.length || pkg.unitCount} in fleet
         </p>
-        <Link to="/intake?adjust=1" className="btn btn-sm">
+        <Link to="/intake?adjust=1" className="btn btn-sm package-cta-adjust">
           Adjust mix
         </Link>
       </div>
