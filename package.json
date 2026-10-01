@@ -9,7 +9,11 @@
     "lint": "oxlint",
     "preview": "vite preview",
     "check-listings": "node scripts/check-listings.mjs",
-    "test": "npx vite-node scripts/test-suggestion-eligibility.mjs",
+    "test": "node scripts/test-package-total.mjs && npx vite-node scripts/test-suggestion-eligibility.mjs && npx vite-node scripts/test-listing-page-kind.mjs && npx vite-node scripts/test-trade-packages.mjs",
+    "test:package-total": "node scripts/test-package-total.mjs",
+    "test:eligibility": "npx vite-node scripts/test-suggestion-eligibility.mjs",
+    "test:listing-page-kind": "npx vite-node scripts/test-listing-page-kind.mjs",
+    "test:trade-packages": "npx vite-node scripts/test-trade-packages.mjs",
     "test:score": "npx vite-node scripts/validate-score-v2-g-final.mjs"
   },
   "dependencies": {

@@ -10,6 +10,11 @@
  * dealer_url (specific vehicle page) for that id. No code change required
  * beyond this file (suggestions still also need a good score at 0.7+).
  *
+ * A live URL must be a specific vehicle detail page (VDP). A 200 that
+ * redirects to a dealer inventory / make-model index is DEAD — same rule
+ * as sold/"No longer listed". See src/lib/listingPageKind.js and
+ * `npm run check-listings`.
+ *
  * Re-check: `npm run check-listings`
  * Cars.com HTML is often Cloudflare-blocked from CI hosts — treat CF as
  * inconclusive unless sold/"No longer listed" text is visible; Steve/Pages
@@ -79,12 +84,11 @@ export const LISTING_OUTBOUND = {
       'Score v2 validation unit (2022 R1T Quad Large sample); no live dealer VDP pinned',
   },
   'unit-l1': {
-    listingStatus: 'live',
-    checkedAt: LISTING_OUTBOUND_CHECKED_AT,
-    dealer_url:
-      'https://www.socalchevy.com/inventory/Used-2026-Chevrolet-Silverado_EV-Extended_Range_Trail_Boss-1GC403ED1TU400628/',
+    listingStatus: 'dead',
+    checkedAt: '2026-10-01',
+    dealer_url: null,
     check_note:
-      'Dealer VDP HTTP 200 + VIN (re-checked 2026-10-01). Landscape score incomplete — not suggestible under good-score rule.',
+      'SoCal Chevy VDP URL HTTP 200 but redirects (301×2) to inventory index https://www.socalchevy.com/inventory/used-chevrolet-silverado_ev/ (title: Explore Used Chevrolet Silverado EVs for Sale…). VIN 1GC403ED1TU400628 stripped from final path — not a vehicle page. Marked dead 2026-10-01 (Steve browser bar PR5). dealer_url cleared.',
   },
   'unit-l2': {
     listingStatus: 'dead',

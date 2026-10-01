@@ -64,8 +64,28 @@ export type JobInputs = {
   crew: number | null
   tows: boolean | null
   trailerLb: number | null
+  /** Tongue weight (lb). When towing and unset, default 15% of trailerLb. */
+  tongueLb: number | null
   wdh: boolean | null
   shopCity: string | null
+}
+
+/**
+ * Effective payload load for cat 2 when the job tows:
+ * loadLb + tongue (entered, else 15% of trailerLb).
+ * If loadLb is null, stay null — do not invent a trade payload from tongue alone.
+ */
+export function effectivePayloadLoadLb(job: JobInputs): number | null {
+  if (job.loadLb == null) return null
+  if (job.tows !== true) return job.loadLb
+  const tongue =
+    job.tongueLb != null && Number.isFinite(job.tongueLb)
+      ? job.tongueLb
+      : job.trailerLb != null && Number.isFinite(job.trailerLb)
+        ? Math.round(job.trailerLb * 0.15)
+        : null
+  if (tongue == null) return job.loadLb
+  return job.loadLb + tongue
 }
 
 export type CurrentVehicleInput = {
@@ -828,6 +848,11 @@ export function parseJobFromIntake(
     else tows = true
   }
   const trailerLb = num(job.trailerLb) ?? num(intake?.trailerLb) ?? num(defaults.trailerLb)
+  let tongueLb = num(job.tongueLb) ?? num(intake?.tongueLb) ?? num(defaults.tongueLb)
+  // Landscaping / tow jobs: when tongue unset and trailer known, default 15%.
+  if (tongueLb == null && tows === true && trailerLb != null) {
+    tongueLb = Math.round(trailerLb * 0.15)
+  }
   const wdh =
     job.wdh === true || intake?.wdh === true
       ? true
@@ -848,6 +873,7 @@ export function parseJobFromIntake(
     crew,
     tows,
     trailerLb,
+    tongueLb,
     wdh,
     shopCity,
   }
@@ -1105,13 +1131,16 @@ export function scoreReplacementV2(
     pkg?.jobDefaults && typeof (pkg.jobDefaults as { loadUrl?: string }).loadUrl === 'string'
       ? String((pkg.jobDefaults as { loadUrl: string }).loadUrl)
       : null
+  // Towing jobs: payload load = loadLb + tongue (15% of trailer when tongue unset).
+  // loadLb null → Not scored (do not invent trade payload from tongue alone).
+  const payloadLoadLb = effectivePayloadLoadLb(job)
   const c2cur = missingCurrent
     ? notEntered()
     : baseline
       ? (() => {
           const cell2 = scorePayload(
             baselinePayloadHit?.payloadLb ?? baseline.payloadLb,
-            job.loadLb,
+            payloadLoadLb,
             null,
             job.cargoCuFt,
             baselinePayloadHit?.url ?? loadUrl,
@@ -1150,7 +1179,7 @@ export function scoreReplacementV2(
       : null
   const c2cand = scorePayload(
     candPayload,
-    job.loadLb,
+    payloadLoadLb,
     num(merged.cargoCuFt),
     job.cargoCuFt,
     cand.payloadSourceUrl ?? null,
