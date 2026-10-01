@@ -4664,6 +4664,16 @@ img { max-width: 100%; display: block; }
   font-weight: 600;
   background: #e5e7eb;
 }
+.new-vehicle-photo-credit,
+.new-vehicle-photo-note {
+  margin: 0;
+  padding: 5px 10px 0;
+  font-size: 0.72rem;
+  font-weight: 600;
+  line-height: 1.3;
+  text-align: center;
+  color: #4b5563;
+}
 .new-vehicle-body {
   padding: 14px 14px 16px;
   display: flex;

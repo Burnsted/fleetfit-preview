@@ -3,40 +3,40 @@ import { TRADE_PACKAGE_IDS } from '../data/tradePackages'
 import PathChrome from '../components/PathChrome'
 import Wordmark from '../components/Wordmark'
 
-import landscapingPhoto from '../assets/home-trades/landscaping-silverado.jpg'
-import hvacPhoto from '../assets/home-trades/hvac-cybertruck.jpg'
-import electricPhoto from '../assets/home-trades/electric-r1t.jpg'
-import plumbingPhoto from '../assets/home-trades/plumbing-r1t.jpg'
+import landscapingPhoto from '../assets/home-trades/landscaping-silverado-ev.png'
+import hvacPhoto from '../assets/home-trades/hvac-cybertruck.png'
+import electricPhoto from '../assets/home-trades/electric-r1t.png'
+import plumbingPhoto from '../assets/home-trades/plumbing-rivian-commercial-van.png'
 
 /**
  * Home trade cards — photo + trade name only.
  * Electric card uses the Electrical package (pkg-trade-electrical).
- * Fourth card is Plumbing (lime R1T plate intent; Commons source used — see PR notes).
+ * Four Ted-approved generated plates (16:10); Crestvale Plumbing wrap is invented.
  */
 const HOME_TRADE_CARDS = [
   {
     trade: 'Landscaping',
     packageId: TRADE_PACKAGE_IDS.landscaping,
     photo: landscapingPhoto,
-    alt: 'Chevrolet Silverado EV',
+    alt: 'Landscaping trade vehicle',
   },
   {
     trade: 'HVAC',
     packageId: TRADE_PACKAGE_IDS.hvac,
     photo: hvacPhoto,
-    alt: 'Tesla Cybertruck',
+    alt: 'HVAC trade vehicle',
   },
   {
     trade: 'Electric',
     packageId: TRADE_PACKAGE_IDS.electrical,
     photo: electricPhoto,
-    alt: 'Rivian R1T',
+    alt: 'Electric trade vehicle',
   },
   {
     trade: 'Plumbing',
     packageId: TRADE_PACKAGE_IDS.plumbing,
     photo: plumbingPhoto,
-    alt: 'Rivian R1T',
+    alt: 'Plumbing trade vehicle',
   },
 ]
 

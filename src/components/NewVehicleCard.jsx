@@ -26,6 +26,12 @@ export default function NewVehicleCard({ card }) {
           />
         )}
       </div>
+      {card.photo && card.photoCredit ? (
+        <p className="new-vehicle-photo-credit">{card.photoCredit}</p>
+      ) : null}
+      {card.photo && card.photoNote ? (
+        <p className="new-vehicle-photo-note">{card.photoNote}</p>
+      ) : null}
       <div className="new-vehicle-body">
         <h3 className="new-vehicle-title">{card.title}</h3>
         {card.trimLabel ? (

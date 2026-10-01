@@ -13,6 +13,9 @@ import {
 
 import cybertruckPhoto from '../assets/new-catalog/cybertruck.jpg'
 import r1tPhoto from '../assets/new-catalog/r1t.jpg'
+import silveradoEvWtPhoto from '../assets/new-catalog/chevy-silverado-ev-wt.jpg'
+import rivianRcv500Photo from '../assets/new-catalog/rivian-rcv-500.jpg'
+import sierraEvElevationPhoto from '../assets/new-catalog/gmc-sierra-ev-elevation.jpg'
 
 export {
   NEW_CATALOG_BUILD,
@@ -26,8 +29,8 @@ export {
 } from './newEv/catalogIds'
 
 /**
- * Draft-only Commons-based plates. License check TBD before public use.
- * Photo omitted when visible trim/badging contradicts the card, or no accurate unbranded photo.
+ * Draft plates for New view. License check TBD before public use.
+ * Photo omitted when no accurate unbranded plate is available.
  */
 const PHOTO_BY_ID = {
   /** No Dual Motor / Cyberbeast badge conflict on plate */
@@ -35,12 +38,26 @@ const PHOTO_BY_ID = {
   /** Premium card: no contradictory trim badge; door has physical RIVIAN lettering (real branded unit) */
   rivian_r1t_premium: r1tPhoto,
   ford_etransit_cargo_van_low_roof_148_wb: null,
-  /** Commons plate showed RST badge + RST wheels — not WT */
-  chevy_silverado_ev_wt_4wt: null,
-  /** Commons plate showed Denali badge — not Elevation */
-  gmc_sierra_ev_elevation_standard: null,
-  rivian_rcv_500: null,
+  /** Wikimedia Commons (Kaundike), CC BY-SA 4.0 — license check before public use */
+  chevy_silverado_ev_wt_4wt: silveradoEvWtPhoto,
+  /** Generated illustration, unbranded */
+  gmc_sierra_ev_elevation_standard: sierraEvElevationPhoto,
+  /** Generated illustration, unbranded */
+  rivian_rcv_500: rivianRcv500Photo,
   mb_esprinter_81: null,
+}
+
+/** Optional credit or illustration label shown under the media. */
+const PHOTO_META_BY_ID = {
+  chevy_silverado_ev_wt_4wt: {
+    photoCredit: 'Photo: Kaundike, CC BY-SA 4.0',
+  },
+  rivian_rcv_500: {
+    photoNote: 'Illustration, not a photo',
+  },
+  gmc_sierra_ev_elevation_standard: {
+    photoNote: 'Illustration, not a photo',
+  },
 }
 
 const DISPLAY = {
@@ -233,6 +250,7 @@ function buildCard(row, linkRows) {
   const linkRow = findLinkRow(linkRows, row.make, row.model)
   const makerLink = resolveMakerLink(linkRow)
   const photo = PHOTO_BY_ID[id] ?? null
+  const photoMeta = PHOTO_META_BY_ID[id] || {}
   const rangeMi = primaryRangeMi(row.range_mi)
   const rangeOk = rangeMi != null && isConfirmedFigure(row.range_label)
   const payload = primaryPayloadLb(row.payload_lb)
@@ -258,6 +276,8 @@ function buildCard(row, linkRows) {
     photo,
     photoPending: !photo,
     photoPendingLabel: PHOTO_NOT_CONFIRMED,
+    photoCredit: photoMeta.photoCredit || null,
+    photoNote: photoMeta.photoNote || null,
     makerLink,
     /** Hard rule: New cards never carry used listing fields */
     sellerUrl: null,

@@ -1,24 +1,14 @@
 # Home trade card photos (draft)
 
-Source images from Wikimedia Commons (no baked-in trade captions).
+Ted-approved generated plates (1600x1000, 16:10). No baked trade captions except
+vehicle wraps that are part of the vehicle. Crestvale Plumbing is an invented
+business on the Plumbing plate.
 
-Mock plates from the four-photo agent had fictional door livery baked in;
-`/workspace/fleetfit/product/home-four-photos/` was not present in this repo.
-These Commons plates are used instead for the draft.
-
-| Card | File | Commons file |
+| Card | File | Notes |
 |---|---|---|
-| Landscaping | landscaping-silverado.jpg | 2024 Chevrolet Silverado EV RST, front NYIAS 2022 |
-| HVAC | hvac-cybertruck.jpg | Matte Black Tesla Cybertruck, Midtown South, Manhattan |
-| Electric | electric-r1t.jpg | 2022 Rivian R1T (in Glacier White), front 6.21.22 |
-| Plumbing | plumbing-r1t.jpg | Rivian-r1t-2021 (silver/grey; not a confirmed lime plate) |
+| Landscaping | landscaping-silverado-ev.png | Generated. Silverado EV with plain green mower. |
+| HVAC | hvac-cybertruck.png | Generated. Cybertruck. |
+| Electric | electric-r1t.png | Generated. White Rivian R1T. |
+| Plumbing | plumbing-rivian-commercial-van.png | Generated. Rivian Commercial Van with invented Crestvale Plumbing wrap. |
 
-## RIVIAN door lettering
-
-Stock retail R1Ts do not carry door lettering. Both Electric and Plumbing plates show
-raised metallic **RIVIAN** badges on the front door. Lighting, perspective, and cast
-shadows match the body (including orange calipers elsewhere in frame). Assessment:
-**real press/branded physical units**, not a flat overlay or edit. Kept as-is; noted
-for product desk. Plumbing keeps the silver R1T per Steve bar.
-
-License check is TBD before any public use.
+Whole vehicle shown (`object-fit: contain`, card aspect 16:10). No cover-crop.
