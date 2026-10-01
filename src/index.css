@@ -4157,6 +4157,9 @@ img { max-width: 100%; display: block; }
   background: #e8ecf0;
   min-height: 120px;
 }
+.trade-unit-card-media .unit-photo {
+  pointer-events: none;
+}
 .trade-unit-rank {
   position: absolute;
   left: 8px;
@@ -4170,6 +4173,7 @@ img { max-width: 100%; display: block; }
   font-weight: 700;
   display: grid;
   place-items: center;
+  z-index: 2;
 }
 .trade-unit-remove {
   position: absolute;
@@ -4183,6 +4187,7 @@ img { max-width: 100%; display: block; }
   display: grid;
   place-items: center;
   padding: 0;
+  z-index: 3;
 }
 .trade-unit-remove-x {
   width: 28px;
@@ -4366,4 +4371,20 @@ img { max-width: 100%; display: block; }
   font-weight: 700;
   text-decoration: underline;
   cursor: pointer;
+}
+
+/* Trade package primary CTA — REV 2 teal */
+.trade-summary-card .btn-primary {
+  background: #1bb6a8;
+  border-color: #1bb6a8;
+  color: #fff;
+  border-radius: 4px;
+}
+.trade-summary-card .btn-primary:hover {
+  background: #17a396;
+  border-color: #17a396;
+  color: #fff;
+}
+.trade-summary-card .btn-primary:disabled {
+  opacity: 0.45;
 }
