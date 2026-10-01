@@ -1,0 +1,21 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 400.64 68.00" width="188.54" height="32.00" role="img" aria-label="FleetFit">
+  <title>FleetFit</title>
+  <!-- J6 open plus on light. Fleet #111111. Fit amber #F5A623. Same geometry as nav-dark. -->
+  <g id="open-plus">
+    <rect x="29.579" y="6.000" width="8.842" height="23.579" fill="#F5A623"/>
+    <rect x="38.421" y="29.579" width="23.579" height="8.842" fill="#F5A623"/>
+    <rect x="29.579" y="38.421" width="8.842" height="23.579" fill="#F5A623"/>
+    <rect x="6.000" y="29.579" width="23.579" height="8.842" fill="#F5A623"/>
+  </g>
+  <g id="wordmark">
+    <path fill="#111111" d="M 89.680 62.000 V 6.000 H 124.880 V 15.600 H 100.240 V 29.120 H 122.960 V 38.720 H 100.240 V 62.000 Z"/>
+    <path fill="#111111" d="M 129.200 62.000 V 6.000 H 139.760 V 52.400 H 165.360 V 62.000 Z"/>
+    <path fill="#111111" d="M 169.360 62.000 V 6.000 H 205.360 V 15.600 H 179.920 V 28.960 H 203.120 V 38.560 H 179.920 V 52.400 H 205.840 V 62.000 Z"/>
+    <path fill="#111111" d="M 210.480 62.000 V 6.000 H 246.480 V 15.600 H 221.040 V 28.960 H 244.240 V 38.560 H 221.040 V 52.400 H 246.960 V 62.000 Z"/>
+    <path fill="#111111" d="M 264.560 62.000 V 15.600 H 248.240 V 6.000 H 291.440 V 15.600 H 275.120 V 62.000 Z"/>
+    <path fill="#F5A623" d="M 295.440 62.000 V 6.000 H 330.640 V 15.600 H 306.000 V 29.120 H 328.720 V 38.720 H 306.000 V 62.000 Z"/>
+    <path fill="#F5A623" d="M 334.960 62.000 V 6.000 H 345.520 V 62.000 Z"/>
+    <path fill="#F5A623" d="M 365.840 62.000 V 15.600 H 349.520 V 6.000 H 392.720 V 15.600 H 376.400 V 62.000 Z"/>
+  </g>
+</svg>
