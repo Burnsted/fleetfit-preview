@@ -1,0 +1,37 @@
+{
+  "generatedAt": "2026-09-24T18:25:18.910Z",
+  "note": "ORIGINAL canvas scenes — generic EV work pickups, no logos, FL settings. GenerateImage unavailable.",
+  "method": "HTML canvas + Playwright + cwebp",
+  "images": [
+    {
+      "name": "hero-coastal.webp",
+      "kb": 83,
+      "quality": 85
+    },
+    {
+      "name": "depot-charge.webp",
+      "kb": 62,
+      "quality": 85
+    },
+    {
+      "name": "jobsite-palms.webp",
+      "kb": 82,
+      "quality": 85
+    },
+    {
+      "name": "night-coast.webp",
+      "kb": 49,
+      "quality": 85
+    },
+    {
+      "name": "angular-lot.webp",
+      "kb": 42,
+      "quality": 85
+    },
+    {
+      "name": "scrub-trail.webp",
+      "kb": 62,
+      "quality": 85
+    }
+  ]
+}
