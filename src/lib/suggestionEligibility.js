@@ -1,6 +1,8 @@
 /**
  * Ted rule (2026-10-01): a vehicle appears in suggestions / package picks only if
- * (a) listingLive with a resolvable seller URL, and
+ * (a) listingLive with a resolvable seller URL that was verified as a specific
+ *     vehicle detail page (not a search / home / inventory-index redirect —
+ *     see listingPageKind.js + listingOutbound.js), and
  * (b) Replacement Score passes the dial "high" threshold (ScoreDial is-high).
  * One-of-each-body must not force unreal or weak picks.
  */

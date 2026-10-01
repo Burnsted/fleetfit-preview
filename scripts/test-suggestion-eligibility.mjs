@@ -94,13 +94,21 @@ assert(
 assert(packageStickerSum(pkg) === pkg.units.reduce((s, u) => s + u.askPrice, 0), 'sticker sum')
 
 const landscape = getPackage('pkg-tc-landscape-2')
+assert(landscape.units.length === 0, 'landscape live pool must be empty after Culver City index redirect')
 const landReco = composeRecommendationSet(landscape.units, { pkg: landscape, intake: null })
 assert(
   landReco.items.every((r) => passesGoodScore(r.score)),
   'landscape suggestions must pass good score',
 )
-// l1 is live but incomplete → dropped
+// unit-l1 was live-but-incomplete under PR4; now dead (VDP → inventory index). No suggestible units.
 assert(landReco.items.length === 0, 'landscape should have no good-score suggestible units')
+
+// unit-l1 must not be suggestible anywhere: redirect-to-index → listingLive false
+const allLand = getPackageAllUnits('pkg-tc-landscape-2')
+const l1 = allLand.units.find((u) => u.id === 'unit-l1')
+assert(l1, 'unit-l1 fixture must still exist in all-units pool')
+assert(l1.listingLive !== true, 'unit-l1 must be dead (Culver City VDP redirects to inventory index)')
+assert(!hasRealListing(l1), 'unit-l1 must fail hasRealListing')
 
 const liveShop = LISTINGS.filter((l) => l.listingLive === true)
 assert(liveShop.length === 0, 'shop seed has no fetch-verified live listings after audit')

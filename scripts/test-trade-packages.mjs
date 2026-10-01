@@ -14,8 +14,8 @@ import {
 import { TRADE_PACKAGE_COPY } from '../src/data/tradeNeeds.js'
 import {
   addUnitToPackage,
-  collectCandidateUnits,
   composeTradePackageSet,
+  collectCandidateUnits,
   removeAndAutoReplace,
   rankTradePool,
   sliceActiveSet,
@@ -73,14 +73,31 @@ test('3. Ranking returns only suggestible units in eligible (real + ≥0.7)', ()
       `${row.unit.id} must pass 0.7 bar`,
     )
   }
-  // Tiny real-listing pool: only fetch-verified live units can appear.
-  // Counts vary by trade job seeds (load UNKNOWN drops payload PP).
-  assert.ok(eligible.length >= 1, 'electrical should have ≥1 eligible')
-  assert.ok(
-    eligible.some((e) => e.unit.id === 'unit-e5'),
-    'Sierra EV (unit-e5) must remain eligible for electrical',
-  )
+  // Tiny real-listing pool after Culver City index-redirect drop:
+  // only unit-e5 stays suggestible on electrical trade seeds.
+  assert.equal(eligible.length, 1, `electrical eligible expected 1, got ${eligible.length}`)
+  assert.equal(eligible[0].unit.id, 'unit-e5')
   console.log('   eligibleCount=', eligible.length, eligible.map((e) => e.unit.id).join(','))
+})
+
+test('3b. Per-trade eligible counts after index-redirect drop', () => {
+  const expected = {
+    [TRADE_PACKAGE_IDS.electrical]: ['unit-e5'],
+    [TRADE_PACKAGE_IDS.hvac]: ['unit-e5', 'unit-e1'],
+    [TRADE_PACKAGE_IDS.plumbing]: ['unit-e5'],
+    [TRADE_PACKAGE_IDS.landscaping]: ['unit-e5'],
+    [TRADE_PACKAGE_IDS.gc]: [],
+  }
+  for (const [id, ids] of Object.entries(expected)) {
+    const pkg = getPackage(id)
+    const set = composeTradePackageSet(pkg, { pkg, intake: null }, 4)
+    assert.deepEqual(
+      set.eligible.map((e) => e.unit.id),
+      ids,
+      `${id} eligible mismatch`,
+    )
+    assert.ok(!set.eligible.some((e) => e.unit.id === 'unit-l1'), `${id} must not include dead unit-l1`)
+  }
 })
 
 test('4. Size slice does not invent fillers when pool is short', () => {

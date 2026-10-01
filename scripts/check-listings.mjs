@@ -7,17 +7,16 @@
  * Does not auto-write listingOutbound.js — update listingStatus there after review.
  *
  * Dead signals: HTTP 404/410, sold/"No longer listed"/"no longer available" body text,
- * redirects onto marketplace search results.
+ * redirects onto marketplace search results, OR redirects onto a dealer inventory /
+ * make-model index (200 that is not a specific vehicle page). See listingPageKind.js.
  */
 
 import { readFileSync } from 'node:fs'
-import { fileURLToPath } from 'node:url'
+import { fileURLToPath, pathToFileURL } from 'node:url'
 import path from 'node:path'
+import { classifyListingFetch } from '../src/lib/listingPageKind.js'
 
 const root = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..')
-
-const DEAD_RE =
-  /no longer listed|no longer available|this vehicle is sold|vehicle has been sold|listing (is )?(no longer|not) available|page not found|vehicle not found|this listing is unavailable|has been removed|sorry,? this vehicle|is no longer in our inventory|this vehicle has sold|we couldn.?t find this/i
 
 function loadListingRows() {
   const src = readFileSync(path.join(root, 'src/data/listingPhotos.js'), 'utf8')
@@ -29,24 +28,17 @@ function loadListingRows() {
 }
 
 async function loadOutbound() {
-  const mod = await import(path.join(root, 'src/data/listingOutbound.js'))
+  const mod = await import(pathToFileURL(path.join(root, 'src/data/listingOutbound.js')).href)
   return mod.LISTING_OUTBOUND
 }
 
+function vinFromUrl(url) {
+  if (!url) return null
+  const m = String(url).match(/[A-HJ-NPR-Z0-9]{17}/i)
+  return m ? m[0].toUpperCase() : null
+}
+
 async function fetchPage(url) {
-  try {
-    const { requests } = await import('curl_cffi').catch(() => ({ requests: null }))
-    if (requests) {
-      const r = await requests.get(url, {
-        impersonate: 'chrome131',
-        timeout: 40,
-        allow_redirects: true,
-      })
-      return { status: r.status_code, finalUrl: String(r.url), text: r.text || '', err: null }
-    }
-  } catch {
-    /* fall through to fetch */
-  }
   try {
     const res = await fetch(url, {
       redirect: 'follow',
@@ -62,23 +54,6 @@ async function fetchPage(url) {
   } catch (e) {
     return { status: 0, finalUrl: url, text: '', err: String(e.message || e) }
   }
-}
-
-function classify(status, finalUrl, text) {
-  const title =
-    (text.match(/<title[^>]*>([\s\S]*?)<\/title>/i) || [])[1]?.replace(/\s+/g, ' ').trim() || ''
-  const cf = /just a moment|attention required|cf-browser-verification|challenge-platform/i.test(
-    `${title}\n${text.slice(0, 4000)}`,
-  )
-  if (cf) return { kind: 'BLOCKED', title }
-  const sample = `${title}\n${text.slice(0, 300000)}`
-  const sold = DEAD_RE.test(sample)
-  const searchRedir = /\/shopping\/|\/for-sale\/|\/search/i.test(finalUrl || '')
-  if (status === 404 || status === 410 || sold || searchRedir) {
-    return { kind: 'DEAD', title, sold, searchRedir }
-  }
-  if (status >= 200 && status < 400) return { kind: 'LIVE', title }
-  return { kind: 'DEAD', title, http: status }
 }
 
 const rows = loadListingRows()
@@ -102,7 +77,14 @@ for (const id of ids) {
     continue
   }
   const page = await fetchPage(url)
-  const c = classify(page.status, page.finalUrl, page.text)
+  const vin = vinFromUrl(url)
+  const c = classifyListingFetch({
+    status: page.status,
+    finalUrl: page.finalUrl,
+    originalUrl: url,
+    text: page.text,
+    vin,
+  })
   if (c.kind === 'LIVE') live++
   else if (c.kind === 'BLOCKED') blocked++
   else dead++
@@ -117,6 +99,10 @@ for (const id of ids) {
     `${id}\t${stored}\tHTTP${page.status}\t${c.kind}\t${url.slice(0, 90)}${flag}`,
   )
   if (c.title) console.log(`  title: ${c.title.slice(0, 100)}`)
+  if (c.reason) console.log(`  reason: ${c.reason}`)
+  if (page.finalUrl && page.finalUrl !== url) {
+    console.log(`  final: ${page.finalUrl.slice(0, 120)}`)
+  }
   if (page.err) console.log(`  err: ${page.err}`)
 }
 
