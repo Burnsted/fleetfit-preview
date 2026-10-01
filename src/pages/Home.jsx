@@ -32,7 +32,7 @@ export default function Home() {
             Used EV fleet packages that fit the work day.
           </h1>
           <p className="locked-hero-lead">
-            Same job as your work truck — money, maintenance, and time.
+            Same job as your work truck. Money, maintenance, and time.
           </p>
           <Link to={EXAMPLE} className="home-hero-plate" aria-label="Demo package">
             <ListingPhoto alias="hero" className="home-hero-plate-art" />

@@ -1,4 +1,4 @@
-import { computePackageTotal, NOT_CONFIRMED } from '../lib/packageTotal'
+import { computePackageTotal } from '../lib/packageTotal'
 
 /**
  * Package total block — Total, Trade-in credit, Net, Buyer fee TBD.
@@ -62,9 +62,6 @@ export default function PackageTotal({ units }) {
       </div>
 
       <p className="package-total-fee">{summary.buyerFeeLine}</p>
-      <span className="visually-hidden">
-        {summary.net == null ? `Net ${NOT_CONFIRMED}` : null}
-      </span>
     </section>
   )
 }
