@@ -48,10 +48,11 @@ function workBlurb(make, model) {
   )
 }
 
-/** Aggregate listings into model families (make + model). */
+/** Aggregate listings into model families (make + model). Live seller listings only. */
 export function getModels() {
   const map = new Map()
   for (const l of LISTINGS) {
+    if (l.listingLive !== true) continue
     const key = `${l.make}|${l.model}`
     if (!map.has(key)) {
       map.set(key, {

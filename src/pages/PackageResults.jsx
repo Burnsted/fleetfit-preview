@@ -14,6 +14,7 @@ import {
   composeRecommendationSet,
 } from '../lib/recommendationSet'
 import { currentMilesForScore } from '../lib/replacementScore'
+import { NO_VANS_REAL_GOOD } from '../lib/suggestionEligibility'
 import {
   currentWorkVehicle,
   displayWorkSpec,
@@ -42,9 +43,9 @@ function dayNeedLabel(pkg, intake) {
   return null
 }
 
-function fleetSizeChip(intake, pkg) {
+function fleetSizeChip(intake, shownCount) {
   if (!intake?.fleetSize || intake.fleetSize === 'not-surveyed') {
-    return pkg.unitCount ? `Fleet size ${pkg.unitCount}` : 'Fleet size Not surveyed'
+    return shownCount > 0 ? `Fleet size ${shownCount}` : 'Fleet size Not surveyed'
   }
   return `Fleet size ${intake.fleetSize}`
 }
@@ -77,10 +78,12 @@ export default function PackageResults() {
     maxSlots: Math.max(visibleUnits.length, pkg.unitCount || 0),
   })
   const ranked = reco.items
-  const selectedInPackage = visibleUnits.filter((unit) =>
+  // Counts and totals follow what is actually shown (suggestible set), not the seed pool.
+  const shownUnits = ranked.map((r) => r.unit)
+  const selectedInPackage = shownUnits.filter((unit) =>
     fleet.has(fleetUnitKey(pkg.id, unit.id)),
   ).length
-  const batteryKwhFact = packageBatteryKwhFact(visibleUnits)
+  const batteryKwhFact = packageBatteryKwhFact(shownUnits)
   const dayNeed = dayNeedLabel(pkg, intake)
   const truckCount = ranked.filter((r) => r.bodyClass === 'truck').length
   const vanCount = ranked.filter((r) => r.bodyClass === 'van').length
@@ -120,7 +123,7 @@ export default function PackageResults() {
         <h1 className="match-title">{pkg.headline}</h1>
         <div className="spec-chips match-header-chips" aria-label="Match facts">
           <span className="spec-chip is-known">Trade {pkg.trade}</span>
-          <span className="spec-chip is-known">{pkg.unitCount} units</span>
+          <span className="spec-chip is-known">{shownUnits.length} units</span>
           {dayNeed ? <span className="spec-chip is-known">Day {dayNeed}</span> : null}
           <span className={`spec-chip ${pkg.tradeIn?.status ? 'is-known' : 'is-dash'}`}>
             Trade-in {pkg.tradeIn?.status || NOT_PUBLISHED}
@@ -129,7 +132,7 @@ export default function PackageResults() {
             Battery {batteryKwhFact.text}
           </span>
           <span className="spec-chip is-dash">Recalls Not checked</span>
-          <span className="spec-chip is-known">{fleetSizeChip(intake, pkg)}</span>
+          <span className="spec-chip is-known">{fleetSizeChip(intake, shownUnits.length)}</span>
           {envelope != null ? (
             <span className="spec-chip is-known">Envelope {formatMoney(envelope)}</span>
           ) : null}
@@ -163,7 +166,9 @@ export default function PackageResults() {
               Van · {vanCount}
             </span>
           ) : (
-            <span className="recommendation-mix-chip is-missing">Van not in this set</span>
+            <span className="recommendation-mix-chip is-missing" data-body-class="van-none">
+              Van · 0
+            </span>
           )}
           {reco.hasFreshMy ? (
             <span className="recommendation-mix-chip is-fresh" data-fresh-my="true">
@@ -171,7 +176,11 @@ export default function PackageResults() {
             </span>
           ) : null}
         </div>
-        {reco.missingBodyNote ? (
+        {!reco.hasVan ? (
+          <p className="recommendation-mix-missing" data-vans-line="true">
+            {reco.missingBodyNote || NO_VANS_REAL_GOOD}
+          </p>
+        ) : reco.missingBodyNote ? (
           <p className="recommendation-mix-missing">{reco.missingBodyNote}</p>
         ) : null}
       </section>
@@ -187,8 +196,14 @@ export default function PackageResults() {
         <h2 id="units-title" className="package-units-title">Units</h2>
         {ranked.length === 0 ? (
           <p className="locked-muted">
-            No units in this demo fit that spend.{' '}
-            <Link to="/budget">Adjust spend</Link>
+            {visibleUnits.length === 0 && envelope != null ? (
+              <>
+                No units in this demo fit that spend.{' '}
+                <Link to="/budget">Adjust spend</Link>
+              </>
+            ) : (
+              <>No units with a real listing and a good score in this package right now.</>
+            )}
           </p>
         ) : null}
         <ul className="package-unit-stack">
@@ -218,7 +233,7 @@ export default function PackageResults() {
 
       <div className="package-cta-bar">
         <p className="package-fleet-count">
-          {selectedInPackage} of {visibleUnits.length || pkg.unitCount} in fleet
+          {selectedInPackage} of {shownUnits.length} in fleet
         </p>
         <Link to="/intake?adjust=1" className="btn btn-sm">
           Adjust mix

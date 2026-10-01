@@ -1,6 +1,8 @@
 import { SCORE_V2_BUILD, STATUS } from '../data/scoreV2Rubric'
+import { GOOD_SCORE_RATIO } from '../lib/suggestionEligibility'
 
 export const SCORE_UI_BUILD = 'score-ui-dial-v2-g-final-20260927-1635'
+export { GOOD_SCORE_RATIO }
 
 /**
  * CLEARED Score UI dial — right of pricing.
@@ -48,7 +50,7 @@ export default function ScoreDial({
     ? 'is-sidegrade'
     : incomplete
       ? 'is-incomplete'
-      : pct >= 0.7
+      : pct >= GOOD_SCORE_RATIO
         ? 'is-high'
         : pct >= 0.5
           ? 'is-mid'
