@@ -153,6 +153,28 @@ img { max-width: 100%; display: block; }
   .header-menu-btn .menu-label { display: none; }
 }
 
+/* Phone: primary text links + Demo overflow the 390 viewport (~435px).
+   Menu already exposes Home / Fleet intake / Shop — hide duplicate text links. */
+@media (max-width: 480px) {
+  .header-inner {
+    padding: 0 12px;
+    gap: 8px;
+    width: 100%;
+    max-width: 100%;
+    box-sizing: border-box;
+  }
+  .header-nav .header-text-link {
+    display: none;
+  }
+  .logo .wordmark {
+    height: 22px;
+    max-width: 132px;
+  }
+  .badge-demo {
+    flex-shrink: 0;
+  }
+}
+
 /* ── Buttons — black primary (Porsche), outline secondary ── */
 .btn {
   display: inline-flex; align-items: center; justify-content: center; gap: 6px;
