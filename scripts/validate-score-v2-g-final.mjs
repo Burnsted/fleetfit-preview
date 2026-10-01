@@ -2,7 +2,7 @@
  * §6.1 G-final — 7 live-demo candidates vs 2018 Transit-250
  * Run: npx vite-node scripts/validate-score-v2-g-final.mjs
  */
-import { getPackage } from '../src/data/package.js'
+import { getPackageAllUnits } from '../src/data/package.js'
 import { rankUnitsByScoreV2 } from '../src/lib/scoreV2.ts'
 import { currentWorkVehicle } from '../src/lib/workSpec.js'
 
@@ -16,7 +16,8 @@ const EXPECTED = [
   { match: /R1T/i, total: 46.1, pp: 90, diff: 0.6 },
 ]
 
-const pkg = getPackage('pkg-tc-electrical-4')
+// Score fixture uses the full seed pool (including dead listings) so totals stay locked.
+const pkg = getPackageAllUnits('pkg-tc-electrical-4')
 const ranked = rankUnitsByScoreV2(pkg.units, { pkg, intake: null })
 
 console.log('BUILD', ranked[0]?.score?.build)
