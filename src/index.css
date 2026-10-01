@@ -1845,8 +1845,8 @@ img { max-width: 100%; display: block; }
 .locked-crumbs a { color: var(--text-muted); }
 .crumb-divider {
   display: inline-block;
-  width: 6px;
-  height: 6px;
+  width: 8px;
+  height: 3px;
   margin: 0 8px;
   border-radius: 4px;
   background: var(--border-strong);
