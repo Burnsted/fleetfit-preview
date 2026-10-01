@@ -1,8 +1,15 @@
 import { useCallback, useEffect, useMemo, useState } from 'react'
 import { Link, useLocation } from 'react-router-dom'
+import NewCatalog from '../components/NewCatalog'
 import PackageTotal from '../components/PackageTotal'
+import StockModeToggle from '../components/StockModeToggle'
 import TradePackageToast from '../components/TradePackageToast'
 import TradeUnitCard from '../components/TradeUnitCard'
+import {
+  NEW_CATALOG_BUILD,
+  NEW_HELPER_LINE,
+  USED_RESULTS_HELPER,
+} from '../data/newEvCatalog'
 import { TRADE_PACKAGE_COPY, JOB_STORAGE_KEY } from '../data/tradeNeeds'
 import {
   TRADE_PACKAGE_BUILD,
@@ -76,6 +83,10 @@ export default function TradePackageResults({ pkg }) {
   const location = useLocation()
   const intake = location.state?.intake
   const fleet = useFleetPick()
+
+  const [stockMode, setStockMode] = useState(
+    intake?.stockMode === 'New' || pkg.stockMode === 'New' ? 'New' : 'Used',
+  )
 
   const storedJob = useMemo(() => readStoredJob(pkg.id), [pkg.id])
   const [job, setJob] = useState(() => mergeJob(pkg, intake, storedJob))
@@ -236,12 +247,15 @@ export default function TradePackageResults({ pkg }) {
     (r) => !active.some((a) => a.unit.id === r.unit.id),
   )
 
+  const isNew = stockMode === 'New'
+
   return (
     <div
       className="locked-page package-page is-stack is-trade-package"
       data-trade-package={TRADE_PACKAGE_BUILD}
       data-trade-set={TRADE_PACKAGE_SET_BUILD}
-      data-stock-mode={pkg.stockMode || 'Used'}
+      data-stock-mode={stockMode}
+      data-new-catalog={NEW_CATALOG_BUILD}
       data-oem-specs={OEM_SPECS_BUILD}
       data-outbound-listing={OUTBOUND_LISTING_BUILD}
       data-score-v2={SCORE_V2_BUILD}
@@ -259,24 +273,40 @@ export default function TradePackageResults({ pkg }) {
         <p className="match-kicker trade-package-kicker">
           {TRADE_PACKAGE_COPY.tradePackageKicker}
         </p>
-        <h1 className="match-title">{headerTitle}</h1>
-        <p className="trade-work-day">{pkg.workDayCopy || pkg.workDayNote}</p>
-        <div className="spec-chips match-header-chips" aria-label="Package facts">
-          <span className="spec-chip is-known">Trade {pkg.trade}</span>
-          <span className="spec-chip is-known">
-            {active.length === 1 ? '1 unit' : `${active.length} units`}
-          </span>
-          <span className="spec-chip is-known">{TRADE_PACKAGE_COPY.orderedByScore}</span>
-          <span className="spec-chip is-known">{TRADE_PACKAGE_COPY.exampleDataTag}</span>
+        <h1 className="match-title">{isNew ? 'Your fleet' : headerTitle}</h1>
+        {!isNew ? (
+          <p className="trade-work-day">{pkg.workDayCopy || pkg.workDayNote}</p>
+        ) : null}
+        <div className="trade-stock-bar">
+          <StockModeToggle
+            value={stockMode}
+            onChange={setStockMode}
+            usedHelper={USED_RESULTS_HELPER}
+            newHelper={NEW_HELPER_LINE}
+          />
         </div>
-        {missingCurrent ? (
+        {!isNew ? (
+          <div className="spec-chips match-header-chips" aria-label="Package facts">
+            <span className="spec-chip is-known">Trade {pkg.trade}</span>
+            <span className="spec-chip is-known">
+              {active.length === 1 ? '1 unit' : `${active.length} units`}
+            </span>
+            <span className="spec-chip is-known">{TRADE_PACKAGE_COPY.orderedByScore}</span>
+            <span className="spec-chip is-known">{TRADE_PACKAGE_COPY.exampleDataTag}</span>
+          </div>
+        ) : null}
+        {!isNew && missingCurrent ? (
           <p className="trade-current-banner" role="status">
             {TRADE_PACKAGE_COPY.addCurrentBanner}
           </p>
         ) : null}
       </header>
 
-      <div className="trade-package-layout">
+      {isNew ? (
+        <NewCatalog helper={NEW_HELPER_LINE} />
+      ) : null}
+
+      <div className="trade-package-layout" hidden={isNew}>
         <div className="trade-package-main">
           <section className="trade-job-strip" aria-label="Job numbers">
             <p className="trade-job-help">{TRADE_PACKAGE_COPY.editJobNumbers}</p>
@@ -487,9 +517,6 @@ export default function TradePackageResults({ pkg }) {
               </div>
             </div>
 
-            {/* Layout slot for future Used | New — field only this ship */}
-            <div className="trade-stock-slot" data-stock-mode={pkg.stockMode || 'Used'} hidden />
-
             {banner ? (
               <p className="trade-summary-banner" role="status">
                 {banner}
@@ -520,15 +547,18 @@ export default function TradePackageResults({ pkg }) {
         </aside>
       </div>
 
+      {/* Package total always from Used units — never mix New MSRP into Used total */}
       <PackageTotal units={activeUnits} />
 
-      <div className="package-cta-bar">
+      <div className="package-cta-bar" hidden={isNew}>
         <p className="package-fleet-count">
           {selectedInPackage} of {active.length} in fleet
         </p>
         <Link
           to="/intake?adjust=1"
-          state={{ intake: { ...intake, job, trade: pkg.trade } }}
+          state={{
+            intake: { ...intake, job, trade: pkg.trade, stockMode },
+          }}
           className="btn btn-sm"
         >
           Adjust mix

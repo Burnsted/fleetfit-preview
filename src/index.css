@@ -4388,3 +4388,296 @@ img { max-width: 100%; display: block; }
 .trade-summary-card .btn-primary:disabled {
   opacity: 0.45;
 }
+
+/* —— Trade home cards + Used | New (CLEARED 2026-10-01) —— */
+.locked-home.is-trade-home {
+  background: #fff;
+  color: #111;
+}
+.locked-home.is-trade-home .trade-home-hero {
+  padding: 8px 24px 12px;
+}
+.locked-home.is-trade-home .locked-hero-inner.trade-home-hero-inner {
+  width: min(720px, 100%);
+  margin: 0 auto;
+  text-align: center;
+}
+.locked-home.is-trade-home .locked-hero-title {
+  font-size: clamp(1.65rem, 4.2vw, 2.4rem);
+  margin: 8px 0 10px;
+}
+.locked-home.is-trade-home .locked-hero-lead {
+  margin: 0 auto 8px;
+  max-width: 28rem;
+  color: #666;
+}
+.locked-home.is-trade-home .locked-topnav-links .badge-demo {
+  display: none;
+}
+.home-trade-photo-section {
+  padding: 8px 24px 20px;
+  max-width: 960px;
+  margin: 0 auto;
+}
+.home-trade-photo-grid {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: 14px;
+}
+@media (min-width: 720px) {
+  .home-trade-photo-grid {
+    grid-template-columns: 1fr 1fr;
+    gap: 16px;
+  }
+}
+.home-trade-photo-card {
+  display: flex;
+  flex-direction: column;
+  border: 1px solid #d8dee6;
+  border-radius: 4px;
+  overflow: hidden;
+  background: #fff;
+  text-decoration: none;
+  color: #111;
+}
+.home-trade-photo-card:hover {
+  text-decoration: none;
+  color: #111;
+  border-color: #b8c0ca;
+}
+.home-trade-photo-frame {
+  position: relative;
+  width: 100%;
+  aspect-ratio: 16 / 10;
+  background: #eef1f4;
+  overflow: hidden;
+}
+.home-trade-photo {
+  display: block;
+  width: 100%;
+  height: 100%;
+  object-fit: contain;
+  object-position: center;
+  background: #eef1f4;
+}
+.home-trade-photo-caption {
+  display: block;
+  padding: 12px 10px;
+  text-align: center;
+  font-weight: 700;
+  font-size: 1rem;
+  background: #fff;
+  border-top: 1px solid #e8ecf0;
+}
+.trade-home-cta {
+  display: flex;
+  justify-content: center;
+  margin: 22px 0 8px;
+}
+.trade-home-match {
+  min-width: min(100%, 320px);
+  border-radius: 4px !important;
+  background: #111 !important;
+  border-color: #111 !important;
+  color: #fff !important;
+  padding: 14px 22px;
+  font-weight: 700;
+}
+.locked-home.is-trade-home .trade-home-path {
+  padding: 12px 24px 40px;
+  max-width: 960px;
+  margin: 0 auto;
+}
+.locked-home.is-trade-home .home-path-card {
+  border-radius: 4px;
+  box-shadow: none;
+  border: 1px solid #d8dee6;
+}
+
+/* Stock mode toggle — 4px rectangles, not pills */
+.stock-mode-block {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 12px 16px;
+}
+.stock-mode-toggle {
+  display: inline-flex;
+  border: 1px solid #d8dee6;
+  border-radius: 4px;
+  overflow: hidden;
+  background: #f3f4f6;
+}
+.stock-mode-btn {
+  appearance: none;
+  border: 0;
+  margin: 0;
+  padding: 10px 18px;
+  min-height: 40px;
+  background: transparent;
+  color: #111;
+  font: inherit;
+  font-weight: 700;
+  font-size: 0.92rem;
+  cursor: pointer;
+  border-radius: 0;
+}
+.stock-mode-btn.is-active {
+  background: #111;
+  color: #fff;
+}
+.stock-mode-helper {
+  margin: 0;
+  font-size: 0.88rem;
+  color: #666;
+}
+.trade-stock-bar {
+  margin: 12px 0 8px;
+}
+
+/* Intake trade preset rectangles */
+.intake-preset-row {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+.intake-preset-btn {
+  appearance: none;
+  border: 1px solid #d8dee6;
+  border-radius: 4px;
+  background: #fff;
+  color: #111;
+  font: inherit;
+  font-weight: 700;
+  font-size: 0.92rem;
+  padding: 10px 14px;
+  min-height: 40px;
+  cursor: pointer;
+}
+.intake-preset-btn.is-active {
+  background: #111;
+  color: #fff;
+  border-color: #111;
+}
+.intake-stock-field .stock-mode-block {
+  margin-top: 4px;
+}
+
+/* New OEM catalog */
+.new-catalog {
+  margin: 12px 0 28px;
+}
+.new-catalog-helper {
+  margin: 0 0 14px;
+  font-size: 0.92rem;
+  color: #666;
+}
+.new-catalog-grid {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: 14px;
+}
+@media (min-width: 720px) {
+  .new-catalog-grid {
+    grid-template-columns: 1fr 1fr;
+  }
+}
+@media (min-width: 1100px) {
+  .new-catalog-grid {
+    grid-template-columns: 1fr 1fr 1fr;
+  }
+}
+.new-vehicle-card {
+  display: flex;
+  flex-direction: column;
+  border: 1px solid #d8dee6;
+  border-radius: 4px;
+  background: #fff;
+  overflow: hidden;
+  height: 100%;
+}
+.new-vehicle-media {
+  position: relative;
+  aspect-ratio: 16 / 10;
+  background: #eceff2;
+}
+.new-vehicle-tag {
+  position: absolute;
+  top: 10px;
+  left: 10px;
+  z-index: 1;
+  background: #f5a623;
+  color: #111;
+  font-size: 0.72rem;
+  font-weight: 800;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  padding: 4px 8px;
+  border-radius: 4px;
+}
+.new-vehicle-photo {
+  display: block;
+  width: 100%;
+  height: 100%;
+  object-fit: contain;
+  object-position: center;
+  background: #eceff2;
+}
+.new-vehicle-photo-pending {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 100%;
+  height: 100%;
+  padding: 16px;
+  text-align: center;
+  color: #6b7280;
+  font-size: 0.92rem;
+  font-weight: 600;
+  background: #e5e7eb;
+}
+.new-vehicle-body {
+  padding: 14px 14px 16px;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+.new-vehicle-title {
+  margin: 0;
+  font-size: 1.05rem;
+  font-weight: 800;
+  color: #111;
+}
+.new-vehicle-trim {
+  margin: 0;
+  color: #666;
+  font-size: 0.9rem;
+}
+.new-vehicle-specs {
+  margin: 4px 0 0;
+  color: #111;
+  font-size: 0.9rem;
+}
+.new-vehicle-price {
+  margin: 6px 0 0;
+  font-weight: 800;
+  font-size: 1rem;
+  color: #111;
+}
+.new-vehicle-link {
+  margin-top: 8px;
+  color: #f5a623;
+  font-weight: 700;
+  font-size: 0.9rem;
+  text-decoration: none;
+}
+.new-vehicle-link:hover {
+  text-decoration: underline;
+  color: #d48c12;
+}

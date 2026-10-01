@@ -1,11 +1,19 @@
 import { useState } from 'react'
 import { useNavigate, useSearchParams } from 'react-router-dom'
 import PathChrome from '../components/PathChrome'
+import StockModeToggle from '../components/StockModeToggle'
 import Wordmark from '../components/Wordmark'
 import { matchPackageIdFromIntake } from '../data/package'
+import {
+  NEW_RESULTS_HELPER,
+  USED_HELPER_LINE,
+} from '../data/newEvCatalog'
 
-/** CLEARED Score v2 intake fields + Supervisor preset */
-const INTAKE_BUILD = 'intake-score-v2-f-pages-20260927-1515'
+/** CLEARED Score v2 intake fields + Supervisor preset + stockMode */
+const INTAKE_BUILD = 'intake-trade-stock-20261001'
+
+/** Trade preset rectangles (mock / CLEARED). Landscaping maps to Landscaping / lawn seed. */
+const TRADE_PRESETS = ['Electrical', 'HVAC', 'Plumbing', 'Landscaping']
 
 const TRADES = [
   'Electrical',
@@ -15,6 +23,17 @@ const TRADES = [
   'General contracting',
   'Other',
 ]
+
+function tradeToFormValue(preset) {
+  if (preset === 'Landscaping') return 'Landscaping / lawn'
+  return preset
+}
+
+function formTradeToPreset(trade) {
+  if (/landscap|lawn/i.test(trade || '')) return 'Landscaping'
+  if (TRADE_PRESETS.includes(trade)) return trade
+  return null
+}
 
 const FLEET_SIZE_OPTIONS = [
   { value: '', label: 'Not surveyed yet' },
@@ -52,6 +71,7 @@ const ABRP_URL = 'https://abetterrouteplanner.com/'
 const INITIAL = {
   trade: 'Electrical',
   tradeOther: '',
+  stockMode: 'Used',
   fleetSize: '',
   address: '',
   shopCity: '',
@@ -142,6 +162,18 @@ export default function FleetIntake() {
     }))
   }
 
+  function onTradePreset(preset) {
+    setForm((prev) => ({
+      ...prev,
+      trade: tradeToFormValue(preset),
+      tradeOther: '',
+    }))
+  }
+
+  function onStockMode(mode) {
+    setField('stockMode', mode === 'New' ? 'New' : 'Used')
+  }
+
   function onTradeInChange(value) {
     setForm((prev) => ({
       ...prev,
@@ -221,9 +253,11 @@ export default function FleetIntake() {
             ? '1500'
             : '')
 
+    const stockMode = form.stockMode === 'New' ? 'New' : 'Used'
     const intake = {
       trade: tradeValue,
       tradeOther: form.trade === 'Other' ? form.tradeOther.trim() : '',
+      stockMode,
       fleetSize: form.fleetSize || 'not-surveyed',
       address: form.address.trim(),
       shopCity: form.shopCity || undefined,
@@ -273,8 +307,11 @@ export default function FleetIntake() {
     navigate(`/package/${matchPackageIdFromIntake(intake)}`, { state: { intake } })
   }
 
+  const activePreset = formTradeToPreset(form.trade)
+  const stockMode = form.stockMode === 'New' ? 'New' : 'Used'
+
   return (
-    <div className="locked-page" data-cleared={INTAKE_BUILD}>
+    <div className="locked-page" data-cleared={INTAKE_BUILD} data-stock-mode={stockMode}>
       <PathChrome active="intake" className="path-chrome-intake" />
 
       <header className="locked-page-header">
@@ -282,13 +319,43 @@ export default function FleetIntake() {
           <Wordmark size="eyebrow" tone="light" decorative />
           <span>Fleet swap</span>
         </p>
-        <h1>{adjusting ? 'Adjust the mix' : 'Tell us about the work day'}</h1>
+        <h1>{adjusting ? 'Adjust the mix' : 'Fleet intake'}</h1>
         <p className="locked-page-lead">
-          We’ll match a used EV package to the work day.
+          Choose a trade preset and Used or New stock.
         </p>
       </header>
 
       <form className="intake-form" onSubmit={onSubmit}>
+        <div className="intake-field intake-trade-preset" data-trade-preset="1">
+          <span className="intake-label">Trade preset</span>
+          <div className="intake-preset-row" role="group" aria-label="Trade preset">
+            {TRADE_PRESETS.map((preset) => {
+              const active = activePreset === preset
+              return (
+                <button
+                  key={preset}
+                  type="button"
+                  className={`intake-preset-btn${active ? ' is-active' : ''}`}
+                  aria-pressed={active}
+                  onClick={() => onTradePreset(preset)}
+                >
+                  {preset}
+                </button>
+              )
+            })}
+          </div>
+        </div>
+
+        <div className="intake-field intake-stock-field">
+          <span className="intake-label">Stock</span>
+          <StockModeToggle
+            value={stockMode}
+            onChange={onStockMode}
+            usedHelper={USED_HELPER_LINE}
+            newHelper={NEW_RESULTS_HELPER}
+          />
+        </div>
+
         <label className="intake-field">
           <span className="intake-label">Role preset</span>
           <select
