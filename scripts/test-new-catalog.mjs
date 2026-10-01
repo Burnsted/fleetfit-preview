@@ -122,11 +122,16 @@ test('5. INFERENCE build URLs get no Build link; FACT Rivian fleet does', () => 
   assert.equal(resolveMakerLink(ford), null)
 })
 
-test('6. Photo-not-confirmed vans have no photo; trucks have draft plates', () => {
+test('6. Photo-not-confirmed when trim/badging conflicts or no plate; keep matching drafts', () => {
   const byId = Object.fromEntries(getNewCatalog().map((c) => [c.id, c]))
   assert.equal(byId.rivian_rcv_500.photoPending, true)
   assert.equal(byId.mb_esprinter_81.photoPending, true)
   assert.equal(byId.ford_etransit_cargo_van_low_roof_148_wb.photoPending, true)
+  // WT / Elevation cards must not show RST / Denali plates
+  assert.equal(byId.chevy_silverado_ev_wt_4wt.photoPending, true)
+  assert.equal(byId.gmc_sierra_ev_elevation_standard.photoPending, true)
+  assert.equal(byId.chevy_silverado_ev_wt_4wt.trimLabel, 'WT 4WT')
+  assert.equal(byId.gmc_sierra_ev_elevation_standard.trimLabel, 'Elevation Standard Range')
   assert.equal(byId.tesla_cybertruck_dual.photoPending, false)
   assert.equal(byId.rivian_r1t_premium.photoPending, false)
 })

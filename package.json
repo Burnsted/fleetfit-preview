@@ -9,11 +9,7 @@
     "lint": "oxlint",
     "preview": "vite preview",
     "check-listings": "node scripts/check-listings.mjs",
-<<<<<<< HEAD
-    "test": "node scripts/test-package-total.mjs && npx vite-node scripts/test-suggestion-eligibility.mjs && npx vite-node scripts/test-listing-page-kind.mjs && npx vite-node scripts/test-trade-packages.mjs",
-=======
-    "test": "node scripts/test-package-total.mjs && npx vite-node scripts/test-suggestion-eligibility.mjs && npx vite-node scripts/test-trade-packages.mjs && npx vite-node scripts/test-new-catalog.mjs",
->>>>>>> 90bf60e (CLEARED draft: home trade cards, stockMode Used|New, New OEM catalog)
+    "test": "node scripts/test-package-total.mjs && npx vite-node scripts/test-suggestion-eligibility.mjs && npx vite-node scripts/test-listing-page-kind.mjs && npx vite-node scripts/test-trade-packages.mjs && npx vite-node scripts/test-new-catalog.mjs",
     "test:package-total": "node scripts/test-package-total.mjs",
     "test:eligibility": "npx vite-node scripts/test-suggestion-eligibility.mjs",
     "test:listing-page-kind": "npx vite-node scripts/test-listing-page-kind.mjs",

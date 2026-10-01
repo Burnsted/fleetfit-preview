@@ -13,8 +13,6 @@ import {
 
 import cybertruckPhoto from '../assets/new-catalog/cybertruck.jpg'
 import r1tPhoto from '../assets/new-catalog/r1t.jpg'
-import silveradoPhoto from '../assets/new-catalog/silverado-ev.jpg'
-import sierraPhoto from '../assets/new-catalog/sierra-ev.jpg'
 
 export {
   NEW_CATALOG_BUILD,
@@ -29,15 +27,18 @@ export {
 
 /**
  * Draft-only Commons-based plates. License check TBD before public use.
- * E-Transit Commons plate carries courier livery (DPD) — not shown; Photo not confirmed.
+ * Photo omitted when visible trim/badging contradicts the card, or no accurate unbranded photo.
  */
 const PHOTO_BY_ID = {
+  /** No Dual Motor / Cyberbeast badge conflict on plate */
   tesla_cybertruck_dual: cybertruckPhoto,
+  /** Premium card: no contradictory trim badge; door has physical RIVIAN lettering (real branded unit) */
   rivian_r1t_premium: r1tPhoto,
   ford_etransit_cargo_van_low_roof_148_wb: null,
-  chevy_silverado_ev_wt_4wt: silveradoPhoto,
-  gmc_sierra_ev_elevation_standard: sierraPhoto,
-  /** No accurate unbranded photo yet */
+  /** Commons plate showed RST badge + RST wheels — not WT */
+  chevy_silverado_ev_wt_4wt: null,
+  /** Commons plate showed Denali badge — not Elevation */
+  gmc_sierra_ev_elevation_standard: null,
   rivian_rcv_500: null,
   mb_esprinter_81: null,
 }
