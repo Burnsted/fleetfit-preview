@@ -88,8 +88,13 @@ test('3. Expected CLEARED headline figures from CSV', () => {
   assert.equal(byId.gmc_sierra_ev_elevation_standard.rangeMi, 283)
   assert.equal(byId.gmc_sierra_ev_elevation_standard.payloadLb, 2250)
   assert.equal(byId.mb_esprinter_81.msrpUsd, 52700)
+  assert.equal(byId.mb_esprinter_81.msrpConfirmed, true)
+  assert.match(byId.mb_esprinter_81.priceLabel, /52,700/)
   assert.equal(byId.mb_esprinter_81.rangeMi, 150)
   assert.equal(byId.mb_esprinter_81.payloadLb, null)
+  assert.match(byId.mb_esprinter_81.specsLabel, /max est/)
+  assert.match(byId.rivian_rcv_500.specsLabel, /est/)
+  assert.doesNotMatch(byId.rivian_rcv_500.specsLabel, /\bEPA\b/)
 })
 
 test('4. No New card carries seller link, mileage, or used price', () => {
@@ -121,6 +126,7 @@ test('6. Photo-not-confirmed vans have no photo; trucks have draft plates', () =
   const byId = Object.fromEntries(getNewCatalog().map((c) => [c.id, c]))
   assert.equal(byId.rivian_rcv_500.photoPending, true)
   assert.equal(byId.mb_esprinter_81.photoPending, true)
+  assert.equal(byId.ford_etransit_cargo_van_low_roof_148_wb.photoPending, true)
   assert.equal(byId.tesla_cybertruck_dual.photoPending, false)
   assert.equal(byId.rivian_r1t_premium.photoPending, false)
 })

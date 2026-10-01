@@ -13,7 +13,6 @@ import {
 
 import cybertruckPhoto from '../assets/new-catalog/cybertruck.jpg'
 import r1tPhoto from '../assets/new-catalog/r1t.jpg'
-import etransitPhoto from '../assets/new-catalog/etransit.jpg'
 import silveradoPhoto from '../assets/new-catalog/silverado-ev.jpg'
 import sierraPhoto from '../assets/new-catalog/sierra-ev.jpg'
 
@@ -28,11 +27,14 @@ export {
   NEW_RESULTS_HELPER,
 } from './newEv/catalogIds'
 
-/** Draft-only Commons-based plates. License check TBD before public use. */
+/**
+ * Draft-only Commons-based plates. License check TBD before public use.
+ * E-Transit Commons plate carries courier livery (DPD) — not shown; Photo not confirmed.
+ */
 const PHOTO_BY_ID = {
   tesla_cybertruck_dual: cybertruckPhoto,
   rivian_r1t_premium: r1tPhoto,
-  ford_etransit_cargo_van_low_roof_148_wb: etransitPhoto,
+  ford_etransit_cargo_van_low_roof_148_wb: null,
   chevy_silverado_ev_wt_4wt: silveradoPhoto,
   gmc_sierra_ev_elevation_standard: sierraPhoto,
   /** No accurate unbranded photo yet */
@@ -76,15 +78,17 @@ function isUnknown(value) {
   return !s || /^unknown\b/i.test(s) || /^n\/a$/i.test(s)
 }
 
-/** FACT accepted when label has FACT and is not inference-only. FACT-secondary OK for display figures that CSV lists as FACT-secondary. */
+/**
+ * Figure confirmed when CSV label includes FACT and is not UNKNOWN / pure INFERENCE.
+ * Mixed cells like "FACT (price…); … INFERENCE (config mapping)" still count
+ * as confirmed for the FACT portion (e.g. eSprinter MSRP).
+ */
 function isConfirmedFigure(label) {
   const l = String(label || '').toUpperCase()
-  if (l.includes('UNKNOWN')) return false
-  if (l.includes('INFERENCE') && !l.includes('FACT')) return false
-  // Pure INFERENCE / INF
+  if (l.includes('UNKNOWN') && !l.includes('FACT')) return false
+  if (l.startsWith('UNKNOWN')) return false
   if (l.startsWith('INFERENCE') || l === 'INF' || l.startsWith('INF ')) return false
-  // Mixed FACT + INFERENCE on the same field → not confirmed for display
-  if (l.includes('INFERENCE') && l.includes('FACT')) return false
+  if (l.includes('INFERENCE') && !l.includes('FACT')) return false
   return l.includes('FACT')
 }
 
@@ -105,9 +109,12 @@ function primaryPayloadLb(raw) {
 }
 
 function rangeBasisSuffix(basis) {
-  const b = String(basis || '').toLowerCase()
-  if (b.includes('epa')) return 'EPA'
-  if (b.includes('maximum range') || b.includes('maximum')) return 'max est'
+  const raw = String(basis || '')
+  const b = raw.toLowerCase()
+  // "not EPA" / "not on fueleconomy" must not count as EPA
+  const notEpa = /\bnot\s+epa\b/i.test(raw) || /\bnot on fueleconomy/i.test(raw)
+  if (!notEpa && /\bepa\b/i.test(raw)) return 'EPA'
+  if (b.includes('maximum range') || /\bmaximum\b/.test(b)) return 'max est'
   if (b.includes('oem') || b.includes('rivian') || b.includes('est')) return 'est'
   return 'est'
 }

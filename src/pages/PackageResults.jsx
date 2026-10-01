@@ -168,7 +168,7 @@ export default function PackageResults() {
             value={stockMode}
             onChange={setStockMode}
             usedHelper={USED_RESULTS_HELPER}
-            newHelper={NEW_HELPER_LINE}
+            newHelper={null}
           />
         </div>
         {!isNew ? (

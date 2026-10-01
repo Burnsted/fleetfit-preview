@@ -282,7 +282,7 @@ export default function TradePackageResults({ pkg }) {
             value={stockMode}
             onChange={setStockMode}
             usedHelper={USED_RESULTS_HELPER}
-            newHelper={NEW_HELPER_LINE}
+            newHelper={null}
           />
         </div>
         {!isNew ? (
@@ -302,11 +302,10 @@ export default function TradePackageResults({ pkg }) {
         ) : null}
       </header>
 
-      {isNew ? (
-        <NewCatalog helper={NEW_HELPER_LINE} />
-      ) : null}
+      {isNew ? <NewCatalog helper={NEW_HELPER_LINE} /> : null}
 
-      <div className="trade-package-layout" hidden={isNew}>
+      {!isNew ? (
+      <div className="trade-package-layout">
         <div className="trade-package-main">
           <section className="trade-job-strip" aria-label="Job numbers">
             <p className="trade-job-help">{TRADE_PACKAGE_COPY.editJobNumbers}</p>
@@ -546,11 +545,13 @@ export default function TradePackageResults({ pkg }) {
           </div>
         </aside>
       </div>
+      ) : null}
 
       {/* Package total always from Used units — never mix New MSRP into Used total */}
       <PackageTotal units={activeUnits} />
 
-      <div className="package-cta-bar" hidden={isNew}>
+      {!isNew ? (
+      <div className="package-cta-bar">
         <p className="package-fleet-count">
           {selectedInPackage} of {active.length} in fleet
         </p>
@@ -564,6 +565,7 @@ export default function TradePackageResults({ pkg }) {
           Adjust mix
         </Link>
       </div>
+      ) : null}
 
       <p className="locked-foot-note">
         {TRADE_PACKAGE_COPY.scoreFoot}
