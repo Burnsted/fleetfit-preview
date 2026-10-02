@@ -69,7 +69,7 @@ function applyFilters(listings, filters, q) {
     if (payloadMin != null && l.payload < payloadMin) return false
 
     if (filters.cabBed) {
-      const key = `${l.cab} / ${l.bed}`
+      const key = `${l.cab} and ${l.bed}`
       if (key !== filters.cabBed) return false
     }
 

@@ -1,3 +1,5 @@
+import { readStoredTradeInRows, sumTradeInEntries } from './tradeInEntry.js'
+
 const STORAGE_KEY = 'fleetfit-budget'
 
 function finitePositive(value) {
@@ -15,8 +17,19 @@ export function parseSpend(raw) {
   return finitePositive(s)
 }
 
-/** KBB trade only when a numeric FACT is already in data. Never invent. */
+/**
+ * Trade-in credit for the spend envelope.
+ * Prefers the sum of typed-in per-vehicle values when every row has a value.
+ * Falls back to intake.kbbTradeIn / pkg.currentKbbTradeIn when present.
+ * Never fetches or invents a KBB figure.
+ */
 export function factKbbTradeIn(intake, pkg) {
+  const fromEntries = sumTradeInEntries(intake?.tradeInEntries)
+  if (fromEntries != null) return fromEntries
+  if (pkg?.id) {
+    const fromStored = sumTradeInEntries(readStoredTradeInRows(pkg.id))
+    if (fromStored != null) return fromStored
+  }
   return finitePositive(intake?.kbbTradeIn ?? pkg?.currentKbbTradeIn)
 }
 

@@ -134,7 +134,7 @@ export type ScoreV2Result = {
   missingCurrent: boolean
   /** One-time banner copy when missingCurrent. */
   banner: string | null
-  /** Dial: NN.N / PP */
+  /** Dial: NN.N out of PP */
   dialTotal: string | null
   dialDiff: string | null
   /** Dial muted line: Current NN.N (null when no current / no compare). */
@@ -570,7 +570,7 @@ function scoreLongevity(opts: {
     )
     const floor = lookupCapacityFloor(opts.make, opts.model, opts.year)
     if (opts.warrantyType === 'unconfirmed') {
-      let reason = `${STATUS.WARRANTY_UNCONFIRMED}. Scores as consumer (lower case). Nominal consumer coverage left: ${yearsLeft.toFixed(2)} yr / ${(milesLeft / 1000).toFixed(1)}k mi. On Rivian Commercial terms this unit would score ${commercialPts.toFixed(1)} of ${WARRANTY_MAX}.`
+      let reason = `${STATUS.WARRANTY_UNCONFIRMED}. Scores as consumer (lower case). Nominal consumer coverage left: ${yearsLeft.toFixed(2)} yr and ${(milesLeft / 1000).toFixed(1)}k mi. On Rivian Commercial terms this unit would score ${commercialPts.toFixed(1)} of ${WARRANTY_MAX}.`
       if (floor?.pct != null) reason += ` · Battery capacity floor ${floor.pct}% (${floor.label})`
       return cell(0, {
         unconfirmed: true,
@@ -579,7 +579,7 @@ function scoreLongevity(opts: {
         counted: true,
       })
     }
-    let reason = `At risk, not counted: Rivian consumer warranty does not apply if "used primarily for business or commercial purposes" (NVLW Guide Rev ${RIVIAN_CONSUMER_WARRANTY.revision}, eff. ${RIVIAN_CONSUMER_WARRANTY.effective}, p${RIVIAN_CONSUMER_WARRANTY.pageExclusion}). Nominal consumer coverage left: ${yearsLeft.toFixed(2)} yr / ${(milesLeft / 1000).toFixed(1)}k mi.`
+    let reason = `At risk, not counted: Rivian consumer warranty does not apply if "used primarily for business or commercial purposes" (NVLW Guide Rev ${RIVIAN_CONSUMER_WARRANTY.revision}, eff. ${RIVIAN_CONSUMER_WARRANTY.effective}, p${RIVIAN_CONSUMER_WARRANTY.pageExclusion}). Nominal consumer coverage left: ${yearsLeft.toFixed(2)} yr and ${(milesLeft / 1000).toFixed(1)}k mi.`
     if (floor?.pct != null) reason += ` · Battery capacity floor ${floor.pct}% (${floor.label})`
     return cell(0, {
       atRisk: true,
@@ -652,7 +652,7 @@ function scoreLongevity(opts: {
 
   let reason: string
   if (opts.warrantyType === 'commercial' && /rivian/i.test(opts.make)) {
-    reason = `Commercial ${wYr} yr/${(wMi / 1000).toFixed(0)}k: 20 × min(${yearsLeft.toFixed(2)}/${wYr}, ${(milesLeft / 1000).toFixed(1)}k/${(wMi / 1000).toFixed(0)}k) = ${(WARRANTY_MAX * frac).toFixed(1)}`
+    reason = `Commercial ${wYr} yr · ${(wMi / 1000).toFixed(0)}k: 20 × min(${yearsLeft.toFixed(2)}/${wYr}, ${(milesLeft / 1000).toFixed(1)}k/${(wMi / 1000).toFixed(0)}k) = ${(WARRANTY_MAX * frac).toFixed(1)}`
     if (opts.upfit === 'other' || opts.upfit === 'unknown') {
       reason +=
         opts.upfit === 'unknown'
@@ -662,9 +662,9 @@ function scoreLongevity(opts: {
       reason += '; no upfit'
     }
   } else if (!opts.isEv && yearsLeft <= 0) {
-    reason = `powertrain ${wYr} yr/${(wMi / 1000).toFixed(0)}k expired; ≤150k mi, no modifier`
+    reason = `powertrain ${wYr} yr · ${(wMi / 1000).toFixed(0)}k expired; ≤150k mi, no modifier`
   } else {
-    reason = `${opts.isEv ? 'battery/drivetrain' : 'powertrain'} ${wYr} yr/${(wMi / 1000).toFixed(0)}k · start Jan 1 ${opts.year} · ${yearsLeft.toFixed(2)} yr left, ${(milesLeft / 1000).toFixed(1)}k mi left · 20 × min = ${(WARRANTY_MAX * frac).toFixed(1)}`
+    reason = `${opts.isEv ? 'battery and drivetrain' : 'powertrain'} ${wYr} yr · ${(wMi / 1000).toFixed(0)}k · start Jan 1 ${opts.year} · ${yearsLeft.toFixed(2)} yr left, ${(milesLeft / 1000).toFixed(1)}k mi left · 20 × min = ${(WARRANTY_MAX * frac).toFixed(1)}`
   }
   if (floor) {
     if (floor.label === 'NONE') {
@@ -703,7 +703,7 @@ function scoreEnergyEv(
       ? energyBasis
       : 'EPA'
   return cell(pts, {
-    reason: `${kwhPer100} kWh/100 mi (${basis}) × ${FL_COMMERCIAL_ELECTRICITY.value}¢/kWh FL commercial (EIA, Jul 2026) = ${cpm.toFixed(1)}¢/mi`,
+    reason: `${kwhPer100} kWh per 100 mi (${basis}) × ${FL_COMMERCIAL_ELECTRICITY.value}¢ per kWh FL commercial (EIA, Jul 2026) = ${cpm.toFixed(1)}¢ per mi`,
     url: url || FL_COMMERCIAL_ELECTRICITY.url,
   })
 }
@@ -749,8 +749,8 @@ function scoreEnergyGas(
     ? ' · rated on midgrade; priced at regular'
     : ''
   const reason = reasonMpg
-    ? `${reasonMpg}: ${useMpg} mpg · $${price.value}/gal FL ${diesel ? 'diesel' : 'regular'} (AAA, 9/27/26) = ${cpm.toFixed(1)}¢/mi`
-    : `$${price.value}/gal FL ${diesel ? 'diesel' : 'regular'} (AAA, 9/27/26) ÷ ${useMpg} mpg (EPA) = ${cpm.toFixed(1)}¢/mi${mid}`
+    ? `${reasonMpg}: ${useMpg} mpg · $${price.value} per gal FL ${diesel ? 'diesel' : 'regular'} (AAA, 9/27/26) = ${cpm.toFixed(1)}¢ per mi`
+    : `$${price.value} per gal FL ${diesel ? 'diesel' : 'regular'} (AAA, 9/27/26) ÷ ${useMpg} mpg (EPA) = ${cpm.toFixed(1)}¢ per mi${mid}`
   return cell(pts, { reason, url: price.url || mpgUrl })
 }
 
@@ -1479,7 +1479,7 @@ export function scoreReplacementV2(
         : 0
 
   // Polish 2 / §1.6: incomplete → no total, no difference on card or readout
-  const dialTotal = incomplete || pp <= 0 ? null : `${candidateTotal.toFixed(1)} / ${pp}`
+  const dialTotal = incomplete || pp <= 0 ? null : `${candidateTotal.toFixed(1)} out of ${pp}`
   const dialDiff =
     incomplete || missingCurrent || difference == null
       ? null
@@ -1577,7 +1577,7 @@ export function scoreV2ValidationExample(
       miles: 120000,
       // cab not entered
     },
-    rolePreset: 'Supervisor / team lead',
+    rolePreset: 'Supervisor and team lead',
   }
   const unit = {
     id: 'unit-r1t-val',

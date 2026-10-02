@@ -102,7 +102,7 @@ export default function FilterSidebar({ filters, setFilters, open, onClose }) {
             value={filters.payloadMin} onChange={(e) => set('payloadMin', e.target.value)} />
         </div>
         <div className="filter-group">
-          <label htmlFor="cabBed">Cab / bed</label>
+          <label htmlFor="cabBed">Cab and bed</label>
           <select id="cabBed" value={filters.cabBed} onChange={(e) => set('cabBed', e.target.value)}>
             <option value="">Any</option>
             {CAB_BED_OPTIONS.map((o) => <option key={o} value={o}>{o}</option>)}

@@ -1,5 +1,6 @@
 import { Link, useLocation, useParams } from 'react-router-dom'
 import AddToFleetButton from '../components/AddToFleetButton'
+import CrumbDivider from '../components/CrumbDivider'
 import ReplacementScore from '../components/ReplacementScore'
 import UnitPhoto from '../components/UnitPhoto'
 import WorkCompare from '../components/WorkCompare'
@@ -66,11 +67,11 @@ export default function PackageUnit() {
     <div className="locked-page locked-unit-page is-dense" data-density-build={DENSITY_BUILD}>
       <nav className="locked-crumbs" aria-label="Breadcrumb">
         <Link to="/">Home</Link>
-        <span aria-hidden="true"> / </span>
+        <CrumbDivider />
         <Link to="/intake">Fleet intake</Link>
-        <span aria-hidden="true"> / </span>
+        <CrumbDivider />
         <Link to={`/package/${pkg.id}`} state={location.state}>Package</Link>
-        <span aria-hidden="true"> / </span>
+        <CrumbDivider />
         <span>{unit.year} {unit.model}</span>
       </nav>
 

@@ -38,7 +38,7 @@ export function formatLb(value) {
 export function formatCabBed(cab, bed) {
   const c = cab != null && String(cab).trim() ? String(cab).trim() : ''
   const b = bed != null && String(bed).trim() ? String(bed).trim() : ''
-  if (c && b) return `${c} / ${b}`
+  if (c && b) return `${c} and ${b}`
   if (c) return c
   if (b) return b
   return NOT_PUBLISHED
@@ -323,7 +323,7 @@ export function packageBatteryKwhFact(units = []) {
 /** Package + unit cards: payload · bed/cab · tow */
 export const WORK_SPEC_ROWS = [
   { key: 'payload', label: 'Payload' },
-  { key: 'cabBed', label: 'Bed / cab' },
+  { key: 'cabBed', label: 'Bed and cab' },
   { key: 'tow', label: 'Tow' },
 ]
 

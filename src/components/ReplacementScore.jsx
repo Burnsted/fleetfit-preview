@@ -26,7 +26,7 @@ export default function ReplacementScore({
         <span className="replacement-score-total">
           {score.incomplete
             ? score.incompleteLabel || 'Score incomplete'
-            : score.dialTotal || `${Number(score.candidateTotal).toFixed(1)} / ${score.pointsPossible}`}
+            : score.dialTotal || `${Number(score.candidateTotal).toFixed(1)} out of ${score.pointsPossible}`}
         </span>
         {score.sidegrade ? (
           <span className="replacement-score-side">Similar miles</span>
@@ -65,7 +65,7 @@ export default function ReplacementScore({
           ) : (
             <p className="replacement-score-total-lg">
               {Number(score.candidateTotal).toFixed(1)}
-              <span className="replacement-score-of"> / {score.pointsPossible}</span>
+              <span className="replacement-score-of"> out of {score.pointsPossible}</span>
             </p>
           )}
           {!score.incomplete && score.dialDiff ? (
@@ -134,12 +134,12 @@ export default function ReplacementScore({
                 ? STATUS.NOT_ENTERED
                 : score.incomplete
                   ? score.incompleteLabel
-                  : `${Number(score.currentTotal).toFixed(1)} / ${score.pointsPossible}`}
+                  : `${Number(score.currentTotal).toFixed(1)} out of ${score.pointsPossible}`}
             </td>
             <td>
               {score.incomplete
                 ? score.incompleteLabel
-                : `${Number(score.candidateTotal).toFixed(1)} / ${score.pointsPossible}`}
+                : `${Number(score.candidateTotal).toFixed(1)} out of ${score.pointsPossible}`}
             </td>
           </tr>
           <tr className="score-v2-difference">

@@ -1,7 +1,16 @@
+import { useState } from 'react'
 import { Link, Navigate, useLocation, useParams } from 'react-router-dom'
+import CrumbDivider from '../components/CrumbDivider'
+import NewCatalog from '../components/NewCatalog'
 import PackageTotal from '../components/PackageTotal'
 import StackCard from '../components/StackCard'
+import StockModeToggle from '../components/StockModeToggle'
 import WorkCompare from '../components/WorkCompare'
+import {
+  NEW_CATALOG_BUILD,
+  NEW_HELPER_LINE,
+  USED_RESULTS_HELPER,
+} from '../data/newEvCatalog'
 import { getPackage, resolvePackageId } from '../data/package'
 import TradePackageResults from './TradePackageResults'
 import { factKbbTradeIn, readBudget, spendEnvelope, unitsWithinEnvelope } from '../lib/budget'
@@ -59,7 +68,13 @@ export default function PackageResults() {
   const { packageId } = useParams()
   const location = useLocation()
   const intake = location.state?.intake
+  const fleet = useFleetPick()
+  const [stockMode, setStockMode] = useState(
+    intake?.stockMode === 'New' ? 'New' : 'Used',
+  )
   const resolvedId = resolvePackageId(packageId)
+  const pkg = getPackage(resolvedId || packageId)
+
   // Decision 11: alias demo ids → trade packages (UI redirect).
   if (resolvedId && resolvedId !== packageId) {
     return (
@@ -70,8 +85,6 @@ export default function PackageResults() {
       />
     )
   }
-  const pkg = getPackage(packageId)
-  const fleet = useFleetPick()
 
   if (!pkg) {
     return (
@@ -83,8 +96,15 @@ export default function PackageResults() {
   }
 
   if (pkg.isTradePackage) {
-    return <TradePackageResults pkg={pkg} />
+    return (
+      <TradePackageResults
+        key={`${pkg.id}:${intake?.stockMode || 'Used'}`}
+        pkg={pkg}
+      />
+    )
   }
+
+  const isNew = stockMode === 'New'
 
   const current = currentWorkVehicle(intake, pkg)
   const envelope = spendEnvelope(readBudget().maxSpend, factKbbTradeIn(intake, pkg))
@@ -130,40 +150,55 @@ export default function PackageResults() {
       data-outbound-listing={OUTBOUND_LISTING_BUILD}
       data-package-total={PACKAGE_TOTAL_BUILD}
       data-score-v2={SCORE_V2_BUILD}
+      data-stock-mode={stockMode}
+      data-new-catalog={NEW_CATALOG_BUILD}
     >
       <nav className="locked-crumbs" aria-label="Breadcrumb">
         <Link to="/">Home</Link>
-        <span aria-hidden="true"> / </span>
+        <CrumbDivider />
         <Link to="/intake">Fleet intake</Link>
-        <span aria-hidden="true"> / </span>
+        <CrumbDivider />
         <span>Package</span>
       </nav>
 
       <header className="match-header is-dense" data-density-build="package-density-20260926-0923">
         <p className="match-kicker">DEMO</p>
-        <h1 className="match-title">{pkg.headline}</h1>
-        <div className="spec-chips match-header-chips" aria-label="Match facts">
-          <span className="spec-chip is-known">Trade {pkg.trade}</span>
-          <span className="spec-chip is-known">
-            {shownUnits.length === 1 ? '1 unit' : `${shownUnits.length} units`}
-          </span>
-          {dayNeed ? <span className="spec-chip is-known">Day {dayNeed}</span> : null}
-          <span className={`spec-chip ${pkg.tradeIn?.status ? 'is-known' : 'is-dash'}`}>
-            Trade-in {pkg.tradeIn?.status || NOT_PUBLISHED}
-          </span>
-          <span className={`spec-chip ${batteryKwhFact.known ? 'is-known' : 'is-dash'}`}>
-            Battery {batteryKwhFact.text}
-          </span>
-          <span className="spec-chip is-dash">Recalls Not checked</span>
-          <span className="spec-chip is-known">{fleetSizeChip(intake, shownUnits.length)}</span>
-          {envelope != null ? (
-            <span className="spec-chip is-known">Envelope {formatMoney(envelope)}</span>
-          ) : null}
+        <h1 className="match-title">{isNew ? 'Your fleet' : pkg.headline}</h1>
+        <div className="trade-stock-bar">
+          <StockModeToggle
+            value={stockMode}
+            onChange={setStockMode}
+            usedHelper={USED_RESULTS_HELPER}
+            newHelper={null}
+          />
         </div>
+        {!isNew ? (
+          <div className="spec-chips match-header-chips" aria-label="Match facts">
+            <span className="spec-chip is-known">Trade {pkg.trade}</span>
+            <span className="spec-chip is-known">
+              {shownUnits.length === 1 ? '1 unit' : `${shownUnits.length} units`}
+            </span>
+            {dayNeed ? <span className="spec-chip is-known">Day {dayNeed}</span> : null}
+            <span className={`spec-chip ${pkg.tradeIn?.status ? 'is-known' : 'is-dash'}`}>
+              Trade-in {pkg.tradeIn?.status || NOT_PUBLISHED}
+            </span>
+            <span className={`spec-chip ${batteryKwhFact.known ? 'is-known' : 'is-dash'}`}>
+              Battery {batteryKwhFact.text}
+            </span>
+            <span className="spec-chip is-dash">Recalls Not checked</span>
+            <span className="spec-chip is-known">{fleetSizeChip(intake, shownUnits.length)}</span>
+            {envelope != null ? (
+              <span className="spec-chip is-known">Envelope {formatMoney(envelope)}</span>
+            ) : null}
+          </div>
+        ) : null}
       </header>
+
+      {isNew ? <NewCatalog helper={NEW_HELPER_LINE} /> : null}
 
       <section
         className="recommendation-mix"
+        hidden={isNew}
         aria-labelledby="reco-mix-title"
         data-body-mix-build={BODY_MIX_BUILD}
         data-has-truck={reco.hasTruck ? 'true' : 'false'}
@@ -208,62 +243,69 @@ export default function PackageResults() {
         ) : null}
       </section>
 
-      <WorkCompare
-        current={current}
-        candidates={compareCandidates}
-        packageId={pkg.id}
-        title="Current vs package"
-      />
+      <div hidden={isNew}>
+        <WorkCompare
+          current={current}
+          candidates={compareCandidates}
+          packageId={pkg.id}
+          title="Current vs package"
+        />
 
-      <section aria-labelledby="units-title">
-        <h2 id="units-title" className="package-units-title">Units</h2>
-        {ranked.length === 0 ? (
-          <p className="locked-muted">
-            {visibleUnits.length === 0 && envelope != null ? (
-              <>
-                No units in this demo fit that spend.{' '}
-                <Link to="/budget">Adjust spend</Link>
-              </>
-            ) : (
-              <>
-                {NO_SUGGESTIONS}{' '}
-                <Link to="/intake">Intake</Link>
-                {' · '}
-                <Link to="/budget">Budget</Link>
-              </>
-            )}
-          </p>
-        ) : null}
-        <ul className="package-unit-stack">
-          {ranked.map((row) => {
-            const spec = displayWorkSpec(row.unit)
-            return (
-              <li key={row.unit.id}>
-                <StackCard
-                  heading={`${row.unit.year} ${row.unit.model}`}
-                  role={row.unit.role}
-                  unit={row.unit}
-                  packageId={pkg.id}
-                  pickId={fleetUnitKey(pkg.id, row.unit.id)}
-                  spec={spec}
-                  mileage={row.unit.mileage}
-                  score={row.score}
-                  rank={row.rank}
-                  bodyClass={row.bodyClass}
-                />
-              </li>
-            )
-          })}
-        </ul>
-      </section>
+        <section aria-labelledby="units-title">
+          <h2 id="units-title" className="package-units-title">Units</h2>
+          {ranked.length === 0 ? (
+            <p className="locked-muted">
+              {visibleUnits.length === 0 && envelope != null ? (
+                <>
+                  No units in this demo fit that spend.{' '}
+                  <Link to="/budget">Adjust spend</Link>
+                </>
+              ) : (
+                <>
+                  {NO_SUGGESTIONS}{' '}
+                  <Link to="/intake">Intake</Link>
+                  {' · '}
+                  <Link to="/budget">Budget</Link>
+                </>
+              )}
+            </p>
+          ) : null}
+          <ul className="package-unit-stack">
+            {ranked.map((row) => {
+              const spec = displayWorkSpec(row.unit)
+              return (
+                <li key={row.unit.id}>
+                  <StackCard
+                    heading={`${row.unit.year} ${row.unit.model}`}
+                    role={row.unit.role}
+                    unit={row.unit}
+                    packageId={pkg.id}
+                    pickId={fleetUnitKey(pkg.id, row.unit.id)}
+                    spec={spec}
+                    mileage={row.unit.mileage}
+                    score={row.score}
+                    rank={row.rank}
+                    bodyClass={row.bodyClass}
+                  />
+                </li>
+              )
+            })}
+          </ul>
+        </section>
+      </div>
 
+      {/* Totals always from Used units — empty sets must not crash */}
       <PackageTotal units={ranked.map((row) => row.unit)} />
 
-      <div className="package-cta-bar">
+      <div className="package-cta-bar" hidden={isNew}>
         <p className="package-fleet-count">
           {selectedInPackage} of {shownUnits.length} in fleet
         </p>
-        <Link to="/intake?adjust=1" className="btn btn-sm package-cta-adjust">
+        <Link
+          to="/intake?adjust=1"
+          state={{ intake: { ...intake, stockMode } }}
+          className="btn btn-sm package-cta-adjust"
+        >
           Adjust mix
         </Link>
       </div>
