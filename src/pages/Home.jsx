@@ -18,19 +18,19 @@ const HOME_TRADE_CARDS = [
     trade: 'Landscaping',
     packageId: TRADE_PACKAGE_IDS.landscaping,
     photo: landscapingPhoto,
-    alt: 'Landscaping trade vehicle: white electric pickup with a green stripe wrap, towing a trailer with a riding mower',
+    alt: 'Landscaping trade vehicle: white satin-finish electric pickup with a green stripe wrap and dark wheels, towing a trailer with a riding mower',
   },
   {
     trade: 'HVAC',
     packageId: TRADE_PACKAGE_IDS.hvac,
     photo: hvacPhoto,
-    alt: 'HVAC trade vehicle: angular silver electric pickup with a red-to-blue gradient wrap',
+    alt: 'HVAC trade vehicle: angular electric pickup with a chrome-style glossy red-to-blue gradient wrap and dark wheels',
   },
   {
     trade: 'Electric',
     packageId: TRADE_PACKAGE_IDS.electrical,
     photo: electricPhoto,
-    alt: 'Electric trade vehicle: dark carbon-fiber-look pickup with a yellow lightning logo stripe',
+    alt: 'Electric trade vehicle: dark satin carbon-fiber-look pickup with a yellow lightning stripe wrap and dark wheels',
   },
   {
     trade: 'Plumbing',
