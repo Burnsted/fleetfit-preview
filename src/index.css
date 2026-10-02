@@ -4739,3 +4739,121 @@ img { max-width: 100%; display: block; }
   text-decoration: underline;
   color: #d48c12;
 }
+
+/* Typed trade-in entry — 4px rectangles, one column on phone */
+.trade-in-entry {
+  margin: 22px 0 0;
+  padding: 16px 18px 14px;
+  background: #ffffff;
+  border: 1px solid var(--border, #d8dee6);
+  border-radius: 4px;
+  color: var(--mark-ink, #0b1220);
+  max-width: 100%;
+  box-sizing: border-box;
+}
+.trade-in-entry-head {
+  margin-bottom: 14px;
+}
+.trade-in-entry-title {
+  margin: 0 0 6px;
+  font-size: 0.72rem;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--mark-teal, #17a396);
+}
+.trade-in-entry-lead,
+.trade-in-entry-empty {
+  margin: 0;
+  font-size: 0.9rem;
+  color: var(--text-dim, #666);
+}
+.trade-in-entry-list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: grid;
+  gap: 14px;
+}
+.trade-in-entry-row {
+  margin: 0;
+  padding: 12px;
+  border: 1px solid var(--line, #d8dee6);
+  border-radius: 4px;
+  background: #fff;
+  box-sizing: border-box;
+  max-width: 100%;
+}
+.trade-in-entry-row-label {
+  margin: 0 0 10px;
+  font-size: 0.88rem;
+  font-weight: 700;
+  color: var(--mark-ink, #0b1220);
+}
+.trade-in-entry-fields {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: 10px;
+}
+.trade-in-entry-fields label {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  font-size: 0.78rem;
+  font-weight: 600;
+  color: var(--text-dim, #666);
+  min-width: 0;
+}
+.trade-in-entry-fields input,
+.trade-in-entry-fields select {
+  border: 1px solid var(--line, #d8dee6);
+  border-radius: 4px;
+  padding: 8px 10px;
+  font-size: 0.95rem;
+  color: #0b1220;
+  background: #fff;
+  width: 100%;
+  max-width: 100%;
+  box-sizing: border-box;
+  min-width: 0;
+}
+.trade-in-entry-value-field .trade-in-entry-estimate {
+  font-size: 0.75rem;
+  font-weight: 600;
+  color: var(--text-dim, #666);
+}
+.trade-in-entry-kbb {
+  margin: 12px 0 0;
+}
+.trade-in-entry-kbb-link {
+  color: #17a396;
+  font-weight: 700;
+  font-size: 0.92rem;
+  text-decoration: underline;
+}
+.trade-in-entry-kbb-help,
+.trade-in-entry-source-note,
+.trade-in-entry-package-note {
+  margin: 4px 0 0;
+  font-size: 0.82rem;
+  color: var(--text-dim, #666);
+}
+.trade-in-entry-error {
+  margin: 8px 0 0;
+  font-size: 0.85rem;
+  font-weight: 600;
+  color: #0b1220;
+}
+.trade-in-entry-package-note {
+  margin-top: 12px;
+}
+@media (min-width: 640px) {
+  .trade-in-entry-fields {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
+@media (min-width: 960px) {
+  .trade-in-entry-fields {
+    grid-template-columns: repeat(4, minmax(0, 1fr));
+  }
+}

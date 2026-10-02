@@ -2,10 +2,14 @@ import { computePackageTotal } from '../lib/packageTotal'
 
 /**
  * Package total block — Total, Trade-in credit, Net, Buyer fee TBD.
- * Pass the active package slot units (M). Math recomputes when the set changes.
+ * Pass the active package slot units (M). Optional tradeInRows for typed credit.
+ * Math recomputes when the set changes. No KBB figures are fetched or shown.
  */
-export default function PackageTotal({ units }) {
-  const summary = computePackageTotal(units)
+export default function PackageTotal({ units, tradeInRows }) {
+  const summary = computePackageTotal(
+    units,
+    tradeInRows != null ? { tradeInRows } : undefined,
+  )
 
   return (
     <section
@@ -43,7 +47,8 @@ export default function PackageTotal({ units }) {
             >
               {summary.tradeInDisplay}
             </span>
-            {summary.tradeInCredit != null ? (
+            {summary.slotCount > 0 &&
+            (summary.tradeInCredit != null || !summary.creditComplete) ? (
               <span className="package-total-count">{summary.creditCountLabel}</span>
             ) : null}
           </div>

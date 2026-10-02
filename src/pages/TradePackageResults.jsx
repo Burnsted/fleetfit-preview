@@ -4,6 +4,7 @@ import CrumbDivider from '../components/CrumbDivider'
 import NewCatalog from '../components/NewCatalog'
 import PackageTotal from '../components/PackageTotal'
 import StockModeToggle from '../components/StockModeToggle'
+import TradeInEntryList from '../components/TradeInEntryList'
 import TradePackageToast from '../components/TradePackageToast'
 import TradeUnitCard from '../components/TradeUnitCard'
 import {
@@ -22,6 +23,12 @@ import { formatMoney } from '../lib/fit'
 import { fleetUnitKey, useFleetPick } from '../lib/fleetPick'
 import { OUTBOUND_LISTING_BUILD } from '../lib/outboundListing'
 import { currentMilesForScore } from '../lib/replacementScore'
+import {
+  createTradeInRows,
+  readStoredTradeInRows,
+  resizeTradeInRows,
+  writeStoredTradeInRows,
+} from '../lib/tradeInEntry'
 import {
   addUnitToPackage,
   composeTradePackageSet,
@@ -103,6 +110,15 @@ export default function TradePackageResults({ pkg }) {
   const [pickerOpen, setPickerOpen] = useState(false)
   const [addBlockedMsg, setAddBlockedMsg] = useState(null)
   const [replaceUndo, setReplaceUndo] = useState(null)
+  const [tradeInRows, setTradeInRows] = useState(() => {
+    const fromIntake = intake?.tradeInEntries
+    if (Array.isArray(fromIntake) && fromIntake.length) {
+      return resizeTradeInRows(fromIntake, fromIntake.length)
+    }
+    const stored = readStoredTradeInRows(pkg.id)
+    if (stored?.length) return stored
+    return createTradeInRows(pkg.sizeDefault || 4)
+  })
 
   const scoreCtx = useMemo(
     () => ({
@@ -158,6 +174,14 @@ export default function TradePackageResults({ pkg }) {
   useEffect(() => {
     writeStoredJob(pkg.id, job)
   }, [pkg.id, job])
+
+  useEffect(() => {
+    setTradeInRows((prev) => resizeTradeInRows(prev, size))
+  }, [size])
+
+  useEffect(() => {
+    writeStoredTradeInRows(pkg.id, tradeInRows)
+  }, [pkg.id, tradeInRows])
 
   const headerTitle = tradePackageHeader(pkg.trade, size)
   const activeUnits = active.map((s) => s.unit)
@@ -548,8 +572,10 @@ export default function TradePackageResults({ pkg }) {
       </div>
       ) : null}
 
+      <TradeInEntryList rows={tradeInRows} onChange={setTradeInRows} />
+
       {/* Package total always from Used units — never mix New MSRP into Used total */}
-      <PackageTotal units={activeUnits} />
+      <PackageTotal units={activeUnits} tradeInRows={tradeInRows} />
 
       {!isNew ? (
       <div className="package-cta-bar">
@@ -559,7 +585,13 @@ export default function TradePackageResults({ pkg }) {
         <Link
           to="/intake?adjust=1"
           state={{
-            intake: { ...intake, job, trade: pkg.trade, stockMode },
+            intake: {
+              ...intake,
+              job,
+              trade: pkg.trade,
+              stockMode,
+              tradeInEntries: tradeInRows,
+            },
           }}
           className="btn btn-sm"
         >

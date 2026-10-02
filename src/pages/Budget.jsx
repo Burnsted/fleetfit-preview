@@ -68,10 +68,12 @@ export default function Budget() {
           />
           {kbbFact != null ? (
             <span className="intake-hint">
-              KBB trade-in {formatMoney(kbbFact)} · counted in the envelope
+              Trade-in credit {formatMoney(kbbFact)} · counted in the envelope
             </span>
           ) : (
-            <span className="intake-hint">Blank is OK — no KBB on file, none invented.</span>
+            <span className="intake-hint">
+              Blank is OK. No trade-in credit on file, none invented.
+            </span>
           )}
         </label>
 

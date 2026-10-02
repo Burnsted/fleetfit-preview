@@ -91,7 +91,7 @@ test('4. Count match after remove / auto-add / Undo', () => {
   assert.equal(s.askCount, 7)
   assert.equal(s.creditCount, 7)
   assert.equal(s.askCountLabel, '7 of 7 vehicles')
-  assert.equal(s.creditCountLabel, '7 of 7 trade-ins')
+  assert.equal(s.creditCountLabel, 'Entered for 7 of 7 vehicles.')
 
   // Remove first unit, auto-add next-ranked (slot 8)
   const removed = active[0]
@@ -130,7 +130,7 @@ test('5. Net only when both Total and Credit are M of M', () => {
   ])
   s = computePackageTotal(partialAsk)
   assert.equal(s.askCountLabel, '1 of 2 vehicles')
-  assert.equal(s.creditCountLabel, '2 of 2 trade-ins')
+  assert.equal(s.creditCountLabel, 'Entered for 2 of 2 vehicles.')
   assert.equal(s.net, null)
   assert.equal(s.netDisplay, NOT_CONFIRMED)
 
@@ -140,7 +140,9 @@ test('5. Net only when both Total and Credit are M of M', () => {
   ])
   s = computePackageTotal(partialCredit)
   assert.equal(s.askCountLabel, '2 of 2 vehicles')
-  assert.equal(s.creditCountLabel, '1 of 2 trade-ins')
+  assert.equal(s.creditCountLabel, 'Entered for 1 of 2 vehicles.')
+  assert.equal(s.tradeInDisplay, NOT_CONFIRMED)
+  assert.equal(s.tradeInCredit, null)
   assert.equal(s.net, null)
   assert.equal(s.netDisplay, NOT_CONFIRMED)
 })
