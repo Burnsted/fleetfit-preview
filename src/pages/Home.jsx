@@ -3,34 +3,34 @@ import { TRADE_PACKAGE_IDS } from '../data/tradePackages'
 import PathChrome from '../components/PathChrome'
 import Wordmark from '../components/Wordmark'
 
-import landscapingPhoto from '../assets/home-trades/landscaping-silverado-ev.png'
-import hvacPhoto from '../assets/home-trades/hvac-cybertruck.png'
-import electricPhoto from '../assets/home-trades/electric-r1t.png'
+import landscapingPhoto from '../assets/home-trades/fleetfit-wrap-card-landscaping.png'
+import hvacPhoto from '../assets/home-trades/fleetfit-wrap-card-hvac.png'
+import electricPhoto from '../assets/home-trades/fleetfit-wrap-card-electric.png'
 import plumbingPhoto from '../assets/home-trades/plumbing-rivian-commercial-van.png'
 
 /**
  * Home trade cards — photo + trade name only.
  * Electric card uses the Electrical package (pkg-trade-electrical).
- * Four Ted-approved generated plates (16:10); Crestvale Plumbing wrap is invented.
+ * Four Ted-approved generated plates (16:10); wrap names on vehicles are invented.
  */
 const HOME_TRADE_CARDS = [
   {
     trade: 'Landscaping',
     packageId: TRADE_PACKAGE_IDS.landscaping,
     photo: landscapingPhoto,
-    alt: 'Landscaping trade vehicle',
+    alt: 'Landscaping trade vehicle: white electric pickup with a green stripe wrap, towing a trailer with a riding mower',
   },
   {
     trade: 'HVAC',
     packageId: TRADE_PACKAGE_IDS.hvac,
     photo: hvacPhoto,
-    alt: 'HVAC trade vehicle',
+    alt: 'HVAC trade vehicle: angular silver electric pickup with a red-to-blue gradient wrap',
   },
   {
     trade: 'Electric',
     packageId: TRADE_PACKAGE_IDS.electrical,
     photo: electricPhoto,
-    alt: 'Electric trade vehicle',
+    alt: 'Electric trade vehicle: dark carbon-fiber-look pickup with a yellow lightning logo stripe',
   },
   {
     trade: 'Plumbing',
