@@ -6,6 +6,7 @@ import assert from 'node:assert/strict'
 import {
   computePackageTotal,
   NOT_CONFIRMED,
+  NET_NOT_CONFIRMED,
 } from '../src/lib/packageTotal.js'
 import {
   ADD_SOURCE_AND_DATE,
@@ -75,7 +76,7 @@ test('2. Partial rows: not confirmed and Entered for N of M', () => {
   assert.equal(s.creditCountLabel, ENTERED_FOR_LABEL(2, 3))
   assert.equal(s.creditCountLabel, 'Entered for 2 of 3 vehicles.')
   assert.equal(s.net, null)
-  assert.equal(s.netDisplay, NOT_CONFIRMED)
+  assert.equal(s.netDisplay, NET_NOT_CONFIRMED)
   assert.equal(sumTradeInEntries(rows), null)
 })
 
@@ -92,7 +93,8 @@ test('3. Net hidden until both sides confirmed', () => {
   assert.equal(s.creditComplete, true)
   assert.equal(s.totalComplete, false)
   assert.equal(s.net, null)
-  assert.equal(s.netDisplay, NOT_CONFIRMED)
+  assert.equal(s.netDisplay, NET_NOT_CONFIRMED)
+  assert.equal(s.netHelper, 'Total covers 1 of 2 vehicles.')
 
   const unitsFull = [
     { id: 'a', askPrice: 40000 },
@@ -103,11 +105,13 @@ test('3. Net hidden until both sides confirmed', () => {
   assert.equal(s.totalComplete, true)
   assert.equal(s.creditComplete, false)
   assert.equal(s.net, null)
-  assert.equal(s.netDisplay, NOT_CONFIRMED)
+  assert.equal(s.netDisplay, NET_NOT_CONFIRMED)
+  assert.equal(s.netHelper, null)
 
   s = computePackageTotal(unitsFull, { tradeInRows: rowsFull })
   assert.equal(s.net, 78000)
   assert.equal(s.netDisplay, '$78,000')
+  assert.equal(s.netHelper, null)
 })
 
 test('4. Negative and text input rejected', () => {
@@ -205,6 +209,87 @@ test('7. factKbbTradeIn reads sum of typed values; rows resize blank', () => {
   )
   assert.equal(merged[0].tradeInValue, 9)
   assert.equal(Object.prototype.hasOwnProperty.call(merged[1], 'tradeInValue'), false)
+})
+
+test('8. Total 1 of 4 with four trade-ins typed → net not confirmed', () => {
+  // One-unit Total vs fleet size 4 (Steve Landscaping bug): do not subtract 4 credits from 1 ask.
+  const units = [{ id: 'a', askPrice: 54177 }]
+  const rows = [
+    { value: '10000' },
+    { value: '10500' },
+    { value: '11000' },
+    { value: '10000' },
+  ]
+  const s = computePackageTotal(units, { tradeInRows: rows })
+  assert.equal(s.total, 54177)
+  assert.equal(s.askCount, 1)
+  assert.equal(s.fleetSize, 4)
+  assert.equal(s.creditComplete, true)
+  assert.equal(s.tradeInCredit, 41500)
+  assert.equal(s.totalComplete, false)
+  assert.equal(s.net, null)
+  assert.equal(s.netDisplay, NET_NOT_CONFIRMED)
+  assert.equal(s.netHelper, 'Total covers 1 of 4 vehicles.')
+})
+
+test('9. Total 4 of 4 with four trade-ins typed → Net money', () => {
+  const units = [
+    { id: 'a', askPrice: 54177 },
+    { id: 'b', askPrice: 40000 },
+    { id: 'c', askPrice: 42000 },
+    { id: 'd', askPrice: 38000 },
+  ]
+  const rows = [
+    { value: '10000' },
+    { value: '10500' },
+    { value: '11000' },
+    { value: '10000' },
+  ]
+  const s = computePackageTotal(units, { tradeInRows: rows })
+  assert.equal(s.askCount, 4)
+  assert.equal(s.fleetSize, 4)
+  assert.equal(s.totalComplete, true)
+  assert.equal(s.creditComplete, true)
+  assert.equal(s.total, 174177)
+  assert.equal(s.tradeInCredit, 41500)
+  assert.equal(s.net, 132677)
+  assert.equal(s.netDisplay, '$132,677')
+  assert.equal(s.netHelper, null)
+})
+
+test('10. Total 4 of 4 with only 3 trade-ins → net not confirmed', () => {
+  const units = [
+    { id: 'a', askPrice: 54177 },
+    { id: 'b', askPrice: 40000 },
+    { id: 'c', askPrice: 42000 },
+    { id: 'd', askPrice: 38000 },
+  ]
+  const rows = [
+    { value: '10000' },
+    { value: '10500' },
+    { value: '11000' },
+    { value: '' },
+  ]
+  const s = computePackageTotal(units, { tradeInRows: rows })
+  assert.equal(s.totalComplete, true)
+  assert.equal(s.creditComplete, false)
+  assert.equal(s.creditCountLabel, ENTERED_FOR_LABEL(3, 4))
+  assert.equal(s.net, null)
+  assert.equal(s.netDisplay, NET_NOT_CONFIRMED)
+  assert.equal(s.netHelper, null)
+})
+
+test('11. Total 1 of 1 with one trade-in typed → Net money', () => {
+  const units = [{ id: 'a', askPrice: 54177 }]
+  const rows = [{ value: '10000' }]
+  const s = computePackageTotal(units, { tradeInRows: rows })
+  assert.equal(s.askCount, 1)
+  assert.equal(s.fleetSize, 1)
+  assert.equal(s.totalComplete, true)
+  assert.equal(s.creditComplete, true)
+  assert.equal(s.net, 44177)
+  assert.equal(s.netDisplay, '$44,177')
+  assert.equal(s.netHelper, null)
 })
 
 console.log(`\nAll ${passed} trade-in entry tests passed.`)

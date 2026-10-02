@@ -8,6 +8,7 @@ import {
   confirmedAskPrice,
   confirmedTradeInValue,
   NOT_CONFIRMED,
+  NET_NOT_CONFIRMED,
   BUYER_FEE_LINE,
 } from '../src/lib/packageTotal.js'
 
@@ -54,7 +55,8 @@ test('2. Partial asks: count and sum exclude missing', () => {
   assert.equal(s.total, 162000)
   assert.equal(s.askCountLabel, '4 of 7 vehicles')
   assert.equal(s.net, null)
-  assert.equal(s.netDisplay, NOT_CONFIRMED)
+  assert.equal(s.netDisplay, NET_NOT_CONFIRMED)
+  assert.equal(s.netHelper, 'Total covers 4 of 7 vehicles.')
 })
 
 // 3. Zero confirmed asks → Total "not confirmed".
@@ -68,7 +70,8 @@ test('3. Zero confirmed asks → Total not confirmed', () => {
   assert.equal(s.askCount, 0)
   assert.equal(s.total, null)
   assert.equal(s.totalDisplay, NOT_CONFIRMED)
-  assert.equal(s.netDisplay, NOT_CONFIRMED)
+  assert.equal(s.netDisplay, NET_NOT_CONFIRMED)
+  assert.equal(s.netHelper, 'Total covers 0 of 3 vehicles.')
 })
 
 // 4. Count match: N and M track active package slots after remove / auto-add / Undo.
@@ -132,7 +135,8 @@ test('5. Net only when both Total and Credit are M of M', () => {
   assert.equal(s.askCountLabel, '1 of 2 vehicles')
   assert.equal(s.creditCountLabel, 'Entered for 2 of 2 vehicles.')
   assert.equal(s.net, null)
-  assert.equal(s.netDisplay, NOT_CONFIRMED)
+  assert.equal(s.netDisplay, NET_NOT_CONFIRMED)
+  assert.equal(s.netHelper, 'Total covers 1 of 2 vehicles.')
 
   const partialCredit = fixture([
     { askPrice: 40000, tradeInValue: 6000 },
@@ -144,7 +148,8 @@ test('5. Net only when both Total and Credit are M of M', () => {
   assert.equal(s.tradeInDisplay, NOT_CONFIRMED)
   assert.equal(s.tradeInCredit, null)
   assert.equal(s.net, null)
-  assert.equal(s.netDisplay, NOT_CONFIRMED)
+  assert.equal(s.netDisplay, NET_NOT_CONFIRMED)
+  assert.equal(s.netHelper, null)
 })
 
 // 6. No invented trade-in dollars when per-unit field is absent.
@@ -170,7 +175,7 @@ test('6. No invented trade-in dollars when per-unit field is absent', () => {
   assert.equal(s.creditCount, 0)
   assert.equal(s.tradeInCredit, null)
   assert.equal(s.tradeInDisplay, NOT_CONFIRMED)
-  assert.equal(s.netDisplay, NOT_CONFIRMED)
+  assert.equal(s.netDisplay, NET_NOT_CONFIRMED)
   assert.equal(s.total, 38900 + 54900 + 35900 + 41200 + 54177 + 27995 + 53343)
   assert.equal(s.askCountLabel, '7 of 7 vehicles')
   assert.equal(s.buyerFeeLine, BUYER_FEE_LINE)

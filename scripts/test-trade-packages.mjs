@@ -196,7 +196,7 @@ test('7. Package total tracks active slots after remove', () => {
   assert.equal(total.total, 164500)
   assert.equal(total.slotCount, 4)
   assert.equal(total.tradeInDisplay, 'not confirmed')
-  assert.equal(total.netDisplay, 'not confirmed')
+  assert.equal(total.netDisplay, 'net not confirmed')
 })
 
 test('8. tongueLb: effective load adds tongue when towing; null load stays null', () => {

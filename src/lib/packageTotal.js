@@ -7,14 +7,23 @@
  *
  * Credit shows as money only when every vehicle row has a value;
  * otherwise "not confirmed" with "Entered for N of M vehicles."
- * Net only when both Total and Credit are complete (M of M).
+ * Net only when BOTH (a) Total covers the whole fleet size (askCount === M)
+ * and (b) every trade-in row has a typed value. Otherwise
+ * "net not confirmed". When Total covers fewer than M, add helper
+ * "Total covers N of M vehicles."
  *
- * M = units currently in the package slots (active set).
+ * M = fleet size: trade-in row count when tradeInRows is provided,
+ * otherwise active package slot count.
  * Recompute after remove / auto-add / Undo by passing the new active set.
  */
 
 export const NOT_CONFIRMED = 'not confirmed'
+export const NET_NOT_CONFIRMED = 'net not confirmed'
 export const BUYER_FEE_LINE = 'Buyer fee TBD'
+
+export function totalCoversLabel(askCount, fleetSize) {
+  return `Total covers ${askCount} of ${fleetSize} vehicles.`
+}
 
 function formatMoney(price) {
   return `$${Number(price).toLocaleString('en-US')}`
@@ -42,7 +51,8 @@ export function confirmedTradeInValue(unit) {
 /**
  * Compute package total from the active slot units.
  * Optional tradeInRows: typed-in current-vehicle values (fleet size 1 to 5).
- * When provided, credit uses those rows (not unit.tradeInValue).
+ * When provided, credit uses those rows (not unit.tradeInValue),
+ * and fleet size M for Net is the row count.
  * @param {Array<{ askPrice?: number, tradeInValue?: number }>} units
  * @param {{ tradeInRows?: Array<{ value?: string|number }> }} [options]
  */
@@ -88,8 +98,12 @@ export function computePackageTotal(units, options = {}) {
     }
   }
 
-  const totalComplete = slotCount > 0 && askCount === slotCount
+  // Fleet size M: trade-in rows when provided (typed fleet), else package slots.
+  const fleetSize = tradeInRows != null ? creditSlotCount : slotCount
+  // Total confirmed for Net only when every one of M fleet vehicles is priced.
+  const totalComplete = fleetSize > 0 && askCount === fleetSize
   const creditComplete = creditSlotCount > 0 && creditCount === creditSlotCount
+  const totalCoversFewerThanFleet = fleetSize > 0 && askCount < fleetSize
 
   const total = askCount === 0 ? null : askSum
   // Money only when every trade-in row has a value; partial stays not confirmed.
@@ -101,14 +115,19 @@ export function computePackageTotal(units, options = {}) {
     askCount,
     creditCount,
     creditSlotCount,
+    fleetSize,
     total,
     tradeInCredit,
     net,
     totalComplete,
     creditComplete,
+    totalCoversFewerThanFleet,
     totalDisplay: total == null ? NOT_CONFIRMED : formatMoney(total),
     tradeInDisplay: tradeInCredit == null ? NOT_CONFIRMED : formatMoney(tradeInCredit),
-    netDisplay: net == null ? NOT_CONFIRMED : formatMoney(net),
+    netDisplay: net == null ? NET_NOT_CONFIRMED : formatMoney(net),
+    netHelper: totalCoversFewerThanFleet
+      ? totalCoversLabel(askCount, fleetSize)
+      : null,
     askCountLabel: `${askCount} of ${slotCount} vehicles`,
     creditCountLabel: `Entered for ${creditCount} of ${creditSlotCount} vehicles.`,
     buyerFeeLine: BUYER_FEE_LINE,

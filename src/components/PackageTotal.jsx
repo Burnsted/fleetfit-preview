@@ -62,6 +62,9 @@ export default function PackageTotal({ units, tradeInRows }) {
             >
               {summary.netDisplay}
             </span>
+            {summary.netHelper ? (
+              <span className="package-total-count">{summary.netHelper}</span>
+            ) : null}
           </div>
         </div>
       </div>
