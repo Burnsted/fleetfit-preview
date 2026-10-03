@@ -3,10 +3,14 @@ import { Link, useLocation } from 'react-router-dom'
 import CrumbDivider from '../components/CrumbDivider'
 import NewCatalog from '../components/NewCatalog'
 import PackageTotal from '../components/PackageTotal'
+import GasTwinControls from '../components/GasTwinControls'
+import GasTwinFleetTotal from '../components/GasTwinFleetTotal'
 import StockModeToggle from '../components/StockModeToggle'
 import TradeInEntryList from '../components/TradeInEntryList'
 import TradePackageToast from '../components/TradePackageToast'
 import TradeUnitCard from '../components/TradeUnitCard'
+import { mapVehicleToPrimaryPair } from '../lib/gasTwin'
+import { useGasTwin } from '../lib/gasTwinState'
 import {
   NEW_CATALOG_BUILD,
   NEW_HELPER_LINE,
@@ -91,6 +95,7 @@ export default function TradePackageResults({ pkg }) {
   const location = useLocation()
   const intake = location.state?.intake
   const fleet = useFleetPick()
+  const { compareOn } = useGasTwin()
 
   const [stockMode, setStockMode] = useState(
     intake?.stockMode === 'New' || pkg.stockMode === 'New' ? 'New' : 'Used',
@@ -309,6 +314,7 @@ export default function TradePackageResults({ pkg }) {
             usedHelper={USED_RESULTS_HELPER}
             newHelper={null}
           />
+          <GasTwinControls showMiles />
         </div>
         {!isNew ? (
           <div className="spec-chips match-header-chips" aria-label="Package facts">
@@ -453,6 +459,12 @@ export default function TradePackageResults({ pkg }) {
                 )
               })}
             </ul>
+
+            {compareOn ? (
+              <GasTwinFleetTotal
+                pairs={active.map((slot) => mapVehicleToPrimaryPair(slot.unit))}
+              />
+            ) : null}
 
             <div className="trade-add-unit-row">
               <button

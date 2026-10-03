@@ -2,10 +2,15 @@ import { useState } from 'react'
 import { Link, Navigate, useLocation, useParams } from 'react-router-dom'
 import CrumbDivider from '../components/CrumbDivider'
 import NewCatalog from '../components/NewCatalog'
+import GasTwinControls from '../components/GasTwinControls'
+import GasTwinFleetTotal from '../components/GasTwinFleetTotal'
+import GasTwinStrip from '../components/GasTwinStrip'
 import PackageTotal from '../components/PackageTotal'
 import StackCard from '../components/StackCard'
 import StockModeToggle from '../components/StockModeToggle'
 import WorkCompare from '../components/WorkCompare'
+import { mapVehicleToPrimaryPair } from '../lib/gasTwin'
+import { useGasTwin } from '../lib/gasTwinState'
 import {
   NEW_CATALOG_BUILD,
   NEW_HELPER_LINE,
@@ -69,6 +74,7 @@ export default function PackageResults() {
   const location = useLocation()
   const intake = location.state?.intake
   const fleet = useFleetPick()
+  const { compareOn } = useGasTwin()
   const [stockMode, setStockMode] = useState(
     intake?.stockMode === 'New' ? 'New' : 'Used',
   )
@@ -171,6 +177,7 @@ export default function PackageResults() {
             usedHelper={USED_RESULTS_HELPER}
             newHelper={null}
           />
+          <GasTwinControls showMiles />
         </div>
         {!isNew ? (
           <div className="spec-chips match-header-chips" aria-label="Match facts">
@@ -273,6 +280,7 @@ export default function PackageResults() {
           <ul className="package-unit-stack">
             {ranked.map((row) => {
               const spec = displayWorkSpec(row.unit)
+              const gasPair = mapVehicleToPrimaryPair(row.unit)
               return (
                 <li key={row.unit.id}>
                   <StackCard
@@ -287,10 +295,19 @@ export default function PackageResults() {
                     rank={row.rank}
                     bodyClass={row.bodyClass}
                   />
+                  <GasTwinStrip
+                    pair={gasPair}
+                    vehicleLabel={`${row.unit.year} ${row.unit.make} ${row.unit.model}`}
+                  />
                 </li>
               )
             })}
           </ul>
+          {compareOn ? (
+            <GasTwinFleetTotal
+              pairs={ranked.map((row) => mapVehicleToPrimaryPair(row.unit))}
+            />
+          ) : null}
         </section>
       </div>
 

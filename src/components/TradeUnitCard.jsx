@@ -1,8 +1,10 @@
 import OutboundListingLink, { OutboundListingLabel } from './OutboundListingLink'
 import UnitPhoto from './UnitPhoto'
 import ScoreDial from './ScoreDial'
+import GasTwinStrip from './GasTwinStrip'
 import { TRADE_PACKAGE_COPY } from '../data/tradeNeeds'
 import { formatMoney } from '../lib/fit'
+import { mapVehicleToPrimaryPair } from '../lib/gasTwin'
 import { NOT_PUBLISHED } from '../lib/workSpec'
 import { SELLER_LISTING_UNAVAILABLE } from '../lib/outboundListing'
 
@@ -33,8 +35,10 @@ export default function TradeUnitCard({
 
   const ask = Number(unit.askPrice)
   const priceText = Number.isFinite(ask) && ask > 0 ? formatMoney(ask) : NOT_PUBLISHED
+  const gasPair = mapVehicleToPrimaryPair(unit)
 
   return (
+    <div className="trade-unit-with-twin">
     <article
       className="trade-unit-card"
       data-unit-id={unit.id}
@@ -106,5 +110,7 @@ export default function TradeUnitCard({
         </div>
       </div>
     </article>
+    <GasTwinStrip pair={gasPair} vehicleLabel={ymm} />
+    </div>
   )
 }

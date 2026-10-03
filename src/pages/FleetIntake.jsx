@@ -1,8 +1,10 @@
 import { useState } from 'react'
 import { useNavigate, useSearchParams } from 'react-router-dom'
+import GasTwinToggle from '../components/GasTwinToggle'
 import PathChrome from '../components/PathChrome'
 import StockModeToggle from '../components/StockModeToggle'
 import Wordmark from '../components/Wordmark'
+import { useGasTwin } from '../lib/gasTwinState'
 import { matchPackageIdFromIntake } from '../data/package'
 import {
   NEW_RESULTS_HELPER,
@@ -146,6 +148,7 @@ export default function FleetIntake() {
   const [params] = useSearchParams()
   const adjusting = params.get('adjust') === '1'
   const [form, setForm] = useState(INITIAL)
+  const { compareOn, setCompareOn } = useGasTwin()
   const showTradeOther = form.trade === 'Other'
   const showTradeInModel = form.tradeIn === 'Yes'
   const showTowFields = form.tows === 'yes' || (form.tows === '' && form.haul && form.haul !== 'None')
@@ -347,13 +350,18 @@ export default function FleetIntake() {
         </div>
 
         <div className="intake-field intake-stock-field">
-          <span className="intake-label">Stock</span>
-          <StockModeToggle
-            value={stockMode}
-            onChange={onStockMode}
-            usedHelper={USED_HELPER_LINE}
-            newHelper={NEW_RESULTS_HELPER}
-          />
+          <div className="intake-stock-gas-row">
+            <div className="intake-stock-side">
+              <span className="intake-label">Stock</span>
+              <StockModeToggle
+                value={stockMode}
+                onChange={onStockMode}
+                usedHelper={USED_HELPER_LINE}
+                newHelper={NEW_RESULTS_HELPER}
+              />
+            </div>
+            <GasTwinToggle value={compareOn} onChange={setCompareOn} />
+          </div>
         </div>
 
         <label className="intake-field">

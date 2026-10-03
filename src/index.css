@@ -4857,3 +4857,445 @@ img { max-width: 100%; display: block; }
     grid-template-columns: repeat(4, minmax(0, 1fr));
   }
 }
+
+/* --- Gas twin Option 1 DRAFT --- */
+.trade-stock-bar {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 12px 24px;
+}
+.intake-stock-gas-row {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 12px 24px;
+  width: 100%;
+}
+.intake-stock-side {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+.gas-twin-toggle-block {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 10px 12px;
+}
+.gas-twin-toggle-label {
+  font-size: 0.88rem;
+  font-weight: 650;
+  color: #222;
+}
+.gas-twin-toggle {
+  display: inline-flex;
+  border: 1px solid #d8dee6;
+  border-radius: 4px;
+  overflow: hidden;
+  background: #f3f4f6;
+}
+.gas-twin-btn,
+.gas-twin-year-btn {
+  appearance: none;
+  border: 0;
+  margin: 0;
+  padding: 10px 18px;
+  min-height: 40px;
+  background: transparent;
+  color: #111;
+  font: inherit;
+  font-weight: 700;
+  font-size: 0.92rem;
+  cursor: pointer;
+  border-radius: 0;
+}
+.gas-twin-btn.is-active,
+.gas-twin-year-btn.is-active {
+  background: #111;
+  color: #fff;
+}
+.gas-twin-controls {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  gap: 10px;
+}
+.gas-twin-years-block {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  gap: 8px;
+}
+.gas-twin-years-label {
+  font-size: 0.84rem;
+  font-weight: 650;
+  color: #333;
+}
+.gas-twin-years {
+  display: inline-flex;
+  border: 1px solid #d8dee6;
+  border-radius: 4px;
+  overflow: hidden;
+  background: #f3f4f6;
+}
+.gas-twin-miles {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  gap: 4px;
+  font-size: 0.84rem;
+}
+.gas-twin-miles input {
+  width: 9rem;
+  min-height: 40px;
+  border: 1px solid #d8dee6;
+  border-radius: 4px;
+  padding: 8px 10px;
+  font: inherit;
+}
+.gas-twin-miles-help {
+  font-size: 0.78rem;
+  color: #666;
+  text-align: right;
+  max-width: 16rem;
+}
+.gas-twin-miles-label {
+  font-weight: 650;
+}
+.new-catalog-item {
+  display: flex;
+  flex-direction: column;
+  gap: 0;
+}
+.trade-unit-with-twin {
+  display: contents;
+}
+.gas-twin-strip {
+  margin: 0 0 16px;
+  padding: 14px 14px 12px;
+  border: 1px solid #e2e6eb;
+  border-top: 0;
+  border-radius: 0 0 4px 4px;
+  background: #fafbfc;
+}
+.new-catalog-item .gas-twin-strip,
+.package-unit-stack .gas-twin-strip {
+  border-top: 1px solid #e2e6eb;
+  border-radius: 4px;
+  margin-top: 0;
+}
+.trade-unit-card + .gas-twin-strip,
+.new-vehicle-card + .gas-twin-strip,
+.stack-card + .gas-twin-strip {
+  margin-top: -1px;
+}
+.gas-twin-strip.is-missing {
+  background: #f7f7f8;
+}
+.gas-twin-strip-title {
+  margin: 0 0 10px;
+  font-size: 0.92rem;
+  font-weight: 700;
+  color: #111;
+}
+.gas-twin-strip-sub {
+  margin: 0;
+  font-size: 0.82rem;
+  color: #666;
+}
+.gas-twin-money {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 8px 12px;
+  margin-bottom: 8px;
+}
+.gas-twin-money-label {
+  display: block;
+  font-size: 0.72rem;
+  font-weight: 650;
+  color: #666;
+  margin-bottom: 2px;
+}
+.gas-twin-money-value {
+  display: block;
+  font-size: 0.92rem;
+  font-weight: 700;
+  color: #111;
+}
+.gas-twin-miles-prompt,
+.gas-twin-spec-line {
+  margin: 0 0 8px;
+  font-size: 0.8rem;
+  color: #555;
+  line-height: 1.35;
+}
+.gas-twin-strip-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 12px 18px;
+}
+.gas-twin-text-link {
+  appearance: none;
+  border: 0;
+  background: none;
+  padding: 0;
+  margin: 0;
+  font: inherit;
+  font-size: 0.86rem;
+  font-weight: 650;
+  color: #111;
+  text-decoration: underline;
+  cursor: pointer;
+  border-radius: 4px;
+  min-height: 44px;
+}
+.gas-twin-why {
+  margin-top: 10px;
+  padding-top: 10px;
+  border-top: 1px solid #e5e8ec;
+  font-size: 0.84rem;
+  color: #333;
+  line-height: 1.4;
+}
+.gas-twin-why p { margin: 0; }
+.gas-twin-fleet-total {
+  margin: 8px 0 20px;
+  padding: 16px;
+  border: 1px solid #e2e6eb;
+  border-radius: 4px;
+  border-left: 4px solid #2a9d8f;
+  background: #fff;
+}
+.gas-twin-fleet-title {
+  margin: 0 0 12px;
+  font-size: 0.78rem;
+  font-weight: 750;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: #2a6f8f;
+}
+.gas-twin-estimate-footer,
+.gas-twin-insurance-note {
+  margin: 10px 0 0;
+  font-size: 0.78rem;
+  color: #666;
+  line-height: 1.35;
+}
+.gas-twin-insurance-note {
+  margin-top: 4px;
+}
+
+/* Full comparison panel / sheet */
+.gas-twin-sheet {
+  position: fixed;
+  inset: 0;
+  z-index: 90;
+  display: grid;
+  align-items: stretch;
+  justify-items: end;
+}
+.gas-twin-sheet-backdrop {
+  position: absolute;
+  inset: 0;
+  border: 0;
+  padding: 0;
+  margin: 0;
+  background: rgba(10, 14, 18, 0.45);
+  cursor: pointer;
+}
+.gas-twin-sheet-panel {
+  position: relative;
+  z-index: 1;
+  width: min(420px, 100%);
+  height: 100%;
+  max-height: 100vh;
+  overflow: auto;
+  background: #fff;
+  color: #111;
+  border-radius: 0;
+  box-shadow: -8px 0 28px rgba(0, 0, 0, 0.18);
+  padding: 16px 16px 28px;
+}
+.gas-twin-sheet-head {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 12px;
+  margin-bottom: 14px;
+}
+.gas-twin-sheet-title {
+  margin: 0;
+  font-size: 1.2rem;
+  font-weight: 750;
+}
+.gas-twin-sheet-close {
+  appearance: none;
+  border: 1px solid #d8dee6;
+  background: #fff;
+  color: #111;
+  font: inherit;
+  font-size: 0.88rem;
+  font-weight: 650;
+  min-height: 40px;
+  min-width: 72px;
+  padding: 8px 12px;
+  cursor: pointer;
+  border-radius: 4px;
+}
+.gas-twin-sheet-cols {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 12px;
+  margin-bottom: 12px;
+}
+.gas-twin-col-kicker {
+  margin: 0;
+  font-size: 0.68rem;
+  font-weight: 700;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: #888;
+}
+.gas-twin-col-name {
+  margin: 4px 0 0;
+  font-size: 0.95rem;
+  font-weight: 750;
+  line-height: 1.25;
+}
+.gas-twin-sheet-why {
+  margin: 0 0 14px;
+  font-size: 0.86rem;
+  color: #333;
+  line-height: 1.4;
+}
+.gas-twin-others {
+  margin: 0 0 16px;
+}
+.gas-twin-others-title {
+  margin: 0 0 8px;
+  font-size: 0.84rem;
+  font-weight: 700;
+}
+.gas-twin-others-list {
+  margin: 0;
+  padding: 0;
+  list-style: none;
+  display: grid;
+  gap: 6px;
+}
+.gas-twin-others-list li {
+  display: flex;
+  justify-content: space-between;
+  gap: 10px;
+  font-size: 0.82rem;
+  color: #333;
+}
+.gas-twin-others-metric {
+  color: #666;
+  white-space: nowrap;
+}
+.gas-twin-factor-table {
+  border-top: 1px solid #e5e8ec;
+}
+.gas-twin-factor-row,
+.gas-twin-overall {
+  padding: 12px 0;
+  border-bottom: 1px solid #e5e8ec;
+}
+.gas-twin-overall {
+  border-top: 2px solid #d8dee6;
+  margin-top: 4px;
+}
+.gas-twin-factor-label {
+  margin: 0 0 8px;
+  font-size: 0.84rem;
+  font-weight: 700;
+}
+.gas-twin-factor-cells {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 12px;
+}
+.gas-twin-factor-value {
+  margin: 0;
+  font-size: 0.92rem;
+  font-weight: 750;
+}
+.gas-twin-factor-score {
+  margin: 2px 0 0;
+  font-size: 0.78rem;
+  color: #666;
+}
+.gas-twin-source-note {
+  margin: 4px 0 0;
+  font-size: 0.72rem;
+  color: #666;
+  line-height: 1.3;
+}
+.gas-twin-source-note a {
+  color: #111;
+  text-decoration: underline;
+}
+.gas-twin-score-caption,
+.gas-twin-inference-note {
+  margin: 12px 0 0;
+  font-size: 0.76rem;
+  color: #777;
+}
+.gas-twin-disclosure {
+  margin-top: 16px;
+  border: 1px solid #e2e6eb;
+  border-radius: 4px;
+  padding: 10px 12px;
+  font-size: 0.82rem;
+}
+.gas-twin-disclosure summary {
+  cursor: pointer;
+  font-weight: 700;
+  min-height: 40px;
+  display: flex;
+  align-items: center;
+}
+.gas-twin-disclosure ul {
+  margin: 8px 0 0;
+  padding-left: 1.1rem;
+}
+.gas-twin-disclosure-note {
+  margin: 8px 0 0;
+  color: #666;
+}
+.gas-twin-sheet-missing {
+  font-size: 0.95rem;
+  font-weight: 650;
+}
+
+@media (max-width: 720px) {
+  .gas-twin-sheet {
+    align-items: end;
+    justify-items: stretch;
+  }
+  .gas-twin-sheet-panel {
+    width: 100%;
+    height: auto;
+    max-height: min(92vh, 900px);
+    border-radius: 4px 4px 0 0;
+    box-shadow: 0 -8px 28px rgba(0, 0, 0, 0.18);
+  }
+  .gas-twin-controls {
+    align-items: stretch;
+    width: 100%;
+  }
+  .gas-twin-years-block,
+  .gas-twin-miles {
+    align-items: stretch;
+  }
+  .gas-twin-miles-help {
+    text-align: left;
+  }
+  .gas-twin-money {
+    grid-template-columns: 1fr;
+  }
+}
