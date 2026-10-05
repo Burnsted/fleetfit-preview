@@ -28,7 +28,8 @@ export const TRADE_NEEDS = {
     tongueLb: null,
     workDayCopy:
       'Ladders on the roof, wire and parts inside, several job sites a day.',
-    headerPattern: (n) => `Electrical package · ${n} vehicles`,
+    headerPattern: (n) =>
+      `Electrical package · ${n} ${n === 1 ? 'vehicle' : 'vehicles'}`,
     sourceUrls: [
       'https://www.worktruckonline.com/news/ford-pro-e-telematics-helps-fleet-track-e-transit-efficiency',
       'https://www.fromtheroad.ford.com/us/en/articles/2024/ford-pro-marks-10-years-of-u-s--transit-by-bolstering-e-transit',
@@ -49,7 +50,8 @@ export const TRADE_NEEDS = {
     tongueLb: null,
     workDayCopy:
       'Service calls across town, with parts, tools, and units riding in back.',
-    headerPattern: (n) => `HVAC package · ${n} vehicles`,
+    headerPattern: (n) =>
+      `HVAC package · ${n} ${n === 1 ? 'vehicle' : 'vehicles'}`,
     sourceUrls: [
       'https://azuga.com/blog/productivity-gains-for-hvac-fleets-our-reports-highlights',
       'https://www.achrnews.com/ext/resources/2019/01-2019/1-21-2019/HVAC-Satellite-Office.pdf',
@@ -70,7 +72,8 @@ export const TRADE_NEEDS = {
     tongueLb: null,
     workDayCopy:
       'Pipe on the rack, fittings in the bins, back-to-back service stops.',
-    headerPattern: (n) => `Plumbing package · ${n} vehicles`,
+    headerPattern: (n) =>
+      `Plumbing package · ${n} ${n === 1 ? 'vehicle' : 'vehicles'}`,
     sourceUrls: [
       'https://www.worktruckonline.com/articles/keeping-hvac-and-plumbing-fleets-on-track',
       'https://www.pmmag.com/articles/86616-contractors-love-trucks',
@@ -92,7 +95,8 @@ export const TRADE_NEEDS = {
     tongueLb: 1050,
     workDayCopy:
       'Crew and equipment out on a trailer, route of properties, back to the yard.',
-    headerPattern: (n) => `Landscaping package · ${n} vehicles`,
+    headerPattern: (n) =>
+      `Landscaping package · ${n} ${n === 1 ? 'vehicle' : 'vehicles'}`,
     sourceUrls: [
       'https://www.spencertrailers.com/best-trailers-for-landscaping-businesses-in-2024/',
       'https://stage.landscapemanagement.net/tips-for-determining-your-ideal-maintenance-crew-size/',
@@ -111,7 +115,8 @@ export const TRADE_NEEDS = {
     tongueLb: null,
     workDayCopy:
       'Materials and tools to the site, supply runs, crew to and from the job.',
-    headerPattern: (n) => `General contracting package · ${n} vehicles`,
+    headerPattern: (n) =>
+      `General contracting package · ${n} ${n === 1 ? 'vehicle' : 'vehicles'}`,
     sourceUrls: [
       'https://www.knapheide.com/industries/skilled-trades',
       'https://www.bls.gov/ooh/construction-and-extraction/construction-laborers-and-helpers.htm',

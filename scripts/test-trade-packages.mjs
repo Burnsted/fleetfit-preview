@@ -10,6 +10,7 @@ import {
   PACKAGE_ID_ALIASES,
   TRADE_PACKAGE_IDS,
   resolvePackageId,
+  tradePackageHeader,
 } from '../src/data/tradePackages.js'
 import { TRADE_PACKAGE_COPY } from '../src/data/tradeNeeds.js'
 import {
@@ -52,6 +53,10 @@ test('2. Intake trade maps to trade package ids', () => {
   assert.equal(matchPackageIdFromIntake({ trade: 'Electrical' }), TRADE_PACKAGE_IDS.electrical)
   assert.equal(matchPackageIdFromIntake({ trade: 'HVAC' }), TRADE_PACKAGE_IDS.hvac)
   assert.equal(matchPackageIdFromIntake({ trade: 'Plumbing' }), TRADE_PACKAGE_IDS.plumbing)
+  assert.equal(
+    matchPackageIdFromIntake({ trade: 'Landscaping and lawn' }),
+    TRADE_PACKAGE_IDS.landscaping,
+  )
   assert.equal(
     matchPackageIdFromIntake({ trade: 'Landscaping / lawn' }),
     TRADE_PACKAGE_IDS.landscaping,
@@ -110,6 +115,40 @@ test('4. Size slice does not invent fillers when pool is short', () => {
   // Honest shortfall when fewer than size chip
   if (set.eligibleCount < 4) {
     assert.ok(set.shortfall > 0)
+  }
+})
+
+test('4b. Title count syncs with rendered active set (0 / 1 / 4, singular + plural)', () => {
+  assert.equal(tradePackageHeader('Electrical', 0), 'Electrical package · 0 vehicles')
+  assert.equal(tradePackageHeader('Electrical', 1), 'Electrical package · 1 vehicle')
+  assert.equal(tradePackageHeader('Electrical', 4), 'Electrical package · 4 vehicles')
+  assert.equal(tradePackageHeader('HVAC', 1), 'HVAC package · 1 vehicle')
+  assert.equal(tradePackageHeader('HVAC', 4), 'HVAC package · 4 vehicles')
+  assert.equal(tradePackageHeader('Landscaping', 0), 'Landscaping package · 0 vehicles')
+
+  // Live electrical pool: planned size 4, but title must use shown count.
+  const pkg = getPackage(TRADE_PACKAGE_IDS.electrical)
+  const set = composeTradePackageSet(pkg, { pkg, intake: null }, 4)
+  const title = tradePackageHeader(pkg.trade, set.active.length)
+  assert.equal(
+    title,
+    tradePackageHeader('Electrical', set.active.length),
+    'header must use active.length, not planned size',
+  )
+  assert.ok(
+    !title.includes('4 vehicles') || set.active.length === 4,
+    `title "${title}" must not claim 4 when only ${set.active.length} shown`,
+  )
+  assert.match(title, new RegExp(`· ${set.active.length} vehicles?$`))
+  if (set.active.length === 1) {
+    assert.equal(title, 'Electrical package · 1 vehicle')
+  }
+  if (set.active.length === 0) {
+    assert.equal(title, 'Electrical package · 0 vehicles')
+  }
+  // Planned size alone must not drive the title when shortfall exists.
+  if (set.shortfall > 0) {
+    assert.notEqual(title, tradePackageHeader(pkg.trade, set.size))
   }
 })
 
@@ -192,7 +231,7 @@ test('7. Package total tracks active slots after remove', () => {
   assert.equal(total.total, 164500)
   assert.equal(total.slotCount, 4)
   assert.equal(total.tradeInDisplay, 'not confirmed')
-  assert.equal(total.netDisplay, 'not confirmed')
+  assert.equal(total.netDisplay, 'net not confirmed')
 })
 
 test('8. tongueLb: effective load adds tongue when towing; null load stays null', () => {
@@ -249,7 +288,21 @@ test('9. COPY strings are exact (no Customize in Intake / Size / trucks)', () =>
   assert.ok(!/Customize in Intake/.test(TRADE_PACKAGE_COPY.buildYourOwn))
 })
 
-test('10. sliceActiveSet respects size and eligibility order', () => {
+test('10. Pill/slash cleanup: cab/bed keys and dialTotal wording', async () => {
+  const { formatCabBed } = await import('../src/lib/workSpec.js')
+  const { CAB_BED_OPTIONS } = await import('../src/data/listings.js')
+  assert.equal(formatCabBed('Crew', '5.5 ft'), 'Crew and 5.5 ft')
+  assert.ok(CAB_BED_OPTIONS.length > 0)
+  assert.ok(CAB_BED_OPTIONS.every((o) => !o.includes(' / ') && /\band\b/.test(o)))
+  const pkg = getPackage(TRADE_PACKAGE_IDS.electrical)
+  const { eligible } = rankTradePool(collectCandidateUnits(), { pkg, intake: null })
+  const withDial = eligible.find((r) => r.score?.dialTotal)
+  assert.ok(withDial, 'expected a scored eligible unit')
+  assert.match(withDial.score.dialTotal, / out of /)
+  assert.ok(!withDial.score.dialTotal.includes(' / '))
+})
+
+test('11. sliceActiveSet respects size and eligibility order', () => {
   const eligible = [
     { unit: { id: 'a' }, live: true, suggestible: true, score: {}, sortKey: 0.9 },
     { unit: { id: 'b' }, live: true, suggestible: true, score: {}, sortKey: 0.8 },

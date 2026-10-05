@@ -83,15 +83,15 @@ export type CategoryKey = (typeof CATEGORY_KEYS)[number]
 
 export const CATEGORY_LABELS: Record<CategoryKey, string> = {
   range: 'Range fit',
-  payload: 'Payload / cargo',
-  cab: 'Cab / crew',
+  payload: 'Payload and cargo',
+  cab: 'Cab and crew',
   tow: 'Tow fit',
   resale: 'Resale 3-yr',
   reliability: 'Reliability',
   service: 'Service network',
   longevity: 'Longevity',
-  energy: 'Energy ¢/mi',
-  maintenance: 'Maintenance ¢/mi',
+  energy: 'Energy ¢ per mi',
+  maintenance: 'Maintenance ¢ per mi',
 }
 
 /** Linear interpolation between anchors; clamp at ends. */

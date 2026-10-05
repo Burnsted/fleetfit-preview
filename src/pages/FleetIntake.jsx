@@ -1,20 +1,39 @@
 import { useState } from 'react'
 import { useNavigate, useSearchParams } from 'react-router-dom'
 import PathChrome from '../components/PathChrome'
+import StockModeToggle from '../components/StockModeToggle'
 import Wordmark from '../components/Wordmark'
 import { matchPackageIdFromIntake } from '../data/package'
+import {
+  NEW_RESULTS_HELPER,
+  USED_HELPER_LINE,
+} from '../data/newEvCatalog'
 
-/** CLEARED Score v2 intake fields + Supervisor preset */
-const INTAKE_BUILD = 'intake-score-v2-f-pages-20260927-1515'
+/** CLEARED Score v2 intake fields + Supervisor preset + stockMode */
+const INTAKE_BUILD = 'intake-trade-stock-20261001'
+
+/** Trade preset rectangles (mock / CLEARED). Landscaping maps to Landscaping and lawn seed. */
+const TRADE_PRESETS = ['Electrical', 'HVAC', 'Plumbing', 'Landscaping']
 
 const TRADES = [
   'Electrical',
   'HVAC',
   'Plumbing',
-  'Landscaping / lawn',
+  'Landscaping and lawn',
   'General contracting',
   'Other',
 ]
+
+function tradeToFormValue(preset) {
+  if (preset === 'Landscaping') return 'Landscaping and lawn'
+  return preset
+}
+
+function formTradeToPreset(trade) {
+  if (/landscap|lawn/i.test(trade || '')) return 'Landscaping'
+  if (TRADE_PRESETS.includes(trade)) return trade
+  return null
+}
 
 const FLEET_SIZE_OPTIONS = [
   { value: '', label: 'Not surveyed yet' },
@@ -44,7 +63,7 @@ const TRADE_IN_OPTS = [
 const SHOP_CITIES = ['Vero Beach', 'Fort Pierce', 'West Palm Beach']
 const ROLE_PRESETS = [
   { value: '', label: 'No preset' },
-  { value: 'Supervisor / team lead', label: 'Supervisor / team lead' },
+  { value: 'Supervisor and team lead', label: 'Supervisor and team lead' },
 ]
 
 const ABRP_URL = 'https://abetterrouteplanner.com/'
@@ -52,6 +71,7 @@ const ABRP_URL = 'https://abetterrouteplanner.com/'
 const INITIAL = {
   trade: 'Electrical',
   tradeOther: '',
+  stockMode: 'Used',
   fleetSize: '',
   address: '',
   shopCity: '',
@@ -142,6 +162,18 @@ export default function FleetIntake() {
     }))
   }
 
+  function onTradePreset(preset) {
+    setForm((prev) => ({
+      ...prev,
+      trade: tradeToFormValue(preset),
+      tradeOther: '',
+    }))
+  }
+
+  function onStockMode(mode) {
+    setField('stockMode', mode === 'New' ? 'New' : 'Used')
+  }
+
   function onTradeInChange(value) {
     setForm((prev) => ({
       ...prev,
@@ -153,7 +185,7 @@ export default function FleetIntake() {
   function applySupervisorPreset() {
     setForm((prev) => ({
       ...prev,
-      rolePreset: 'Supervisor / team lead',
+      rolePreset: 'Supervisor and team lead',
       crew: '2',
       tows: 'no',
       haul: 'None',
@@ -164,7 +196,7 @@ export default function FleetIntake() {
   }
 
   function onRolePreset(value) {
-    if (value === 'Supervisor / team lead') {
+    if (value === 'Supervisor and team lead') {
       applySupervisorPreset()
     } else {
       setField('rolePreset', value)
@@ -221,9 +253,11 @@ export default function FleetIntake() {
             ? '1500'
             : '')
 
+    const stockMode = form.stockMode === 'New' ? 'New' : 'Used'
     const intake = {
       trade: tradeValue,
       tradeOther: form.trade === 'Other' ? form.tradeOther.trim() : '',
+      stockMode,
       fleetSize: form.fleetSize || 'not-surveyed',
       address: form.address.trim(),
       shopCity: form.shopCity || undefined,
@@ -273,8 +307,11 @@ export default function FleetIntake() {
     navigate(`/package/${matchPackageIdFromIntake(intake)}`, { state: { intake } })
   }
 
+  const activePreset = formTradeToPreset(form.trade)
+  const stockMode = form.stockMode === 'New' ? 'New' : 'Used'
+
   return (
-    <div className="locked-page" data-cleared={INTAKE_BUILD}>
+    <div className="locked-page" data-cleared={INTAKE_BUILD} data-stock-mode={stockMode}>
       <PathChrome active="intake" className="path-chrome-intake" />
 
       <header className="locked-page-header">
@@ -282,13 +319,43 @@ export default function FleetIntake() {
           <Wordmark size="eyebrow" tone="light" decorative />
           <span>Fleet swap</span>
         </p>
-        <h1>{adjusting ? 'Adjust the mix' : 'Tell us about the work day'}</h1>
+        <h1>{adjusting ? 'Adjust the mix' : 'Fleet intake'}</h1>
         <p className="locked-page-lead">
-          We’ll match a used EV package to the work day.
+          Choose a trade preset and Used or New stock.
         </p>
       </header>
 
       <form className="intake-form" onSubmit={onSubmit}>
+        <div className="intake-field intake-trade-preset" data-trade-preset="1">
+          <span className="intake-label">Trade preset</span>
+          <div className="intake-preset-row" role="group" aria-label="Trade preset">
+            {TRADE_PRESETS.map((preset) => {
+              const active = activePreset === preset
+              return (
+                <button
+                  key={preset}
+                  type="button"
+                  className={`intake-preset-btn${active ? ' is-active' : ''}`}
+                  aria-pressed={active}
+                  onClick={() => onTradePreset(preset)}
+                >
+                  {preset}
+                </button>
+              )
+            })}
+          </div>
+        </div>
+
+        <div className="intake-field intake-stock-field">
+          <span className="intake-label">Stock</span>
+          <StockModeToggle
+            value={stockMode}
+            onChange={onStockMode}
+            usedHelper={USED_HELPER_LINE}
+            newHelper={NEW_RESULTS_HELPER}
+          />
+        </div>
+
         <label className="intake-field">
           <span className="intake-label">Role preset</span>
           <select
@@ -300,7 +367,7 @@ export default function FleetIntake() {
             ))}
           </select>
           <span className="intake-hint">
-            Supervisor / team lead: crew 2, no tow. Daily miles and load stay yours.
+            Supervisor and team lead: crew 2, no tow. Daily miles and load stay yours.
           </span>
         </label>
 
@@ -343,7 +410,7 @@ export default function FleetIntake() {
         </label>
 
         <label className="intake-field">
-          <span className="intake-label">Shop / home-base city</span>
+          <span className="intake-label">Shop and home-base city</span>
           <select
             value={form.shopCity}
             onChange={(e) => setField('shopCity', e.target.value)}
@@ -485,7 +552,7 @@ export default function FleetIntake() {
             onChange={(e) => setField('overnightCharge', e.target.value)}
           >
             <option value="shop-l2">Shop Level 2 available</option>
-            <option value="home-l2">Home / depot L2 mixed</option>
+            <option value="home-l2">Home and depot L2 mixed</option>
             <option value="l1-only">Level 1 only today</option>
             <option value="unknown">Not surveyed yet</option>
           </select>
@@ -531,7 +598,7 @@ export default function FleetIntake() {
           options={PAYLOAD_OPTS}
           value={form.payload}
           onChange={(v) => setField('payload', v)}
-          helper="Used when Load (lb) is blank: Light 500 / Medium 1000 / Heavy 1500."
+          helper="Used when Load (lb) is blank: Light 500, Medium 1000, and Heavy 1500."
         />
 
         <ChipRow
