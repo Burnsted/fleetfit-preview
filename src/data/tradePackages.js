@@ -159,7 +159,13 @@ export function matchTradePackageIdFromIntake(intake) {
   return DEFAULT_TRADE_PACKAGE_ID
 }
 
-export function tradePackageHeader(trade, n) {
+/**
+ * Package page title count. Pass the number of vehicles actually shown
+ * (the rendered active set), not the planned fleet-size chip.
+ */
+export function tradePackageHeader(trade, shownCount) {
   const needs = TRADE_NEEDS[trade] || TRADE_NEEDS.Electrical
-  return needs.headerPattern(n)
+  const raw = Number(shownCount)
+  const count = Number.isFinite(raw) ? Math.max(0, Math.floor(raw)) : 0
+  return needs.headerPattern(count)
 }

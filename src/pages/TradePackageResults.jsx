@@ -183,7 +183,9 @@ export default function TradePackageResults({ pkg }) {
     writeStoredTradeInRows(pkg.id, tradeInRows)
   }, [pkg.id, tradeInRows])
 
-  const headerTitle = tradePackageHeader(pkg.trade, size)
+  // Title count must match the vehicles rendered below (active), not the
+  // planned fleet-size chip — pool shortfall can leave size > active.length.
+  const headerTitle = tradePackageHeader(pkg.trade, active.length)
   const activeUnits = active.map((s) => s.unit)
   const selectedInPackage = activeUnits.filter((unit) =>
     fleet.has(fleetUnitKey(pkg.id, unit.id)),

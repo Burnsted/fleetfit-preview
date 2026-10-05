@@ -10,6 +10,7 @@ import {
   PACKAGE_ID_ALIASES,
   TRADE_PACKAGE_IDS,
   resolvePackageId,
+  tradePackageHeader,
 } from '../src/data/tradePackages.js'
 import { TRADE_PACKAGE_COPY } from '../src/data/tradeNeeds.js'
 import {
@@ -114,6 +115,40 @@ test('4. Size slice does not invent fillers when pool is short', () => {
   // Honest shortfall when fewer than size chip
   if (set.eligibleCount < 4) {
     assert.ok(set.shortfall > 0)
+  }
+})
+
+test('4b. Title count syncs with rendered active set (0 / 1 / 4, singular + plural)', () => {
+  assert.equal(tradePackageHeader('Electrical', 0), 'Electrical package · 0 vehicles')
+  assert.equal(tradePackageHeader('Electrical', 1), 'Electrical package · 1 vehicle')
+  assert.equal(tradePackageHeader('Electrical', 4), 'Electrical package · 4 vehicles')
+  assert.equal(tradePackageHeader('HVAC', 1), 'HVAC package · 1 vehicle')
+  assert.equal(tradePackageHeader('HVAC', 4), 'HVAC package · 4 vehicles')
+  assert.equal(tradePackageHeader('Landscaping', 0), 'Landscaping package · 0 vehicles')
+
+  // Live electrical pool: planned size 4, but title must use shown count.
+  const pkg = getPackage(TRADE_PACKAGE_IDS.electrical)
+  const set = composeTradePackageSet(pkg, { pkg, intake: null }, 4)
+  const title = tradePackageHeader(pkg.trade, set.active.length)
+  assert.equal(
+    title,
+    tradePackageHeader('Electrical', set.active.length),
+    'header must use active.length, not planned size',
+  )
+  assert.ok(
+    !title.includes('4 vehicles') || set.active.length === 4,
+    `title "${title}" must not claim 4 when only ${set.active.length} shown`,
+  )
+  assert.match(title, new RegExp(`· ${set.active.length} vehicles?$`))
+  if (set.active.length === 1) {
+    assert.equal(title, 'Electrical package · 1 vehicle')
+  }
+  if (set.active.length === 0) {
+    assert.equal(title, 'Electrical package · 0 vehicles')
+  }
+  // Planned size alone must not drive the title when shortfall exists.
+  if (set.shortfall > 0) {
+    assert.notEqual(title, tradePackageHeader(pkg.trade, set.size))
   }
 })
 
