@@ -69,6 +69,7 @@ export default function StackCard({
         score={!current ? score : null}
         rank={!current ? rank : null}
         outboundPhoto={!current}
+        pickId={!current ? pickId : null}
       />
       <div className="stack-card-body">
         {kicker ? <p className="stack-card-kicker">{kicker}</p> : null}

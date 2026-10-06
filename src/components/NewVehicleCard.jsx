@@ -1,8 +1,16 @@
 /**
  * New OEM catalog card — CSV figures only. No seller link, mileage, used price, dial, or score.
+ * Photo chip uses the same fleet-pick toggle as used listings (no duplicate ids).
  */
+import PhotoAddChip from './PhotoAddChip'
+import { fleetCatalogKey, useFleetPick } from '../lib/fleetPick'
+
 export default function NewVehicleCard({ card }) {
+  const fleet = useFleetPick()
   if (!card) return null
+
+  const pickId = fleetCatalogKey(card.id)
+  const inFleet = fleet.has(pickId)
 
   return (
     <article
@@ -10,6 +18,7 @@ export default function NewVehicleCard({ card }) {
       data-stock-mode="New"
       data-vehicle-id={card.id}
       data-listing-live="false"
+      data-in-fleet={inFleet ? 'true' : 'false'}
     >
       <div className="new-vehicle-media">
         <span className="new-vehicle-tag">New</span>
@@ -25,6 +34,11 @@ export default function NewVehicleCard({ card }) {
             draggable={false}
           />
         )}
+        <PhotoAddChip
+          active={inFleet}
+          onToggle={() => fleet.toggle(pickId)}
+          corner="top-right"
+        />
       </div>
       {card.photo && card.photoCredit ? (
         <p className="new-vehicle-photo-credit">{card.photoCredit}</p>

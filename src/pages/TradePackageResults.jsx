@@ -462,13 +462,16 @@ export default function TradePackageResults({ pkg }) {
                   <li key={slot.unit.id}>
                     <TradeUnitCard
                       unit={slot.unit}
+                      packageId={pkg.id}
                       score={slot.score}
                       rank={slot.rank}
                       spec={spec}
                       newlyAdded={Boolean(slot.newlyAdded)}
                       dead={Boolean(slot.dead)}
                       noReplacement={Boolean(slot.noReplacement)}
+                      inPackage
                       onRemove={onRemove}
+                      onAdd={onAddUnit}
                       onUndoReplace={
                         slot.replacedFromId && replaceUndo?.replacementId === slot.unit.id
                           ? onUndoReplace

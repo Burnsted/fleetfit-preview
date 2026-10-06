@@ -81,6 +81,8 @@ export default function PackageUnit() {
         size="hero"
         showAsk
         score={score}
+        pickId={fleetUnitKey(pkg.id, unit.id)}
+        outboundPhoto
       />
 
       <header className="locked-page-header unit-dense-header">

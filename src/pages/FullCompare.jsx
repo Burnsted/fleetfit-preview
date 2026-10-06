@@ -189,6 +189,7 @@ export default function FullCompare() {
                   score={col.score}
                   rank={col.rank}
                   outboundPhoto
+                  pickId={col.pickId}
                 />
                 <p className="full-compare-kicker">EV</p>
               </div>

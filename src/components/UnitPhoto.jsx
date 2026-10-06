@@ -1,6 +1,8 @@
 import CompareControl from './CompareControl'
 import ListingPhoto, { PhotoPending } from './ListingPhoto'
+import PhotoAddChip from './PhotoAddChip'
 import ScoreDialControl from './ScoreDialControl'
+import { useFleetPick } from '../lib/fleetPick'
 import { resolveOutboundListing } from '../lib/outboundListing'
 import { currentWorkPhoto, listingPhotoRecord, PHOTO_BUILD } from '../lib/vehiclePhoto'
 import { formatAsk } from '../lib/workSpec'
@@ -10,6 +12,10 @@ function stopNav(e) {
   e.stopPropagation()
 }
 
+/**
+ * Optional fleet chip: pass pickId to use shared fleet picks, or fleetChip
+ * { active, onToggle } for controlled package membership (trade cards).
+ */
 export default function UnitPhoto({
   unit,
   packageId,
@@ -25,7 +31,11 @@ export default function UnitPhoto({
   rank = null,
   /** When true, photo itself is the outbound seller link (dial/compare stay local). */
   outboundPhoto = false,
+  pickId = null,
+  fleetChip = null,
+  showFleetChip = true,
 }) {
+  const fleet = useFleetPick()
   const body = current
     ? (bodyType || 'truck')
     : unit?.bodyType === 'van'
@@ -47,6 +57,17 @@ export default function UnitPhoto({
 
   const considered = !current ? listingPhotoRecord(unit) : null
   const outbound = !current && outboundPhoto ? resolveOutboundListing(unit) : null
+
+  const controlled = fleetChip && typeof fleetChip.onToggle === 'function'
+  const chipActive = controlled
+    ? Boolean(fleetChip.active)
+    : Boolean(pickId && fleet.has(pickId))
+  const chipToggle = controlled
+    ? fleetChip.onToggle
+    : pickId
+      ? () => fleet.toggle(pickId)
+      : null
+  const showChip = showFleetChip && !current && typeof chipToggle === 'function'
 
   const photoInner = current ? (
     <img
@@ -83,6 +104,13 @@ export default function UnitPhoto({
       data-photo-kind={current ? 'current-stock' : considered?.src ? 'listing' : 'stub'}
     >
       {photoEl}
+      {showChip ? (
+        <PhotoAddChip
+          active={chipActive}
+          onToggle={chipToggle}
+          corner="top-right"
+        />
+      ) : null}
       {current ? <span className="unit-photo-stock">Stock · not a listing</span> : null}
       <span className="unit-photo-glyph sr-only">{thumbLabel}</span>
       {whisper && unit ? (

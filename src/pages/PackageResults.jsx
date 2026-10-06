@@ -294,8 +294,12 @@ export default function PackageResults() {
         </section>
       </div>
 
-      {/* Totals always from Used units — empty sets must not crash */}
-      <PackageTotal units={ranked.map((row) => row.unit)} />
+      {/* Totals follow fleet picks (photo chip / Add to fleet); empty is safe */}
+      <PackageTotal
+        units={ranked
+          .map((row) => row.unit)
+          .filter((unit) => fleet.has(fleetUnitKey(pkg.id, unit.id)))}
+      />
 
       <div className="package-cta-bar" hidden={isNew}>
         <p className="package-fleet-count">

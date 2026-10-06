@@ -1,8 +1,9 @@
 import AddToFleetButton from './AddToFleetButton'
 import OutboundListingLink, { OutboundListingLabel } from './OutboundListingLink'
 import ListingPhoto from './ListingPhoto'
+import PhotoAddChip from './PhotoAddChip'
 import { distanceFromHome } from '../data/listings'
-import { fleetListingKey } from '../lib/fleetPick'
+import { fleetListingKey, useFleetPick } from '../lib/fleetPick'
 import { displayWorkSpec, NOT_PUBLISHED } from '../lib/workSpec'
 
 /** Listing-card chrome · outbound seller · Ted 2026-09-26 */
@@ -27,29 +28,39 @@ function valuePillClass(band) {
 }
 
 export default function ListingCard({ listing }) {
+  const fleet = useFleetPick()
   const price = formatPrice(listing)
   const miles = distanceFromHome(listing)
   const spec = displayWorkSpec(listing)
   const ymm = `${listing.year} ${listing.make} ${listing.model}${listing.trim ? ` ${listing.trim}` : ''}`
   const isVan = /van/i.test(String(listing.bodyType || listing.model || ''))
+  const pickId = fleetListingKey(listing.id)
+  const inFleet = fleet.has(pickId)
 
   return (
     <article className="listing-card" data-card-build={CARD_BUILD} data-listing-live={String(listing.listingLive === true)}>
-      <OutboundListingLink
-        vehicle={listing}
-        className="card-media"
-        ariaLabel={`View seller listing for ${ymm}`}
-      >
-        <div className="card-badges">
-          <span className={valuePillClass(listing.workValue)}>{listing.workValue}</span>
-          {listing.titleStatus && (
-            <span className="pill" style={{ background: '#fff', border: '1px solid var(--border)', color: 'var(--text-muted)' }}>
-              {listing.titleStatus} title
-            </span>
-          )}
-        </div>
-        <ListingPhoto listing={listing} vehicle={listing} className="card-media-photo" />
-      </OutboundListingLink>
+      <div className="card-media-wrap">
+        <OutboundListingLink
+          vehicle={listing}
+          className="card-media"
+          ariaLabel={`View seller listing for ${ymm}`}
+        >
+          <div className="card-badges">
+            <span className={valuePillClass(listing.workValue)}>{listing.workValue}</span>
+            {listing.titleStatus && (
+              <span className="pill" style={{ background: '#fff', border: '1px solid var(--border)', color: 'var(--text-muted)' }}>
+                {listing.titleStatus} title
+              </span>
+            )}
+          </div>
+          <ListingPhoto listing={listing} vehicle={listing} className="card-media-photo" />
+        </OutboundListingLink>
+        <PhotoAddChip
+          active={inFleet}
+          onToggle={() => fleet.toggle(pickId)}
+          corner="top-right"
+        />
+      </div>
 
       <div className="card-body">
         <h3 className="card-ymm">
@@ -95,7 +106,7 @@ export default function ListingCard({ listing }) {
         </div>
 
         <div className="card-actions">
-          <AddToFleetButton pickId={fleetListingKey(listing.id)} />
+          <AddToFleetButton pickId={pickId} />
           <OutboundListingLabel vehicle={listing} className="btn outbound-listing-btn" />
           <button
             type="button"

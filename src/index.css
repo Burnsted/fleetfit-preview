@@ -431,6 +431,14 @@ img { max-width: 100%; display: block; }
   box-shadow: var(--shadow);
   text-decoration: none;
 }
+.card-media-wrap {
+  position: relative;
+  min-height: 100%;
+  display: flex;
+}
+.card-media-wrap .card-media {
+  flex: 1;
+}
 .card-media {
   aspect-ratio: auto;
   min-height: 100%;
@@ -2901,6 +2909,64 @@ img { max-width: 100%; display: block; }
   align-items: center;
   justify-content: center;
 }
+
+/* Photo add / remove chip — high-contrast circle, ≥44×44 tap, top-right
+   to clear rank (# bottom-left) and score dial (bottom band). */
+.photo-add-chip {
+  position: absolute;
+  top: 4px;
+  right: 4px;
+  z-index: 5;
+  width: 44px;
+  height: 44px;
+  margin: 0;
+  padding: 0;
+  border: 0;
+  background: transparent;
+  cursor: pointer;
+  display: grid;
+  place-items: center;
+  color: #0b1220;
+  -webkit-tap-highlight-color: transparent;
+}
+.photo-add-chip.is-top-left {
+  right: auto;
+  left: 4px;
+}
+.photo-add-chip-face {
+  width: 32px;
+  height: 32px;
+  border-radius: 50%;
+  background: #fff;
+  border: 1.5px solid rgba(11, 18, 32, 0.55);
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.35);
+  display: grid;
+  place-items: center;
+}
+.photo-add-chip.is-active .photo-add-chip-face {
+  background: #0b1220;
+  border-color: #0b1220;
+  color: #fff;
+}
+.photo-add-chip-icon {
+  width: 16px;
+  height: 16px;
+  display: block;
+}
+.photo-add-chip:focus-visible {
+  outline: 2px solid var(--cyan, #1bb6a8);
+  outline-offset: 2px;
+  border-radius: 50%;
+}
+.card-media-wrap .photo-add-chip,
+.new-vehicle-media .photo-add-chip {
+  z-index: 6;
+}
+.new-vehicle-media .photo-add-chip {
+  /* New tag sits top-left; chip stays top-right */
+  top: 4px;
+  right: 4px;
+}
 .unit-photo.is-hero {
   height: 220px;
   margin: 0 0 18px;
@@ -4263,6 +4329,9 @@ img { max-width: 100%; display: block; }
 }
 .trade-unit-card-media .unit-photo {
   pointer-events: none;
+}
+.trade-unit-card-media .photo-add-chip {
+  pointer-events: auto;
 }
 .trade-unit-rank {
   position: absolute;

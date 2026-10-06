@@ -5,22 +5,28 @@ import { TRADE_PACKAGE_COPY } from '../data/tradeNeeds'
 import { formatMoney } from '../lib/fit'
 import { NOT_PUBLISHED } from '../lib/workSpec'
 import { SELLER_LISTING_UNAVAILABLE } from '../lib/outboundListing'
+import { fleetUnitKey, useFleetPick } from '../lib/fleetPick'
 
 /**
  * REV2 trade-package unit card: photo, rank, YMM, spec line, price,
- * score badge, remove X (44×44), listing link or dead state.
+ * score badge, Remove, listing link or dead state.
+ * Photo chip matches package membership (Remove / add) — no duplicate units.
  */
 export default function TradeUnitCard({
   unit,
+  packageId,
   score,
   rank,
   spec,
   onRemove,
+  onAdd,
+  inPackage = true,
   newlyAdded = false,
   dead = false,
   noReplacement = false,
   onUndoReplace = null,
 }) {
+  const fleet = useFleetPick()
   const ymm = `${unit.year} ${unit.make} ${unit.model}`
   const cab = spec?.cab?.known ? spec.cab.text : null
   const bed = spec?.bed?.known ? spec.bed.text : null
@@ -33,6 +39,17 @@ export default function TradeUnitCard({
 
   const ask = Number(unit.askPrice)
   const priceText = Number.isFinite(ask) && ask > 0 ? formatMoney(ask) : NOT_PUBLISHED
+  const pickId = packageId ? fleetUnitKey(packageId, unit.id) : null
+
+  function onPhotoChipToggle() {
+    if (inPackage) {
+      if (typeof onRemove === 'function') onRemove(unit.id)
+      if (pickId) fleet.remove(pickId)
+      return
+    }
+    if (typeof onAdd === 'function') onAdd(unit.id)
+    if (pickId) fleet.add(pickId)
+  }
 
   return (
     <article
@@ -41,14 +58,20 @@ export default function TradeUnitCard({
       data-rank={rank}
       data-newly-added={newlyAdded ? 'true' : undefined}
       data-listing-live={String(unit.listingLive === true)}
+      data-in-package={inPackage ? 'true' : 'false'}
     >
       <div className="trade-unit-card-media">
         <UnitPhoto
           unit={unit}
+          packageId={packageId}
           size="stack"
           showAsk={false}
           showCompare={false}
           outboundPhoto
+          fleetChip={{
+            active: inPackage,
+            onToggle: onPhotoChipToggle,
+          }}
         />
         {rank != null ? (
           <span className="trade-unit-rank" aria-label={`Rank ${rank}`}>
@@ -93,7 +116,10 @@ export default function TradeUnitCard({
               type="button"
               className="trade-unit-remove-below"
               aria-label={TRADE_PACKAGE_COPY.removeAria}
-              onClick={() => onRemove(unit.id)}
+              onClick={() => {
+                onRemove(unit.id)
+                if (pickId) fleet.remove(pickId)
+              }}
             >
               Remove
             </button>

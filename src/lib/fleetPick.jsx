@@ -1,4 +1,17 @@
 import { createContext, useContext, useEffect, useMemo, useState } from 'react'
+import {
+  fleetCatalogKey,
+  fleetListingKey,
+  fleetUnitKey,
+  toggleFleetPick,
+} from './fleetPickKeys'
+
+export {
+  fleetCatalogKey,
+  fleetListingKey,
+  fleetUnitKey,
+  toggleFleetPick,
+}
 
 const STORAGE_KEY = 'fleetfit-fleet-picks'
 const FleetPickContext = createContext(null)
@@ -11,14 +24,6 @@ function readPicks() {
   } catch {
     return []
   }
-}
-
-export function fleetUnitKey(packageId, unitId) {
-  return `unit:${packageId}:${unitId}`
-}
-
-export function fleetListingKey(listingId) {
-  return `listing:${listingId}`
 }
 
 export function FleetPickProvider({ children }) {
@@ -38,9 +43,13 @@ export function FleetPickProvider({ children }) {
     has: (id) => Boolean(id) && ids.includes(id),
     toggle: (id) => {
       if (!id) return
-      setIds((prev) => (prev.includes(id) ? prev.filter((x) => x !== id) : [...prev, id]))
+      setIds((prev) => toggleFleetPick(prev, id))
     },
     remove: (id) => setIds((prev) => prev.filter((x) => x !== id)),
+    add: (id) => {
+      if (!id) return
+      setIds((prev) => (prev.includes(id) ? prev : [...prev, id]))
+    },
   }), [ids])
 
   return (
