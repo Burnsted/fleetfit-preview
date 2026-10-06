@@ -273,10 +273,15 @@ export default function TradePackageResults({ pkg }) {
   }
 
   function onAddPackageToFleet() {
-    for (const slot of active) {
-      const key = fleetUnitKey(pkg.id, slot.unit.id)
-      if (!fleet.has(key)) fleet.toggle(key)
-    }
+    const pickIds = active.map((slot) => fleetUnitKey(pkg.id, slot.unit.id))
+    const units = active.map((slot) => slot.unit)
+    // Opens the fleet plan panel — previously this only wrote session picks
+    // with no visible feedback, so the button looked dead on live / seven-fixes.
+    fleet.addPackageToPlan({
+      packageId: pkg.id,
+      pickIds,
+      units,
+    })
   }
 
   function onJobField(field, raw) {

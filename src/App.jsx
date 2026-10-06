@@ -1,6 +1,7 @@
 import { Routes, Route } from 'react-router-dom'
 import Header from './components/Header'
 import Footer from './components/Footer'
+import FleetPlanPanel from './components/FleetPlanPanel'
 import Home from './pages/Home'
 import Browse from './pages/Browse'
 import ListingRedirect from './pages/ListingRedirect'
@@ -34,6 +35,7 @@ export default function App() {
         </Routes>
       </main>
       <Footer />
+      <FleetPlanPanel />
     </div>
   )
 }
