@@ -144,7 +144,7 @@ export function lookupSeats(opts: {
     return {
       seats: 1,
       reasonLabel:
-        '1 seat (cars.com) · Car and Driver / Edmunds 2; lower used for candidate',
+        '1 seat (cars.com) · Car and Driver, Edmunds 2; lower used for candidate',
       url: row?.source_url || null,
       label: row?.label || '',
       inference: false,

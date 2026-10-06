@@ -1,7 +1,7 @@
 pattern,model_years,evidence_type,detail,label,source_url,source_published,accessed
 Front halfshaft inner CV joint separation,2025 (builds Aug 2024-Jan 2025),TSB RCA-38-25-003-1,suspect shafts replaced,FACT,https://static.nhtsa.gov/odi/tsbs/2025/MC-11023488-0001.pdf,2025-09-24,2026-09-27
-HV battery pack seam sealing / moisture / loss of HV isolation,2022 (builds Dec 2021-Feb 2022),TSB RCA-30-22-001-1,pack inspection/reseal,FACT,https://static.oemdtc.com/NHTSA-PDFs/MC-10228717-0001.pdf,2022-12-12,2026-09-27
-Powered tonneau cover fails to open/close,2022 (builds Aug 2021-Nov 2022),TSB RSB-60-22-001-1,,FACT,https://static.oemdtc.com/NHTSA-PDFs/MC-10228730-0001.pdf,2022-12-02,2026-09-27
+HV battery pack seam sealing, moisture, and loss of HV isolation,2022 (builds Dec 2021-Feb 2022),TSB RCA-30-22-001-1,pack inspection and reseal,FACT,https://static.oemdtc.com/NHTSA-PDFs/MC-10228717-0001.pdf,2022-12-12,2026-09-27
+Powered tonneau cover fails to open or close,2022 (builds Aug 2021-Nov 2022),TSB RSB-60-22-001-1,,FACT,https://static.oemdtc.com/NHTSA-PDFs/MC-10228730-0001.pdf,2022-12-02,2026-09-27
 Suspension (air suspension) complaints,2022,NHTSA complaints,"Suspension top component (16 of 66); ""air suspension"" keyword 8",FACT (counts) / INF (pattern),https://api.nhtsa.gov/complaints/complaintsByVehicle?make=RIVIAN&model=R1T&modelYear=2022,,2026-09-27
 "Phantom/unexpected braking, FCA",2022,NHTSA complaints,"Forward Collision Avoidance 12; ""phantom braking"" keyword 5",FACT (counts) / INF (pattern),https://api.nhtsa.gov/complaints/complaintsByVehicle?make=RIVIAN&model=R1T&modelYear=2022,,2026-09-27
 Passenger OCS disables airbag for small adults,2022-2023,NHTSA complaints + recall 22V319,Air Bags 14 of 38 complaints in 2023,FACT (counts) / INF (pattern),https://api.nhtsa.gov/complaints/complaintsByVehicle?make=RIVIAN&model=R1T&modelYear=2023,,2026-09-27

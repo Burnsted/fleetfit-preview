@@ -1,0 +1,37 @@
+{
+  "summary": {
+    "van": {
+      "unitsScanned": 3,
+      "slashHitCount": 0,
+      "slashHits": []
+    },
+    "pickup": {
+      "unitsScanned": 6,
+      "slashHitCount": 0,
+      "slashHits": []
+    },
+    "suv": {
+      "unitsScanned": 0,
+      "slashHitCount": 0,
+      "slashHits": []
+    },
+    "ev": {
+      "unitsScanned": 9,
+      "slashHitCount": 0,
+      "slashHits": []
+    },
+    "gas": {
+      "unitsScanned": 2,
+      "slashHitCount": 0,
+      "slashHits": []
+    },
+    "other": {
+      "unitsScanned": 0,
+      "slashHitCount": 0,
+      "slashHits": []
+    }
+  },
+  "bannedHits": [],
+  "dashHits": [],
+  "failingUnits": []
+}

@@ -33,8 +33,13 @@
   var MAX_DAY = 20;
   var LS_KEY = 'fbw_send_log_v1';
   var MIN_CONSENT_GAP = 8;
+  var FAB_SIZE_PX = 44;
+  var FAB_EDGE_PX = 14;
+  var FOOTER_CLEAR_GAP_PX = 12;
   var STYLE_ID = 'fbw-styles';
   var ROOT_ATTR = 'data-fbw-root';
+  var PAD_ATTR = 'data-fbw-pad';
+  var DEFAULT_HIDE_WHEN = '[data-fleet-plan]';
 
   var DEFAULT_CONSENT_SELECTORS = [
     '[data-consent-bar]',
@@ -191,6 +196,7 @@
       contextFn: String(pick('contextFn', ['contextFnName']) || ''),
       consentSelector: String(pick('consentSelector') || ''),
       exclude: String(pick('exclude') || ''),
+      hideWhen: String(pick('hideWhen') || DEFAULT_HIDE_WHEN),
     };
   }
 
@@ -259,6 +265,23 @@
     var gap = minGap == null ? MIN_CONSENT_GAP : minGap;
     if (h <= 0) return 0;
     return Math.ceil(h + Math.max(gap, MIN_CONSENT_GAP));
+  }
+
+  /** Extra body padding so scrolled footer text clears the resting FAB. */
+  function fabPageReservePx() {
+    return FAB_SIZE_PX + FAB_EDGE_PX + FOOTER_CLEAR_GAP_PX;
+  }
+
+  /** True when a host UI sheet (e.g. fleet plan) should hide the FAB. */
+  function isHostUiBlocking(doc, hideWhen) {
+    if (!doc || !doc.querySelector) return false;
+    var sel = hideWhen == null || hideWhen === '' ? DEFAULT_HIDE_WHEN : String(hideWhen);
+    if (!sel) return false;
+    try {
+      return !!doc.querySelector(sel);
+    } catch (e) {
+      return false;
+    }
   }
 
   function readSendLog(storage) {
@@ -335,18 +358,21 @@
   /* ---------- CSS ---------- */
 
   function cssText() {
+    var reserve = fabPageReservePx();
     return [
       '.fbw-root{all:initial;font-family:system-ui,-apple-system,Segoe UI,sans-serif;box-sizing:border-box}',
       '.fbw-root *,.fbw-root *::before,.fbw-root *::after{box-sizing:border-box}',
       '.fbw-fab{position:fixed;left:14px;bottom:calc(14px + env(safe-area-inset-bottom,0px) + var(--fbw-consent-clearance,0px));z-index:2147483000;width:44px;height:44px;padding:0;margin:0;border:0;border-radius:50%;background:#1a1f2e;color:#fff;opacity:0.55;cursor:pointer;display:grid;place-items:center;box-shadow:0 4px 14px rgba(0,0,0,0.22);transition:opacity .15s ease,bottom .2s ease;-webkit-tap-highlight-color:transparent}',
       '.fbw-fab:hover,.fbw-fab:focus-visible,.fbw-fab[data-active="1"]{opacity:1}',
       '.fbw-fab:focus-visible{outline:2px solid #3b82f6;outline-offset:3px}',
+      '.fbw-fab[hidden],.fbw-fab[data-fbw-hidden="1"]{display:none!important;pointer-events:none}',
       '.fbw-fab svg{width:22px;height:22px;display:block;pointer-events:none}',
-      '.fbw-backdrop{position:fixed;inset:0;z-index:2147483001;background:rgba(10,14,22,0.42)}',
-      '.fbw-sheet{position:fixed;left:0;right:0;bottom:0;z-index:2147483002;background:#fff;color:#111;border-radius:12px 12px 0 0;padding:16px 16px calc(16px + env(safe-area-inset-bottom,0px));box-shadow:0 -8px 28px rgba(0,0,0,0.18);max-height:min(70vh,520px);display:flex;flex-direction:column;gap:10px}',
+      '.fbw-backdrop{position:fixed;left:0;right:0;top:0;bottom:var(--fbw-consent-clearance,0px);z-index:2147483001;background:rgba(10,14,22,0.42);transition:bottom .2s ease}',
+      '.fbw-sheet{position:fixed;left:0;right:0;bottom:var(--fbw-consent-clearance,0px);z-index:2147483002;background:#fff;color:#111;border-radius:12px 12px 0 0;padding:16px 16px calc(16px + env(safe-area-inset-bottom,0px));box-shadow:0 -8px 28px rgba(0,0,0,0.18);max-height:min(70vh,520px);display:flex;flex-direction:column;gap:10px;transition:bottom .2s ease}',
       '.fbw-note{font-size:12px;line-height:1.35;color:#4b5563;margin:0}',
       '.fbw-ta{width:100%;min-height:96px;max-height:40vh;resize:vertical;border:1px solid #d1d5db;border-radius:8px;padding:10px 12px;font:inherit;font-size:15px;color:#111;background:#fff}',
       '.fbw-ta:focus{outline:2px solid #3b82f6;outline-offset:1px}',
+      '.fbw-count{font-size:12px;line-height:1.3;color:#6b7280;margin:0;text-align:right}',
       '.fbw-actions{display:flex;gap:8px;justify-content:flex-end}',
       '.fbw-btn{appearance:none;border:0;border-radius:8px;min-height:40px;padding:0 14px;font:inherit;font-size:14px;font-weight:600;cursor:pointer}',
       '.fbw-btn-cancel{background:#e5e7eb;color:#111}',
@@ -355,7 +381,13 @@
       '.fbw-status{font-size:13px;color:#374151;min-height:1.2em;margin:0}',
       '.fbw-status-alone{font-size:15px;line-height:1.4;color:#111;margin:0;padding:4px 0 8px}',
       '.fbw-hp{position:absolute!important;left:-9999px!important;top:auto!important;width:1px!important;height:1px!important;overflow:hidden!important;opacity:0!important}',
-      '@media (prefers-reduced-motion:reduce){.fbw-fab{transition:none}}',
+      'html[' +
+        PAD_ATTR +
+        '="1"]{--fbw-page-pad-bottom:calc(' +
+        reserve +
+        'px + env(safe-area-inset-bottom,0px))}',
+      'html[' + PAD_ATTR + '="1"] body{padding-bottom:var(--fbw-page-pad-bottom)!important}',
+      '@media (prefers-reduced-motion:reduce){.fbw-fab,.fbw-sheet,.fbw-backdrop{transition:none}}',
     ].join('');
   }
 
@@ -475,9 +507,17 @@
     var exclude = parseExcludeList(
       config.exclude != null && config.exclude !== '' ? config.exclude : resolved.exclude,
     );
+    var hideWhen =
+      config.hideWhen != null && config.hideWhen !== ''
+        ? String(config.hideWhen)
+        : resolved.hideWhen || DEFAULT_HIDE_WHEN;
     var storage = config.storage || win.localStorage;
     var fetchFn = config.fetch || (win.fetch ? win.fetch.bind(win) : null);
-    var Recognition = config.SpeechRecognition || getSpeechRecognitionCtor(win);
+    // Allow explicit null to force typing-only (tests / shot harness).
+    var Recognition =
+      Object.prototype.hasOwnProperty.call(config, 'SpeechRecognition')
+        ? config.SpeechRecognition
+        : getSpeechRecognitionCtor(win);
 
     var root = null;
     var fab = null;
@@ -501,13 +541,48 @@
       root.style.setProperty('--fbw-consent-clearance', m.clearance + 'px');
     }
 
+    function syncFabVisibility() {
+      if (!fab || !fab.setAttribute) return;
+      var hide = isHostUiBlocking(doc, hideWhen);
+      var next = hide ? '1' : '0';
+      // Bail when unchanged so MutationObserver attribute hooks cannot loop.
+      if (fab.getAttribute('data-fbw-hidden') === next) return;
+      try {
+        fab.hidden = !!hide;
+      } catch (e) {
+        /* harness may lack hidden setter */
+      }
+      fab.setAttribute('data-fbw-hidden', next);
+      fab.setAttribute('aria-hidden', hide ? 'true' : 'false');
+      if (hide) fab.setAttribute('tabindex', '-1');
+      else if (typeof fab.removeAttribute === 'function') fab.removeAttribute('tabindex');
+      else fab.setAttribute('tabindex', '0');
+    }
+
+    function applyPagePad(on) {
+      var html = doc.documentElement;
+      if (!html || typeof html.setAttribute !== 'function') return;
+      if (on) html.setAttribute(PAD_ATTR, '1');
+      else if (typeof html.removeAttribute === 'function') html.removeAttribute(PAD_ATTR);
+      else html.setAttribute(PAD_ATTR, '0');
+    }
+
     function watchConsent() {
       setConsentClearance();
+      syncFabVisibility();
       if (typeof MutationObserver !== 'undefined') {
         consentObs = new MutationObserver(function () {
           setConsentClearance();
+          syncFabVisibility();
         });
-        consentObs.observe(doc.body, { childList: true, subtree: true, attributes: true, attributeFilter: ['style', 'class', 'hidden'] });
+        consentObs.observe(doc.body, {
+          childList: true,
+          subtree: true,
+          attributes: true,
+          // Do not watch "hidden": syncFabVisibility sets it on the FAB and
+          // would re-enter the observer in a tight loop.
+          attributeFilter: ['style', 'class', 'data-fleet-plan', 'data-consent-bar'],
+        });
       }
       if (typeof ResizeObserver !== 'undefined') {
         consentRo = new ResizeObserver(function () {
@@ -553,7 +628,14 @@
             else interim += t;
           }
           var text = stripControlChars((finalBits.join(' ') + ' ' + interim).trim());
-          if (ta) ta.value = text;
+          if (ta) {
+            ta.value = text;
+            try {
+              ta.dispatchEvent(new Event('input', { bubbles: true }));
+            } catch (e) {
+              /* ignore */
+            }
+          }
         };
         recognition.onerror = function () {
           listening = false;
@@ -806,6 +888,17 @@
       ta.setAttribute('aria-label', 'Feedback text');
       ta.placeholder = 'Speak or type your feedback…';
 
+      var countEl = doc.createElement('p');
+      countEl.className = 'fbw-count';
+      countEl.setAttribute('aria-live', 'polite');
+      function updateCount() {
+        var n = (ta.value || '').length;
+        if (n > MAX_TEXT) n = MAX_TEXT;
+        countEl.textContent = n + ' of ' + MAX_TEXT;
+      }
+      updateCount();
+      ta.addEventListener('input', updateCount);
+
       hp = doc.createElement('input');
       hp.type = 'text';
       hp.className = 'fbw-hp';
@@ -835,6 +928,7 @@
 
       sheet.appendChild(note);
       sheet.appendChild(ta);
+      sheet.appendChild(countEl);
       sheet.appendChild(hp);
       sheet.appendChild(statusEl);
       sheet.appendChild(actions);
@@ -879,6 +973,7 @@
 
       root.appendChild(fab);
       doc.body.appendChild(root);
+      applyPagePad(true);
       watchConsent();
     }
 
@@ -893,6 +988,7 @@
         consentRo = null;
       }
       win.removeEventListener('resize', setConsentClearance);
+      applyPagePad(false);
       if (root && root.parentNode) root.parentNode.removeChild(root);
       root = null;
       fab = null;
@@ -938,6 +1034,10 @@
       measureConsentClearance: function () {
         return measureConsentClearance(doc, consentSelector);
       },
+      syncFabVisibility: syncFabVisibility,
+      isHostUiBlocking: function () {
+        return isHostUiBlocking(doc, hideWhen);
+      },
     };
   }
 
@@ -982,6 +1082,7 @@
       contextFn: script.getAttribute('data-context-fn') || '',
       consentSelector: script.getAttribute('data-consent-selector') || '',
       exclude: script.getAttribute('data-exclude') || '',
+      hideWhen: script.getAttribute('data-hide-when') || '',
     };
   }
 
@@ -1033,12 +1134,15 @@
     consentClearancePx: consentClearancePx,
     measureConsentClearance: measureConsentClearance,
     findConsentBar: findConsentBar,
+    fabPageReservePx: fabPageReservePx,
+    isHostUiBlocking: isHostUiBlocking,
     canSend: canSend,
     recordSend: recordSend,
     readSendLog: readSendLog,
     pruneLog: pruneLog,
     getSpeechRecognitionCtor: getSpeechRecognitionCtor,
     DEFAULT_FIELD_MAP: DEFAULT_FIELD_MAP,
+    DEFAULT_HIDE_WHEN: DEFAULT_HIDE_WHEN,
     MAX_TEXT: MAX_TEXT,
     MIN_OPEN_MS: MIN_OPEN_MS,
     MAX_HOUR: MAX_HOUR,

@@ -47,7 +47,7 @@ Do **not** hotlink across sites. Copy `dist/feedback-widget.min.js` into your ow
   }
   // Optional: prefer window.FEEDBACK_CONFIG for endpoint + field names
   window.FEEDBACK_CONFIG = {
-    endpointUrl: '',
+    endpointUrl: 'https://formspree.io/f/YOUR_FORM_ID',
     fieldMap: {
       message: 'message',
       page: 'page',
@@ -62,7 +62,7 @@ Do **not** hotlink across sites. Copy `dist/feedback-widget.min.js` into your ow
   src="/assets/feedback-widget.min.js"
   data-app="family-meals"
   data-build="REPLACE_WITH_BUILD_OR_HASH"
-  data-endpoint-url=""
+  data-endpoint-url="https://formspree.io/f/YOUR_FORM_ID"
   data-field-message="message"
   data-field-page="page"
   data-field-screen="screen"
@@ -75,18 +75,18 @@ Do **not** hotlink across sites. Copy `dist/feedback-widget.min.js` into your ow
 ></script>
 ```
 
-Leave `endpointUrl` empty until the Formspree form URL is set. Never fake success.
+Set the same Formspree URL on `endpointUrl` and `data-endpoint-url`. Empty endpoint shows the not-connected dialog. Never fake success.
 
 ### Inline-paste version
 
 ```html
 <script>
-  window.FEEDBACK_CONFIG = { endpointUrl: '', fieldMap: { message: 'message', page: 'page', screen: 'screen', browser: 'browser', time: 'time', honeypot: '_gotcha' } }
+  window.FEEDBACK_CONFIG = { endpointUrl: 'https://formspree.io/f/YOUR_FORM_ID', fieldMap: { message: 'message', page: 'page', screen: 'screen', browser: 'browser', time: 'time', honeypot: '_gotcha' } }
 </script>
 <script
   data-app="family-meals"
   data-build="REPLACE_WITH_BUILD_OR_HASH"
-  data-endpoint-url=""
+  data-endpoint-url="https://formspree.io/f/YOUR_FORM_ID"
   data-context-fn="__fbwContext"
   data-exclude="#/privacy,#/legal,#/terms,#/about,privacy,legal,terms,about"
 >

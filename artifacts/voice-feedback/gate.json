@@ -5,7 +5,8 @@
     "Failed to load resource: the server responded with a status of 404 (Not Found)",
     "Failed to load resource: the server responded with a status of 404 (Not Found)",
     "Failed to load resource: the server responded with a status of 404 (Not Found)",
-    "Failed to load resource: the server responded with a status of 404 (Not Found)"
+    "Failed to load resource: the server responded with a status of 404 (Not Found)",
+    "Failed to load resource: the server responded with a status of 422 (Unprocessable Entity)"
   ],
   "overflow390": false,
   "overflow1440": false,
@@ -14,6 +15,15 @@
     "barTop": 791.703125,
     "gap": 21.703125,
     "clearance": "60px"
+  },
+  "consentGate": {
+    "gap": 21.8125,
+    "overlapArea": 0
+  },
+  "gate1440": {
+    "consentGap": 21.8125,
+    "consentOverlap": 0,
+    "reopenOverlap": 0
   },
   "keepOverlap": {
     "error": "no keep adding",
@@ -32,7 +42,16 @@
     },
     "overlapArea": 0
   },
-  "speechStub": true,
-  "excludedPrivacyNoButton": true,
-  "notConnected": true
+  "formspreeHits": [
+    {
+      "mode": "ok",
+      "url": "https://formspree.io/f/mrpeegjd"
+    },
+    {
+      "mode": "fail",
+      "url": "https://formspree.io/f/mrpeegjd"
+    }
+  ],
+  "formspreeStubbed": true,
+  "wiredEndpoint": "https://formspree.io/f/mrpeegjd"
 }

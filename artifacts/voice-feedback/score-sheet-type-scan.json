@@ -1,0 +1,80 @@
+{
+  "viewports": {
+    "390": {
+      "van": {
+        "present": true,
+        "unit": "2023 Ford E-Transit",
+        "slashHits": [],
+        "banned": null,
+        "enEmDash": false
+      },
+      "pickup": {
+        "present": true,
+        "unit": "2026 GMC Sierra EV",
+        "slashHits": [],
+        "banned": null,
+        "enEmDash": false
+      },
+      "suv": {
+        "present": false,
+        "slashHits": [],
+        "note": "no unit of this type in fixture data"
+      },
+      "ev": {
+        "present": true,
+        "unit": "2026 GMC Sierra EV",
+        "slashHits": [],
+        "banned": null,
+        "enEmDash": false
+      },
+      "gas": {
+        "present": true,
+        "unit": "2023 Ford E-Transit",
+        "slashHits": [],
+        "banned": null,
+        "enEmDash": false
+      }
+    },
+    "1440": {
+      "van": {
+        "present": true,
+        "unit": "2023 Ford E-Transit",
+        "slashHits": [],
+        "banned": null,
+        "enEmDash": false
+      },
+      "pickup": {
+        "present": true,
+        "unit": "2026 GMC Sierra EV",
+        "slashHits": [],
+        "banned": null,
+        "enEmDash": false
+      },
+      "suv": {
+        "present": false,
+        "slashHits": [],
+        "note": "no unit of this type in fixture data"
+      },
+      "ev": {
+        "present": true,
+        "unit": "2026 GMC Sierra EV",
+        "slashHits": [],
+        "banned": null,
+        "enEmDash": false
+      },
+      "gas": {
+        "present": true,
+        "unit": "2023 Ford E-Transit",
+        "slashHits": [],
+        "banned": null,
+        "enEmDash": false
+      }
+    }
+  },
+  "typesInData": [
+    "van",
+    "pickup",
+    "ev",
+    "gas"
+  ]
+}
