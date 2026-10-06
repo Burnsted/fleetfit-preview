@@ -1,0 +1,21 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 785.92 192.00" width="785.92" height="192.00" role="img" aria-label="FleetFit">
+  <title>FleetFit</title>
+  <!-- J6 open plus · Amber/Fit #F5A623 · Fleet #FFFFFF · FLEETFIT Space Grotesk Bold · Ted lock 2026-09-25 -->
+  <g id="open-plus">
+    <rect x="96.421" y="48.000" width="15.158" height="40.421" fill="#F5A623"/>
+    <rect x="111.579" y="88.421" width="40.421" height="15.158" fill="#F5A623"/>
+    <rect x="96.421" y="103.579" width="15.158" height="40.421" fill="#F5A623"/>
+    <rect x="56.000" y="88.421" width="40.421" height="15.158" fill="#F5A623"/>
+  </g>
+  <g id="wordmark">
+    <path fill="#FFFFFF" d="M 207.131 144.000 V 48.000 H 267.474 V 64.457 H 225.234 V 87.634 H 264.183 V 104.091 H 225.234 V 144.000 Z"/>
+    <path fill="#FFFFFF" d="M 274.880 144.000 V 48.000 H 292.983 V 127.543 H 336.869 V 144.000 Z"/>
+    <path fill="#FFFFFF" d="M 343.726 144.000 V 48.000 H 405.440 V 64.457 H 361.829 V 87.360 H 401.600 V 103.817 H 361.829 V 127.543 H 406.263 V 144.000 Z"/>
+    <path fill="#FFFFFF" d="M 414.217 144.000 V 48.000 H 475.931 V 64.457 H 432.320 V 87.360 H 472.091 V 103.817 H 432.320 V 127.543 H 476.754 V 144.000 Z"/>
+    <path fill="#FFFFFF" d="M 506.926 144.000 V 64.457 H 478.949 V 48.000 H 553.006 V 64.457 H 525.029 V 144.000 Z"/>
+    <path fill="#F5A623" d="M 559.863 144.000 V 48.000 H 620.206 V 64.457 H 577.966 V 87.634 H 616.914 V 104.091 H 577.966 V 144.000 Z"/>
+    <path fill="#F5A623" d="M 627.611 144.000 V 48.000 H 645.714 V 144.000 Z"/>
+    <path fill="#F5A623" d="M 680.549 144.000 V 64.457 H 652.571 V 48.000 H 726.629 V 64.457 H 698.651 V 144.000 Z"/>
+  </g>
+</svg>
