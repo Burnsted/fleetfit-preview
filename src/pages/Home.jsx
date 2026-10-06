@@ -9,30 +9,35 @@ import plumbingPhoto from '../assets/home-trades/plumbing-rivian-commercial-van.
 
 /**
  * Home trade cards — photo + trade name only.
- * Electric card uses the Electrical package (pkg-trade-electrical).
+ * Construction caption tile still opens the Electrical package
+ * (pkg-trade-electrical); intake/scoring trade key stays Electric.
  * Four Ted-approved generated plates (16:10); wrap names on vehicles are invented.
  */
 const HOME_TRADE_CARDS = [
   {
     trade: 'Landscaping',
+    label: 'Landscaping',
     packageId: TRADE_PACKAGE_IDS.landscaping,
     photo: landscapingPhoto,
     alt: 'Landscaping trade vehicle: white satin-finish electric pickup with a green stripe wrap and dark wheels, towing a trailer with a riding mower',
   },
   {
     trade: 'HVAC',
+    label: 'HVAC',
     packageId: TRADE_PACKAGE_IDS.hvac,
     photo: hvacPhoto,
     alt: 'HVAC trade vehicle: angular electric pickup with a chrome-style glossy red-to-blue gradient wrap and dark wheels',
   },
   {
     trade: 'Electric',
+    label: 'Construction',
     packageId: TRADE_PACKAGE_IDS.electrical,
     photo: electricPhoto,
     alt: 'Electric trade vehicle: dark satin carbon-fiber-look pickup with a yellow lightning stripe wrap and dark wheels',
   },
   {
     trade: 'Plumbing',
+    label: 'Plumbing',
     packageId: TRADE_PACKAGE_IDS.plumbing,
     photo: plumbingPhoto,
     alt: 'Plumbing trade vehicle',
@@ -75,7 +80,7 @@ export default function Home() {
                     draggable={false}
                   />
                 </div>
-                <span className="home-trade-photo-caption">{card.trade}</span>
+                <span className="home-trade-photo-caption">{card.label}</span>
               </Link>
             </li>
           ))}

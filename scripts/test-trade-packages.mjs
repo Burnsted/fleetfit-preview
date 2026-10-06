@@ -339,13 +339,13 @@ test('12. Intake body Van / Pickup hard-filters; never silent substitute', () =>
 
   const elec = getPackage(TRADE_PACKAGE_IDS.electrical)
   const elecVan = composeTradePackageSet(elec, { pkg: elec, intake: { body: 'Van' } }, 4)
-  // Real van listing exists (E-Transit) but is not dial-high without current —
-  // shortfall only when zero real vans exist, so no shortfall line here.
+  // Real van listing exists — always show it (even mid score), never shortfall.
+  assert.ok(elecVan.active.length >= 1, 'electrical + Van must show the real van')
   assert.equal(elecVan.bodyShortfallNote, null)
   assert.ok(!elecVan.active.some((s) => s.unit.bodyType === 'truck'))
 })
 
-test('13. Van + current: incomplete real vans still show; no shortfall; no invented score', () => {
+test('13. Vans rule: Van + current — incomplete real vans show; no shortfall; no invented score', () => {
   const hvac = getPackage(TRADE_PACKAGE_IDS.hvac)
   const intake = {
     body: 'Van',
@@ -356,8 +356,17 @@ test('13. Van + current: incomplete real vans still show; no shortfall; no inven
     currentMiles: '62000',
   }
   const set = composeTradePackageSet(hvac, { pkg: hvac, intake }, 4)
+  const { all, eligible } = rankTradePool(collectCandidateUnits(), { pkg: hvac, intake })
+  const liveVans = all.filter((r) => r.bodyClass === 'van' && r.live)
+  assert.ok(liveVans.length >= 1, 'pool has a real live van')
   assert.ok(set.active.length >= 1, 'real van listings must still pack when incomplete')
   assert.equal(set.bodyShortfallNote, null, 'shortfall only when zero real van listings')
+  for (const live of liveVans) {
+    assert.ok(
+      eligible.some((e) => e.unit.id === live.unit.id),
+      `live van ${live.unit.id} must be eligible`,
+    )
+  }
   for (const slot of set.active) {
     assert.equal(slot.unit.bodyType, 'van', `${slot.unit.id} must be van`)
     if (slot.packIncomplete || slot.score?.incomplete) {
@@ -371,20 +380,43 @@ test('13. Van + current: incomplete real vans still show; no shortfall; no inven
       assert.equal(slot.score?.candidateTotal, null, 'never invent candidateTotal')
     }
   }
-  // Complete (suggestible) rows, if any, rank before incomplete pack rows.
-  const { eligible } = rankTradePool(collectCandidateUnits(), { pkg: hvac, intake })
   const firstIncomplete = eligible.findIndex((r) => r.packIncomplete)
   if (firstIncomplete >= 0) {
     for (let i = 0; i < firstIncomplete; i += 1) {
-      assert.equal(eligible[i].suggestible, true)
+      assert.equal(eligible[i].score?.incomplete, false)
       assert.equal(eligible[i].packIncomplete, false)
     }
   }
 })
 
-test('14. Body shortfall only when zero real listings of that body exist', () => {
+test('14. Vans rule: Van without current — every real live van shows; no shortfall', () => {
   const hvac = getPackage(TRADE_PACKAGE_IDS.hvac)
-  // Empty pool → shortfall for Van.
+  const intake = { body: 'Van' }
+  const set = composeTradePackageSet(hvac, { pkg: hvac, intake }, 4)
+  const { all, eligible } = rankTradePool(collectCandidateUnits(), { pkg: hvac, intake })
+  const liveVans = all.filter((r) => r.bodyClass === 'van' && r.live)
+  assert.ok(liveVans.length >= 1)
+  assert.equal(set.bodyShortfallNote, null)
+  for (const live of liveVans) {
+    assert.ok(
+      eligible.some((e) => e.unit.id === live.unit.id),
+      `live van ${live.unit.id} must be eligible without current`,
+    )
+  }
+  assert.ok(set.active.length >= 1)
+  for (const slot of set.active) {
+    assert.equal(slot.unit.bodyType, 'van')
+  }
+
+  // Electrical + Van: mid-score complete live van still packs (not only suggestible).
+  const elec = getPackage(TRADE_PACKAGE_IDS.electrical)
+  const elecSet = composeTradePackageSet(elec, { pkg: elec, intake }, 4)
+  assert.ok(elecSet.active.some((s) => s.unit.bodyType === 'van'))
+  assert.equal(elecSet.bodyShortfallNote, null)
+})
+
+test('15. Vans rule: no vans at all → shortfall note only', () => {
+  const hvac = getPackage(TRADE_PACKAGE_IDS.hvac)
   const { bodyShortfallNote, eligible } = rankTradePool([], {
     pkg: hvac,
     intake: { body: 'Van' },

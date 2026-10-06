@@ -3,10 +3,11 @@
  *
  * Hard rule (fleet-list CLEARED): a unit appears only when it has a
  * fetch-verified real listing AND passes the 0.7 score bar — except when
- * intake hard-filters Van / Pickup: then real listings of that body still
- * appear when Score v2 is incomplete (ranked after complete, plain incomplete
- * label, never an invented total). Shortfall only when zero real listings of
- * the chosen body exist.
+ * intake hard-filters Van / Pickup: then every real live listing of that
+ * body appears (complete ranked first; incomplete after with a plain
+ * incomplete label, never an invented total). Mid-score complete live
+ * units still pack. Shortfall only when zero real listings of the chosen
+ * body exist.
  *
  * Body preference (intake Van / Pickup / Either): hard-filter the pool.
  * Never silently substitute the other body type.
@@ -43,11 +44,12 @@ export function unitMatchesIntakeBody(unit, intake) {
   return bodyClassOf(unit) === need
 }
 
-/** Packable into the active set: live suggestible, or body-filtered incomplete live. */
+/** Packable into the active set: live suggestible, or body-filtered live. */
 export function isPackableTradeRow(row) {
   if (!row?.live) return false
   if (row.suggestible) return true
   if (row.packIncomplete) return true
+  if (row.bodyPack) return true
   return false
 }
 
@@ -96,21 +98,25 @@ export function rankTradePool(units, scoreCtx = {}) {
     ? withMeta.filter((r) => r.bodyClass === bodyNeed)
     : withMeta
 
-  // Complete (suggestible) first — preserves score rank — then incomplete live
-  // real listings when a body type was chosen (never invent a total).
-  const complete = bodyMatched.filter((r) => r.suggestible)
-  let eligible = complete
+  // No body filter: suggestible only (Ted good-score bar).
+  // Body Van/Pickup: every real live listing of that body shows — complete
+  // first (score order), then incomplete (plain incomplete label, no invented
+  // total). Mid-score complete live units still pack. Shortfall only when
+  // zero real listings of that body exist.
+  let eligible
   if (bodyNeed) {
-    const incompleteLive = bodyMatched
-      .filter(
-        (r) =>
-          r.live &&
-          !r.suggestible &&
-          r.score?.incomplete &&
-          !r.score?.hardReject,
-      )
-      .map((r) => ({ ...r, packIncomplete: true }))
-    eligible = [...complete, ...incompleteLive]
+    const liveBody = bodyMatched.filter(
+      (r) => r.live && !r.score?.hardReject,
+    )
+    const completeLive = liveBody
+      .filter((r) => !r.score?.incomplete)
+      .map((r) => ({ ...r, bodyPack: true, packIncomplete: false }))
+    const incompleteLive = liveBody
+      .filter((r) => r.score?.incomplete)
+      .map((r) => ({ ...r, bodyPack: true, packIncomplete: true }))
+    eligible = [...completeLive, ...incompleteLive]
+  } else {
+    eligible = bodyMatched.filter((r) => r.suggestible)
   }
 
   const liveOfBody = bodyMatched.filter((r) => r.live)
