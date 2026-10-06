@@ -17,7 +17,7 @@ mkdirSync(ART, { recursive: true })
 
 const LIVE = 'https://burnsted.github.io/fleetfit-preview'
 const DRAFT = 'https://burnsted.github.io/fleetfit-preview/draft-seven-fixes'
-const NEEDLE = 'index-BB8dLciE.js'
+const NEEDLE = 'index-BgHY4dvt.js'
 
 const BANNED =
   /\bBest\b|\bWorst\b|\bWorth it\b|\bSOH\b|\bBattery health\b/i
