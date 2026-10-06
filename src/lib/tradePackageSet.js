@@ -384,7 +384,16 @@ export function addUnitToPackage(active, eligible, unitId, sizeMax = SIZE_MAX) {
  * Compose a full trade-package view model.
  */
 export function composeTradePackageSet(pkgDef, scoreCtx, size) {
-  const desired = Math.max(1, Math.min(SIZE_MAX, Number(size) || pkgDef.sizeDefault || 4))
+  const raw = Number(size)
+  let desired
+  if (Number.isFinite(raw) && raw <= 0) {
+    // Explicit empty package (user removed last unit) — do not re-seed.
+    desired = 0
+  } else if (Number.isFinite(raw) && raw > 0) {
+    desired = Math.min(SIZE_MAX, Math.floor(raw))
+  } else {
+    desired = Math.max(1, Math.min(SIZE_MAX, Number(pkgDef.sizeDefault) || 4))
+  }
   const { all, eligible, bodyNeed, bodyShortfallNote } = rankTradePool(
     collectCandidateUnits(),
     scoreCtx,

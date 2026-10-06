@@ -190,8 +190,9 @@ export default function TradePackageResults({ pkg }) {
 
   useEffect(() => {
     rebuild(size)
-    // eslint-disable-next-line react-hooks/exhaustive-deps -- rebuild when job / package changes
-  }, [pkg.id, job, scoreCtx])
+    // Rebuild when package or job inputs change — not on every pkg object identity.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [pkg.id, job.dailyMiles, job.loadLb, job.crew, job.tows, job.trailerLb, job.tongueLb, job.wdh, job.shopCity, job.cargoCuFt])
 
   useEffect(() => {
     writeStoredJob(pkg.id, job)
