@@ -230,7 +230,7 @@ export default function PackageResults() {
           )}
           {reco.hasFreshMy ? (
             <span className="recommendation-mix-chip is-fresh" data-fresh-my="true">
-              Includes 2025 to 2026
+              Includes 2025–2026
             </span>
           ) : null}
         </div>
