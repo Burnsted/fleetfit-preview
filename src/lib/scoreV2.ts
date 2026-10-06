@@ -750,8 +750,8 @@ function scoreEnergyGas(
     ? ' · rated on midgrade; priced at regular'
     : ''
   const reason = reasonMpg
-    ? `${reasonMpg}: ${useMpg} mpg · $${price.value} per gal FL ${diesel ? 'diesel' : 'regular'} (AAA, 9/27/26) = ${cpm.toFixed(1)}¢ per mi`
-    : `$${price.value} per gal FL ${diesel ? 'diesel' : 'regular'} (AAA, 9/27/26) ÷ ${useMpg} mpg (EPA) = ${cpm.toFixed(1)}¢ per mi${mid}`
+    ? `${reasonMpg}: ${useMpg} mpg · $${price.value} per gal FL ${diesel ? 'diesel' : 'regular'} (AAA, Sep 27, 2026) = ${cpm.toFixed(1)}¢ per mi`
+    : `$${price.value} per gal FL ${diesel ? 'diesel' : 'regular'} (AAA, Sep 27, 2026) ÷ ${useMpg} mpg (EPA) = ${cpm.toFixed(1)}¢ per mi${mid}`
   return cell(pts, { reason, url: price.url || mpgUrl })
 }
 
