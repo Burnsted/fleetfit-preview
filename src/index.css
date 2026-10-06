@@ -4315,6 +4315,23 @@ img { max-width: 100%; display: block; }
   display: grid;
   place-items: center;
 }
+.trade-unit-remove-below {
+  display: inline-block;
+  margin-top: 6px;
+  padding: 6px 10px;
+  border: 1px solid #b7c0cc;
+  border-radius: 4px;
+  background: #fff;
+  color: #0b1220;
+  font-size: 0.82rem;
+  font-weight: 600;
+  cursor: pointer;
+}
+.trade-unit-remove-below:hover,
+.trade-unit-remove-below:focus-visible {
+  border-color: #0b1220;
+  outline: none;
+}
 .trade-unit-card-body {
   display: flex;
   justify-content: space-between;

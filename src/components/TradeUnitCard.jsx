@@ -55,18 +55,6 @@ export default function TradeUnitCard({
             #{rank}
           </span>
         ) : null}
-        {onRemove ? (
-          <button
-            type="button"
-            className="trade-unit-remove"
-            aria-label={TRADE_PACKAGE_COPY.removeAria}
-            onClick={() => onRemove(unit.id)}
-          >
-            <span className="trade-unit-remove-x" aria-hidden="true">
-              ×
-            </span>
-          </button>
-        ) : null}
       </div>
 
       <div className="trade-unit-card-body">
@@ -98,6 +86,16 @@ export default function TradeUnitCard({
           {onUndoReplace ? (
             <button type="button" className="trade-undo-link" onClick={onUndoReplace}>
               Undo replace
+            </button>
+          ) : null}
+          {onRemove ? (
+            <button
+              type="button"
+              className="trade-unit-remove-below"
+              aria-label={TRADE_PACKAGE_COPY.removeAria}
+              onClick={() => onRemove(unit.id)}
+            >
+              Remove
             </button>
           ) : null}
         </div>
