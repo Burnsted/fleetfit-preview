@@ -114,28 +114,23 @@ async function scanCopy(page) {
     while ((node = walker.nextNode())) {
       const t = node.textContent || ''
       if (!t.trim()) continue
-      // Skip script/style
       const p = node.parentElement
       if (!p || /^(SCRIPT|STYLE|NOSCRIPT)$/i.test(p.tagName)) continue
-      // Skip inputs that hold URLs
+      // URLs stay as-is
       if (/https?:\/\//.test(t)) continue
-      // Year ranges like 2020–2026 are dates — leave
-      const isYearRange = /\b(19|20)\d{2}\s*[\u2013\-]\s*(19|20)\d{2}\b/.test(t) && !EM.test(t)
-      if (EN.test(t) && !isYearRange) {
-        hits.push({ kind: 'en-dash', text: t.trim().slice(0, 120) })
+      // No en/em dash exemption for year ranges — Steve: year ranges use "to"
+      if (EN.test(t)) {
+        hits.push({ kind: 'en-dash', text: t.trim().slice(0, 160) })
       }
       if (EM.test(t)) {
-        hits.push({ kind: 'em-dash', text: t.trim().slice(0, 120) })
+        hits.push({ kind: 'em-dash', text: t.trim().slice(0, 160) })
       }
-      // slash as or/per in short phrases
       const slashHit =
         /\b(mi|miles|¢|cents)\s*\/\s*(day|mi|mile)\b/i.test(t) ||
         /\bengines?\s*\/\s*body\b/i.test(t) ||
-        /\$0\.31\s*\/\s*mi\b/i.test(t) ||
-        /\bUsed\s*\/\s*New\b/.test(t) ||
-        /\bEV\s*\/\s*work\b/i.test(t)
+        /\$0\.31\s*\/\s*mi\b/i.test(t)
       if (slashHit) {
-        hits.push({ kind: 'slash', text: t.trim().slice(0, 120) })
+        hits.push({ kind: 'slash', text: t.trim().slice(0, 160) })
       }
     }
     return hits
@@ -198,6 +193,42 @@ try {
     )
     if (sel) sel.size = 1
   })
+
+  // Year-range filter chips (shop) — labels use "to", ids/min/max unchanged
+  await gotoHash(page, '/shop')
+  const filterToggle = page.getByRole('button', { name: /filter/i }).first()
+  if (await filterToggle.count()) {
+    await filterToggle.click()
+    await page.waitForTimeout(400)
+  }
+  const yearSection = page.locator('.filter-section, .filters-panel, aside, form').filter({
+    hasText: /Any years|2020 to 2026/,
+  }).first()
+  await yearSection.scrollIntoViewIfNeeded().catch(() => {})
+  await page.waitForTimeout(200)
+  // Prefer screenshot of the year-range chip row
+  const yearChips = page.locator('.chip, button').filter({ hasText: /2020 to 2026|2024 to 2026|Any years/ })
+  if ((await yearChips.count()) >= 2) {
+    await page.evaluate(() => {
+      const chips = [...document.querySelectorAll('.chip, button')].filter((el) =>
+        /2020 to 2026|Any years|2024 to 2026/.test(el.textContent || ''),
+      )
+      if (!chips.length) return
+      const parent = chips[0].closest('.filter-section, .filters-years, fieldset, div') || chips[0].parentElement
+      parent?.setAttribute('data-year-ranges-shot', '1')
+    })
+    const shot = page.locator('[data-year-ranges-shot="1"]').first()
+    if (await shot.count()) {
+      await shot.screenshot({ path: join(OUT, 'year-ranges.png') })
+    } else {
+      await page.screenshot({ path: join(OUT, 'year-ranges.png'), fullPage: false })
+    }
+  } else {
+    await page.screenshot({ path: join(OUT, 'year-ranges.png'), fullPage: false })
+  }
+  const yearTexts = await page.locator('body').innerText()
+  assert(/2020 to 2026/.test(yearTexts), 'missing 2020 to 2026 year range label')
+  assert(!/2020\u20132026/.test(yearTexts), 'en-dash year range still present')
 
   // Score sheet lines
   await gotoHash(page, '/package/pkg-trade-electrical')

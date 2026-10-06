@@ -472,10 +472,10 @@ export const PACKAGES = [
   {
     id: LEGACY_ELECTRICAL_PACKAGE_ID,
     path: 'PRIMARY',
-    label: 'Treasure Coast electrical — truck + van options',
+    label: 'Treasure Coast electrical. Truck + van options',
     headline: 'Used-EV fleet package. Treasure Coast electrical (truck + van options)',
     summary:
-      'Composite example for a small trade fleet that needs matched used EVs for typical coastal service routes — including newer 2025–2026 options. Not a real shop.',
+      'Composite example for a small trade fleet that needs matched used EVs for typical coastal service routes. Including newer 2025 to 2026 options. Not a real shop.',
     region: 'Treasure Coast, FL',
     trade: 'Electrical',
     /** Demo FACT scaffold for Life Delta vs current non-EV work vehicle */
@@ -540,7 +540,7 @@ export const PACKAGES = [
   {
     id: 'pkg-tc-landscape-2',
     path: 'SECONDARY EXAMPLE',
-    label: 'Treasure Coast landscape — trailer hauler + lead truck',
+    label: 'Treasure Coast landscape. Trailer hauler + lead truck',
     headline: '2-unit used-EV package. Trailer hauler + lead and estimates',
     summary:
       'Composite example for a two-truck landscape day: one candidate hauler and one lighter lead truck. Not a real shop.',
