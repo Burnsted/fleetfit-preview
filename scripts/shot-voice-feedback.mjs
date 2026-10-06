@@ -298,12 +298,22 @@ async function main() {
   await page.keyboard.press('Escape')
   await page.waitForSelector('.fbw-sheet', { state: 'detached' }).catch(() => {})
 
+  // Clear browser send log so rate limits do not block stubbed sends.
+  await page.evaluate(() => {
+    try {
+      localStorage.removeItem('fbw_send_log_v1')
+    } catch (e) {
+      /* ignore */
+    }
+  })
+
   // --- thank-you (stubbed ok:true) ---
   formspreeMode = 'ok'
   await remountWidget({ SpeechRecognition: null })
   await page.click('.fbw-fab')
   await page.waitForSelector('.fbw-sheet[data-fbw-mode="compose"]')
-  await page.locator('.fbw-ta').fill('Stubbed success path. Do not deliver.')
+  const thanksText = 'Stubbed success path. Do not deliver.'
+  await page.locator('.fbw-ta').fill(thanksText)
   // Honor 3s minimum open-to-send
   await page.waitForTimeout(3200)
   await page.click('.fbw-btn-send')
@@ -319,11 +329,21 @@ async function main() {
 
   // --- failure (stubbed 422) ---
   formspreeMode = 'fail'
+  await page.evaluate(() => {
+    try {
+      localStorage.removeItem('fbw_send_log_v1')
+    } catch (e) {
+      /* ignore */
+    }
+  })
   await remountWidget({ SpeechRecognition: null })
   await page.click('.fbw-fab')
   await page.waitForSelector('.fbw-sheet[data-fbw-mode="compose"]')
   const failText = 'Stubbed failure path keeps this text.'
   await page.locator('.fbw-ta').fill(failText)
+  // Confirm speech did not overwrite typed text
+  const beforeSend = await page.locator('.fbw-ta').inputValue()
+  if (beforeSend !== failText) throw new Error('typed text overwritten before send: ' + beforeSend)
   await page.waitForTimeout(3200)
   await page.click('.fbw-btn-send')
   await page.waitForFunction(() => {

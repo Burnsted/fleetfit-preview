@@ -478,7 +478,11 @@
     );
     var storage = config.storage || win.localStorage;
     var fetchFn = config.fetch || (win.fetch ? win.fetch.bind(win) : null);
-    var Recognition = config.SpeechRecognition || getSpeechRecognitionCtor(win);
+    // Allow explicit null to force typing-only (tests / shot harness).
+    var Recognition =
+      Object.prototype.hasOwnProperty.call(config, 'SpeechRecognition')
+        ? config.SpeechRecognition
+        : getSpeechRecognitionCtor(win);
 
     var root = null;
     var fab = null;
