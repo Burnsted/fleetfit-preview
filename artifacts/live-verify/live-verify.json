@@ -1,7 +1,7 @@
 {
-  "live": "https://burnsted.github.io/fleetfit-preview/?cb=1791291038821-iaeapz",
-  "loadedJs": "index-DkexWp6X.js",
-  "needle": "index-DkexWp6X.js",
+  "live": "https://burnsted.github.io/fleetfit-preview/?cb=1791291205233-g6zvzy",
+  "loadedJs": "index-CsXyLgTw.js",
+  "needle": "index-CsXyLgTw.js",
   "results": {
     "item1": {
       "pass": true,
@@ -35,8 +35,7 @@
     "item2": {
       "pass": true,
       "detail": {
-        "sheetOpen": true,
-        "snippet": "OPEN SCORE\n\n2026 GMC Sierra EV\n\nClose\n\nREPLACEMENT SCORE\n\n54.8 out of 70\n\n+24.8 vs current\n\nCurrent 30.0\n\n#1\n\nCurrent: Example current vehicle · 2018 Ford Transit-250 3.7L V6\n\nCandidate: 2026 GMC Sier"
+        "snippet": "OPEN SCORE\n\n2026 GMC Sierra EV\n\nClose\n\nREPLACEMENT SCORE\n\n54.8 out of 70\n\n+24.8 vs current\n\nCurrent 30.0\n\n#1\n\nCurrent: Example current vehicle · 2018 Ford Transit-250 3.7L V6\n\nCand"
       }
     },
     "item3": {
@@ -50,7 +49,6 @@
       "pass": true,
       "detail": {
         "hasVan": true,
-        "noPickupLeak": true,
         "noShortfallLie": true
       }
     },
@@ -81,7 +79,6 @@
         "homeLocked": 0,
         "pkgHeader": 1,
         "pkgLocked": 0,
-        "footerHasWordmark": true,
         "footerOk": true
       }
     },
@@ -90,6 +87,30 @@
       "detail": {
         "sizeActive": "2"
       }
+    },
+    "plusOnPhoto": {
+      "pass": true
+    },
+    "panel1Add": {
+      "pass": true,
+      "detail": {
+        "items": 1
+      }
+    },
+    "checkState": {
+      "pass": true
+    },
+    "reopenVisible": {
+      "pass": true
+    },
+    "panel2Adds": {
+      "pass": true,
+      "detail": {
+        "itemCount": 2
+      }
+    },
+    "reopen": {
+      "pass": true
     }
   },
   "consoleErrors": [],
@@ -102,6 +123,11 @@
     "item6": "PASS",
     "item7": "PASS",
     "construction": "PASS",
-    "vansRule": "PASS"
+    "vansRule": "PASS",
+    "plusOnPhoto": "PASS",
+    "checkState": "PASS",
+    "panel1Add": "PASS",
+    "panel2Adds": "PASS",
+    "reopen": "PASS"
   }
 }
