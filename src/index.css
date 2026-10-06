@@ -905,10 +905,8 @@ img { max-width: 100%; display: block; }
 
 .app-shell.chrome-dark { background: #05080a; color: #fff; }
 .app-shell.chrome-home { background: #f2f2f2; color: #111; }
-.app-shell.chrome-dark .site-footer {
-  background: var(--dark); border-top-color: #222; color: #888;
-}
-.app-shell.chrome-dark .footer-brand { color: #ccc; }
+/* Footer stays light with Header-matching wordmark (dark FLEET / orange FIT).
+   Do not restyle .site-footer under chrome-dark — white FLEET would vanish. */
 
 /* Overlay header (home hero / model) */
 .overlay-header {
@@ -1319,13 +1317,6 @@ img { max-width: 100%; display: block; }
 }
 
 /* ── LOCKED fleet preview ── */
-.chrome-dark .site-footer {
-  background: #0c1214;
-  color: rgba(255, 255, 255, 0.55);
-  border-top: 1px solid rgba(255, 255, 255, 0.08);
-}
-.chrome-dark .site-footer strong { color: #fff; }
-
 .locked-home { background: #0c1214; color: #f2f4f5; }
 .locked-hero {
   position: relative;
