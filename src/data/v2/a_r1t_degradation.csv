@@ -1,0 +1,8 @@
+source,scope,metric,value,label,source_url,source_published,accessed
+Recurrent,all EVs in Recurrent fleet (not R1T-specific),avg range retained at 3 yr,97%,FACT (class-level),https://www.recurrentauto.com/research/after-a-billion-miles-we-know-this-about-your-ev,2026-01-15,2026-09-27
+Recurrent,all EVs (ML-extrapolated),avg range retained at 5 yr,95%,FACT (class-level; modeled),https://www.recurrentauto.com/research/after-a-billion-miles-we-know-this-about-your-ev,2026-01-15,2026-09-27
+Recurrent,brand group incl. Rivian,expected range at 3 yr vs new,"""the same as the expected range when new"" (range, not SOH; buffer release likely)",FACT (brand-level),https://www.recurrentauto.com/research/after-a-billion-miles-we-know-this-about-your-ev,2026-01-15,2026-09-27
+Rivian,R1T,published degradation curve,UNKNOWN (none published; searched rivian.com support/press),UNKNOWN,,,2026-09-27
+rivianforums owner,"2022 R1T Quad, 54k mi",estimated capacity loss,~3.9-4.8%,INF (anecdote),https://www.rivianforums.com/forum/threads/2022-r1t-quad-motor-battery-degradation-estimate-at-54-000-miles-4-degradation.34286/,,2026-09-27
+reddit owner,"R1 Large pack, 100k+ mi",reported usable kWh,127.72 of 131 (~2.5% loss),INF (anecdote),https://www.reddit.com/r/Rivian/comments/1kdvagt/battery_degradation_100000_miles/,,2026-09-27
+reddit owners,"R1 Large pack, 42k / 83k mi",reported loss,130.4 of 131 at 42k; ~1.5% at 83k,INF (anecdote),https://www.reddit.com/r/Rivian/comments/1m9j00y/battery_degradation/,,2026-09-27

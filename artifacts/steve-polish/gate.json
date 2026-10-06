@@ -1,0 +1,74 @@
+{
+  "clearances": {
+    "panelFoot390ConsentBefore": {
+      "gap": -60,
+      "elBottom": 808,
+      "barTop": 748,
+      "dismissed": false,
+      "barHeight": 96
+    },
+    "reopen390ConsentBefore": {
+      "gap": -78,
+      "elBottom": 826,
+      "barTop": 748,
+      "dismissed": false,
+      "barHeight": 96
+    },
+    "panelFoot390ConsentAfter": {
+      "gap": 44,
+      "elBottom": 704,
+      "barTop": 748,
+      "dismissed": false,
+      "barHeight": 96
+    },
+    "reopen390ConsentAfter": {
+      "gap": 26,
+      "elBottom": 722,
+      "barTop": 748,
+      "dismissed": false,
+      "barHeight": 96
+    },
+    "panelFoot390Dismissed": {
+      "gap": 36,
+      "elBottom": 808,
+      "barTop": null,
+      "dismissed": true
+    },
+    "reopen390Dismissed": {
+      "gap": 18,
+      "elBottom": 826,
+      "barTop": null,
+      "dismissed": true
+    },
+    "panelFoot1440Consent": {
+      "gap": 44,
+      "elBottom": 760,
+      "barTop": 804,
+      "dismissed": false,
+      "barHeight": 96
+    },
+    "reopen1440Consent": {
+      "gap": 26,
+      "elBottom": 778,
+      "barTop": 804,
+      "dismissed": false,
+      "barHeight": 96
+    },
+    "reopen1440Dismissed": {
+      "gap": 18,
+      "elBottom": 882,
+      "barTop": null,
+      "dismissed": true
+    },
+    "panelFoot1440Dismissed": {
+      "gap": 36,
+      "elBottom": 864,
+      "barTop": null,
+      "dismissed": true
+    }
+  },
+  "copyScan": [],
+  "consoleErrors": [],
+  "copyChangesNote": "see PR body",
+  "copyScanUnique": []
+}

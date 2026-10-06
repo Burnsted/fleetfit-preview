@@ -1,0 +1,28 @@
+{
+  "base": "https://burnsted.github.io/fleetfit-preview/?cb=0989656a48432895",
+  "js": "./assets/index-C1ZW3Hmt.js",
+  "css": "./assets/index-D2ABSK-a.css",
+  "consoleErrors": [],
+  "copyScan": [],
+  "clearances": {
+    "panelFoot390": {
+      "gap": 44,
+      "elBottom": 704,
+      "barTop": 748,
+      "barHeight": 96
+    },
+    "reopen390": {
+      "gap": 26,
+      "elBottom": 722,
+      "barTop": 748,
+      "barHeight": 96
+    }
+  },
+  "screenshots": [
+    "01a-home-390.png",
+    "01-home-year-ranges-390.png",
+    "02-score-sheet-aaa-date-390.png",
+    "03-panel-keep-adding-consent-390.png",
+    "04-reopen-consent-390.png"
+  ]
+}
