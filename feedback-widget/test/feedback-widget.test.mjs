@@ -208,33 +208,62 @@ add('SPA exclude remount decision flips with hash', () => {
   assert.equal(fbw.isExcluded(exclude, { pathname: '/', hash: '#/privacy', href: '' }), true)
 })
 
-// --- send path: not connected, failure keeps text, success needs JSON ---
-add('send: empty endpointUrl shows not connected; no fetch', async () => {
+// --- empty endpoint: immediate not-connected dialog (no compose / mic) ---
+add('empty endpointUrl: fab opens not-connected only; no textarea, no speech', async () => {
+  let speechStarts = 0
+  function FakeSpeech() {
+    speechStarts++
+  }
+  FakeSpeech.prototype.start = function () {}
+  FakeSpeech.prototype.stop = function () {}
+
   const calls = []
-  const { w, getStatus, getText, setText } = makeHarness({
+  const { w, getStatus, getMode, hasTextarea, hasOkOnly } = makeHarness({
     endpointUrl: '',
+    SpeechRecognition: FakeSpeech,
     fetch: (...a) => {
       calls.push(a)
       return Promise.resolve({ ok: true, json: async () => ({ success: true }) })
     },
   })
+  // openSheet must redirect to not-connected when endpoint empty
   w.openSheet()
-  setText('hello from test')
-  // bypass min-open by rewinding openAt via send after delay simulation:
-  await new Promise((r) => setTimeout(r, 10))
-  // Force openAt in the past by calling send after monkeypatching via waiting MIN_OPEN
-  // Instead: call with a harness that sets openAt - expose through delayed send using fake timers.
-  // Direct: use internal by waiting 0 and checking not_connected only after min open message first.
-  let result = await w.send()
-  if (result.reason === 'too_fast') {
-    // advance by recreating with patched Date - simpler: loop sleep
-    await new Promise((r) => setTimeout(r, fbw.MIN_OPEN_MS + 20))
-    result = await w.send()
-  }
-  assert.equal(result.reason, 'not_connected')
-  assert.equal(calls.length, 0)
+  assert.equal(getMode(), 'not-connected')
   assert.match(getStatus(), /isn['']t connected yet/)
-  assert.equal(getText(), 'hello from test')
+  assert.equal(hasTextarea(), false)
+  assert.equal(hasOkOnly(), true)
+  assert.equal(speechStarts, 0)
+  assert.equal(calls.length, 0)
+  w.destroy()
+})
+
+add('empty endpointUrl: openNotConnected never starts recognition', () => {
+  let speechStarts = 0
+  function FakeSpeech() {
+    speechStarts++
+  }
+  FakeSpeech.prototype.start = function () {}
+  FakeSpeech.prototype.stop = function () {}
+  const { w, getStatus, hasTextarea } = makeHarness({
+    endpointUrl: '',
+    SpeechRecognition: FakeSpeech,
+  })
+  w.openNotConnected()
+  assert.match(getStatus(), /isn['']t connected yet/)
+  assert.equal(hasTextarea(), false)
+  assert.equal(speechStarts, 0)
+  w.destroy()
+})
+
+// --- connected endpoint: compose sheet + send path ---
+add('with endpointUrl: openSheet shows compose UI (textarea)', () => {
+  const { w, getMode, hasTextarea } = makeHarness({
+    endpointUrl: 'https://example.invalid/form',
+    fetch: () => Promise.resolve({ ok: true, json: async () => ({ success: true }) }),
+  })
+  w.openSheet()
+  assert.equal(getMode(), 'compose')
+  assert.equal(hasTextarea(), true)
   w.destroy()
 })
 
@@ -320,7 +349,7 @@ function memStorage() {
   }
 }
 
-function makeHarness({ endpointUrl, fetch, storage }) {
+function makeHarness({ endpointUrl, fetch, storage, SpeechRecognition }) {
   const store = storage || memStorage()
   const listeners = {}
   const fakeWin = {
@@ -347,7 +376,8 @@ function makeHarness({ endpointUrl, fetch, storage }) {
   let statusText = ''
   let taValue = ''
   let hpValue = ''
-  let sheetOpen = false
+  let mode = ''
+  const created = []
 
   const fakeDoc = {
     head: { appendChild() {} },
@@ -371,33 +401,37 @@ function makeHarness({ endpointUrl, fetch, storage }) {
       return []
     },
     createElement(tag) {
+      const attrs = {}
       const el = {
         tagName: String(tag).toUpperCase(),
         style: { setProperty() {} },
         className: '',
         children: [],
         get value() {
-          if (this.className === 'fbw-ta') return taValue
-          if (this.className === 'fbw-hp') return hpValue
+          if (String(this.className).includes('fbw-ta')) return taValue
+          if (String(this.className).includes('fbw-hp')) return hpValue
           return this._value || ''
         },
         set value(v) {
-          if (this.className === 'fbw-ta') taValue = v
-          else if (this.className === 'fbw-hp') hpValue = v
+          if (String(this.className).includes('fbw-ta')) taValue = v
+          else if (String(this.className).includes('fbw-hp')) hpValue = v
           else this._value = v
         },
         get textContent() {
-          return this.className === 'fbw-status' ? statusText : this._text || ''
+          return String(this.className).includes('fbw-status') ? statusText : this._text || ''
         },
         set textContent(v) {
-          if (this.className === 'fbw-status') statusText = v
+          if (String(this.className).includes('fbw-status')) statusText = v
           else this._text = v
         },
         innerHTML: '',
         parentNode: { removeChild() {} },
-        setAttribute() {},
-        getAttribute() {
-          return null
+        setAttribute(k, v) {
+          attrs[k] = String(v)
+          if (k === 'data-fbw-mode') mode = String(v)
+        },
+        getAttribute(k) {
+          return attrs[k] || null
         },
         addEventListener() {},
         appendChild(child) {
@@ -406,6 +440,7 @@ function makeHarness({ endpointUrl, fetch, storage }) {
         focus() {},
         removeChild() {},
       }
+      created.push(el)
       return el
     },
     addEventListener() {},
@@ -425,15 +460,8 @@ function makeHarness({ endpointUrl, fetch, storage }) {
     endpointUrl,
     fieldMap: {},
     exclude: '',
-    SpeechRecognition: null,
+    SpeechRecognition: SpeechRecognition === undefined ? null : SpeechRecognition,
   })
-
-  // Patch openSheet tracking: after open, classNames are set on elements.
-  const origOpen = w.openSheet
-  w.openSheet = function () {
-    sheetOpen = true
-    return origOpen()
-  }
 
   return {
     w,
@@ -445,7 +473,14 @@ function makeHarness({ endpointUrl, fetch, storage }) {
     setHoneypot: (t) => {
       hpValue = t
     },
-    sheetOpen: () => sheetOpen,
+    getMode: () => mode,
+    hasTextarea: () => created.some((el) => String(el.className).includes('fbw-ta')),
+    hasOkOnly: () => {
+      const buttons = created.filter((el) => el.tagName === 'BUTTON' && String(el.className).includes('fbw-btn'))
+      // After openNotConnected: one OK send-styled button, no Cancel
+      const labels = buttons.map((b) => b._text || b.textContent || '')
+      return labels.includes('OK') && !labels.includes('Cancel') && !labels.includes('Send')
+    },
   }
 }
 

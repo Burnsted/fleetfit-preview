@@ -345,6 +345,7 @@
       '.fbw-btn-send{background:#1a1f2e;color:#fff}',
       '.fbw-btn:disabled{opacity:0.5;cursor:not-allowed}',
       '.fbw-status{font-size:13px;color:#374151;min-height:1.2em;margin:0}',
+      '.fbw-status-alone{font-size:15px;line-height:1.4;color:#111;margin:0;padding:4px 0 8px}',
       '.fbw-hp{position:absolute!important;left:-9999px!important;top:auto!important;width:1px!important;height:1px!important;overflow:hidden!important;opacity:0!important}',
       '@media (prefers-reduced-motion:reduce){.fbw-fab{transition:none}}',
     ].join('');
@@ -625,6 +626,7 @@
         showStatus('Add a short note first.');
         return Promise.resolve({ ok: false, reason: 'empty' });
       }
+      // endpointUrl empty never reaches the compose sheet; guard anyway.
       if (!endpointUrl) {
         showStatus("Feedback isn't connected yet.");
         return Promise.resolve({ ok: false, reason: 'not_connected' });
@@ -709,8 +711,59 @@
         });
     }
 
+    /**
+     * When endpointUrl is empty: show only the not-connected message + OK.
+     * Never create a textarea, never start speech, never ask for mic permission.
+     */
+    function openNotConnected() {
+      if (sheet) return;
+      lastFocus = doc.activeElement;
+
+      backdrop = doc.createElement('div');
+      backdrop.className = 'fbw-backdrop';
+      backdrop.addEventListener('click', function () {
+        closeSheet();
+      });
+
+      sheet = doc.createElement('div');
+      sheet.className = 'fbw-sheet';
+      sheet.setAttribute('role', 'dialog');
+      sheet.setAttribute('aria-modal', 'true');
+      sheet.setAttribute('aria-label', 'Feedback not connected');
+      sheet.setAttribute('data-fbw-mode', 'not-connected');
+
+      statusEl = doc.createElement('p');
+      statusEl.className = 'fbw-status fbw-status-alone';
+      statusEl.setAttribute('aria-live', 'polite');
+      statusEl.textContent = "Feedback isn't connected yet.";
+
+      var actions = doc.createElement('div');
+      actions.className = 'fbw-actions';
+      var ok = doc.createElement('button');
+      ok.type = 'button';
+      ok.className = 'fbw-btn fbw-btn-send';
+      ok.textContent = 'OK';
+      ok.addEventListener('click', closeSheet);
+      actions.appendChild(ok);
+
+      sheet.appendChild(statusEl);
+      sheet.appendChild(actions);
+
+      root.appendChild(backdrop);
+      root.appendChild(sheet);
+
+      focusables = [ok];
+      doc.addEventListener('keydown', onKey, true);
+      ok.focus();
+    }
+
     function openSheet() {
       if (sheet) return;
+      // Hard gate: empty endpoint never opens compose / mic UI.
+      if (!endpointUrl) {
+        openNotConnected();
+        return;
+      }
       lastFocus = doc.activeElement;
       openAt = Date.now();
 
@@ -725,6 +778,7 @@
       sheet.setAttribute('role', 'dialog');
       sheet.setAttribute('aria-modal', 'true');
       sheet.setAttribute('aria-label', 'Voice feedback');
+      sheet.setAttribute('data-fbw-mode', 'compose');
 
       var note = doc.createElement('p');
       note.className = 'fbw-note';
@@ -785,6 +839,11 @@
       }
     }
 
+    function onFabClick() {
+      if (!endpointUrl) openNotConnected();
+      else openSheet();
+    }
+
     function mount() {
       if (destroyed) return;
       if (isOptedOut(doc)) return;
@@ -801,9 +860,7 @@
       fab.className = 'fbw-fab';
       fab.setAttribute('aria-label', 'Send voice feedback');
       fab.innerHTML = micSvg();
-      fab.addEventListener('click', function () {
-        openSheet();
-      });
+      fab.addEventListener('click', onFabClick);
 
       root.appendChild(fab);
       doc.body.appendChild(root);
@@ -856,6 +913,7 @@
       syncRoute: syncRoute,
       destroy: destroy,
       openSheet: openSheet,
+      openNotConnected: openNotConnected,
       closeSheet: closeSheet,
       send: send,
       setConsentClearance: setConsentClearance,

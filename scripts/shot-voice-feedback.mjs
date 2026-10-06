@@ -171,9 +171,37 @@ async function main() {
   await page.waitForTimeout(300)
   await shot(page, '390-button-consent-dismissed')
 
-  // --- sheet listening with stub interim ---
+  // Helper: remount widget with overrides (shots never POST to a real inbox)
+  async function remountWidget(overrides) {
+    await page.evaluate((ov) => {
+      if (!window.FleetFeedbackWidget) return
+      const scripts = document.querySelectorAll('script[data-app="fleetfit"]')
+      const cfgScript = scripts[scripts.length - 1]
+      const root = document.querySelector('[data-fbw-root]')
+      if (root) root.remove()
+      const cfg = {
+        app: 'fleetfit',
+        build: 'shot',
+        endpointUrl: ov.endpointUrl || '',
+        contextFn: '__fleetfitFeedbackContext',
+        consentSelector: '[data-consent-bar]',
+        exclude: (cfgScript && cfgScript.getAttribute('data-exclude')) || '#/privacy,#/legal',
+        fetch: function () {
+          return Promise.reject(new Error('shot must not send'))
+        },
+      }
+      if (ov.SpeechRecognition === null) cfg.SpeechRecognition = null
+      window.FleetFeedbackWidget.createWidget(cfg)
+    }, overrides)
+    await waitFab(page, true)
+  }
+
+  // --- sheet listening with stub interim (needs non-empty endpoint for compose UI) ---
+  await remountWidget({
+    endpointUrl: 'https://example.invalid/feedback-shot-no-send',
+  })
   await page.click('.fbw-fab')
-  await page.waitForSelector('.fbw-sheet', { state: 'visible' })
+  await page.waitForSelector('.fbw-sheet[data-fbw-mode="compose"]', { state: 'visible' })
   await page.waitForTimeout(400)
   const taVal = await page.locator('.fbw-ta').inputValue()
   console.log('stub interim text:', taVal || '(empty - stub may not have fired)')
@@ -181,52 +209,44 @@ async function main() {
     path.join(outDir, 'speech-stub-note.txt'),
     'VM has no mic; SpeechRecognition stubbed to inject interim text: "stub interim: package total looks clear"\nCaptured textarea: ' +
       taVal +
-      '\n',
+      '\nCompose UI opened with a throwaway endpointUrl for the stub shot only; no submission sent.\n',
   )
   await shot(page, '390-sheet-listening-stub')
+  await page.keyboard.press('Escape')
+  await page.waitForSelector('.fbw-sheet', { state: 'detached' }).catch(() => {})
 
-  // --- not connected yet (endpointUrl empty; never posts) ---
-  await page.locator('.fbw-ta').fill('draft note, do not send')
-  await page.waitForTimeout(3200)
-  await page.click('.fbw-btn-send')
-  await page.waitForTimeout(200)
+  // --- not connected yet: empty endpointUrl opens message-only dialog (no textarea / mic) ---
+  await remountWidget({ endpointUrl: '', SpeechRecognition: null })
+  await page.click('.fbw-fab')
+  await page.waitForSelector('.fbw-sheet[data-fbw-mode="not-connected"]', { state: 'visible' })
   const status2 = await page.locator('.fbw-status').innerText()
-  console.log('status final:', status2)
+  console.log('not-connected status:', status2)
   if (!/isn['']t connected yet/i.test(status2)) {
     throw new Error('expected not-connected status, got: ' + status2)
   }
+  const taCount = await page.locator('.fbw-ta').count()
+  if (taCount !== 0) throw new Error('not-connected dialog must not include textarea')
   await shot(page, '390-not-connected')
-  await page.click('.fbw-btn-cancel')
+  await page.click('.fbw-btn-send') // OK
   await page.waitForSelector('.fbw-sheet', { state: 'detached' })
 
-  // --- typing fallback: kill speech and reopen ---
+  // --- typing fallback: compose with endpoint, speech unavailable ---
   await page.evaluate(() => {
     window.SpeechRecognition = undefined
     window.webkitSpeechRecognition = undefined
-    // destroy and remount widget without speech
-    if (window.FleetFeedbackWidget) {
-      const scripts = document.querySelectorAll('script[data-app="fleetfit"]')
-      const cfgScript = scripts[scripts.length - 1]
-      const root = document.querySelector('[data-fbw-root]')
-      if (root) root.remove()
-      window.FleetFeedbackWidget.createWidget({
-        app: 'fleetfit',
-        build: 'shot',
-        endpointUrl: '',
-        contextFn: '__fleetfitFeedbackContext',
-        consentSelector: '[data-consent-bar]',
-        exclude: cfgScript?.getAttribute('data-exclude') || '#/privacy,#/legal',
-        SpeechRecognition: null,
-      })
-    }
   })
-  await waitFab(page, true)
+  await remountWidget({
+    endpointUrl: 'https://example.invalid/feedback-shot-no-send',
+    SpeechRecognition: null,
+  })
   await page.click('.fbw-fab')
-  await page.waitForSelector('.fbw-sheet')
+  await page.waitForSelector('.fbw-sheet[data-fbw-mode="compose"]')
   const statusType = await page.locator('.fbw-status').innerText()
   console.log('typing fallback status:', statusType)
   await shot(page, '390-type-fallback')
   await page.keyboard.press('Escape')
+  // Restore empty-endpoint widget for remaining gates (matches draft config)
+  await remountWidget({ endpointUrl: '', SpeechRecognition: null })
 
   // --- excluded hash: button absent (pattern only; no FleetFit privacy pages) ---
   await page.goto(base + '#/privacy', { waitUntil: 'networkidle' })

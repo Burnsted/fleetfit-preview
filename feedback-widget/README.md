@@ -32,7 +32,9 @@ Set via `data-*` on the script tag and/or `window.FEEDBACK_CONFIG` (object wins 
 | `consentSelector` | `""` | CSS selector for a bottom consent/cookie bar |
 | `exclude` | `""` | Comma-separated path/hash patterns; widget does not mount |
 
-POST body is JSON with `Content-Type: application/json` and `Accept: application/json`. Success only when the HTTP response is OK **and** the JSON has `success: true` or `success: "true"`. On failure the widget shows `Couldn't send, please try again` and keeps the typed text. If `endpointUrl` is empty it shows `Feedback isn't connected yet.` and sends nothing.
+POST body is JSON with `Content-Type: application/json` and `Accept: application/json`. Success only when the HTTP response is OK **and** the JSON has `success: true` or `success: "true"`. On failure the widget shows `Couldn't send, please try again` and keeps the typed text.
+
+If `endpointUrl` is empty, tapping the button immediately shows only `Feedback isn't connected yet.` with an OK control. It does **not** open the compose sheet, start the mic, or request speech permission. When `endpointUrl` is set, the normal voice/type Send/Cancel flow runs.
 
 ## Drop-in snippet (copy the file into your repo)
 
