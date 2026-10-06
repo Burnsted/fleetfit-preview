@@ -219,6 +219,16 @@ add('fab page reserve clears footer under resting button', () => {
   assert.ok(fbw.fabPageReservePx() >= 66)
 })
 
+add('syncFabVisibility observer cannot loop on hidden attr', () => {
+  const src = require('fs').readFileSync(
+    path.join(__dirname, '../src/feedback-widget.js'),
+    'utf8',
+  )
+  assert.match(src, /data-fbw-hidden'\) === next/)
+  assert.match(src, /Do not watch "hidden"/)
+  assert.equal(/attributeFilter:\s*\[[^\]]*['"]hidden['"]/.test(src), false)
+})
+
 add('character counter uses of not slash', () => {
   const src = require('fs').readFileSync(
     path.join(__dirname, '../src/feedback-widget.js'),

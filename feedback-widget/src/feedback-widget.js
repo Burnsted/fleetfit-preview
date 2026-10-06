@@ -544,12 +544,15 @@
     function syncFabVisibility() {
       if (!fab || !fab.setAttribute) return;
       var hide = isHostUiBlocking(doc, hideWhen);
+      var next = hide ? '1' : '0';
+      // Bail when unchanged so MutationObserver attribute hooks cannot loop.
+      if (fab.getAttribute('data-fbw-hidden') === next) return;
       try {
         fab.hidden = !!hide;
       } catch (e) {
         /* harness may lack hidden setter */
       }
-      fab.setAttribute('data-fbw-hidden', hide ? '1' : '0');
+      fab.setAttribute('data-fbw-hidden', next);
       fab.setAttribute('aria-hidden', hide ? 'true' : 'false');
       if (hide) fab.setAttribute('tabindex', '-1');
       else if (typeof fab.removeAttribute === 'function') fab.removeAttribute('tabindex');
@@ -576,7 +579,9 @@
           childList: true,
           subtree: true,
           attributes: true,
-          attributeFilter: ['style', 'class', 'hidden', 'data-fleet-plan'],
+          // Do not watch "hidden": syncFabVisibility sets it on the FAB and
+          // would re-enter the observer in a tight loop.
+          attributeFilter: ['style', 'class', 'data-fleet-plan', 'data-consent-bar'],
         });
       }
       if (typeof ResizeObserver !== 'undefined') {
