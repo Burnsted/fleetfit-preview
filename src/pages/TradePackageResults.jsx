@@ -118,9 +118,27 @@ export default function TradePackageResults({ pkg }) {
     if (Array.isArray(fromIntake) && fromIntake.length) {
       return resizeTradeInRows(fromIntake, fromIntake.length)
     }
+    const seeded = createTradeInRowsFromIntake(initialSize, intake)
     const stored = readStoredTradeInRows(pkg.id)
-    if (stored?.length) return stored
-    return createTradeInRowsFromIntake(initialSize, intake)
+    if (stored?.length) {
+      // Prefer intake seed when stored rows are blank shells (prior empty visit).
+      const storedHasVehicle = stored.some(
+        (r) =>
+          String(r?.year || '').trim() ||
+          String(r?.make || '').trim() ||
+          String(r?.model || '').trim() ||
+          String(r?.mileage || '').trim() ||
+          String(r?.value || '').trim(),
+      )
+      const seedHasVehicle = Boolean(
+        seeded[0] &&
+          (seeded[0].year || seeded[0].make || seeded[0].model || seeded[0].mileage),
+      )
+      if (storedHasVehicle || !seedHasVehicle) {
+        return resizeTradeInRows(stored, Math.max(stored.length, initialSize))
+      }
+    }
+    return seeded
   })
 
   const scoreCtx = useMemo(
