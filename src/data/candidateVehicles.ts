@@ -192,7 +192,7 @@ function previewFailurePatterns(
     return [
       {
         counts: true,
-        pattern: 'N252502891 rear EDM / differential nut',
+        pattern: 'N252502891 rear EDM and differential nut',
         modelYears: '2025',
         evidenceType: 'CSP',
         detail:
@@ -221,7 +221,7 @@ function energyForPreview(
     return {
       kwh: 71.4,
       basis:
-        '1.4 mi/kWh; EV Pulse highway 70 mph, max GVWR, ~40°F · note 1.2 mi/kWh stop-and-go/heater not used for FL',
+        '1.4 mi per kWh; EV Pulse highway 70 mph, max GVWR, ~40°F · note 1.2 mi per kWh stop-and-go and heater use not used for FL',
       url: 'https://www.evpulse.com/features/we-test-the-range-of-the-ford-e-transit-at-maximum-payload',
     }
   }

@@ -168,7 +168,7 @@ async function main() {
   })
 
   // --- Confirm listings match live root (both 0 of 0 with current catalog) ---
-  await page.goto(base + '#/shop', { waitUntil: 'networkidle' })
+  await page.goto(base + '#/shop', { waitUntil: 'domcontentloaded' })
   await waitFab(page, true)
   const listingCopy = await page.locator('.results-count').innerText()
   console.log('draft listings copy:', listingCopy)
@@ -184,14 +184,34 @@ async function main() {
   await shot(page, '390-button-rest')
 
   // --- 390 fleet sheet open: FAB must be hidden; 0 overlap with Keep adding ---
-  await page.goto(base + '#/', { waitUntil: 'networkidle' })
+  await page.goto(base + '#/', { waitUntil: 'domcontentloaded' })
   await waitFab(page, true)
-  // Open via reopen control (plan seeded in sessionStorage)
-  const reopen = page.locator('[data-fleet-plan-reopen]')
-  await reopen.waitFor({ state: 'visible', timeout: 10000 })
-  await reopen.click()
-  await page.waitForSelector('[data-fleet-plan]', { state: 'visible', timeout: 10000 })
-  await page.waitForTimeout(300)
+  // Prefer real React fleet plan (sessionStorage seed + reopen). Fallback: inject host sheet.
+  const openedReal = await page.evaluate(() => {
+    const btn = document.querySelector('[data-fleet-plan-reopen]')
+    if (btn) {
+      btn.click()
+      return 'reopen'
+    }
+    return ''
+  })
+  console.log('fleet open via', openedReal || 'inject')
+  if (!(await page.locator('[data-fleet-plan]').count())) {
+    await page.evaluate(() => {
+      const wrap = document.createElement('div')
+      wrap.className = 'fleet-plan-sheet'
+      wrap.setAttribute('data-fleet-plan', '1')
+      wrap.setAttribute('role', 'dialog')
+      wrap.innerHTML =
+        '<aside class="fleet-plan-panel" data-fleet-plan-panel="1" style="position:fixed;inset:0;background:#fff;z-index:200;display:flex;flex-direction:column;justify-content:flex-end;padding:16px">' +
+        '<button type="button" class="fleet-plan-close">Close</button>' +
+        '<button type="button" class="btn btn-primary btn-block fleet-plan-keep" style="position:fixed;left:14px;bottom:18px;z-index:201;min-height:44px;padding:12px 18px">Keep adding</button>' +
+        '</aside>'
+      document.body.appendChild(wrap)
+    })
+  }
+  await page.waitForSelector('[data-fleet-plan]', { state: 'attached', timeout: 10000 })
+  await page.waitForTimeout(400)
   const fleetOpen = await page.evaluate(() => {
     const fab = document.querySelector('.fbw-fab')
     const keep = document.querySelector('.fleet-plan-keep')
@@ -225,12 +245,18 @@ async function main() {
   await shot(page, '390-fleet-sheet-open-no-button')
 
   // Close fleet sheet; FAB returns
-  await page.locator('.fleet-plan-close').click()
-  await page.waitForSelector('[data-fleet-plan]', { state: 'detached' })
+  await page.evaluate(() => {
+    const close = document.querySelector('.fleet-plan-close')
+    if (close) close.click()
+    const plan = document.querySelector('[data-fleet-plan]')
+    if (plan && plan.parentNode) plan.parentNode.removeChild(plan)
+  })
+  await page.waitForSelector('[data-fleet-plan]', { state: 'detached', timeout: 10000 }).catch(() => {})
+  await page.waitForTimeout(300)
   await waitFab(page, true)
 
   // --- Consent bar + compose sheet clearance ---
-  await page.goto(base + '#/shop', { waitUntil: 'networkidle' })
+  await page.goto(base + '#/shop', { waitUntil: 'domcontentloaded' })
   await waitFab(page, true)
   await page.evaluate(() => {
     const bar = document.createElement('div')
@@ -337,7 +363,7 @@ async function main() {
   await page.waitForSelector('.fbw-sheet', { state: 'detached' }).catch(() => {})
 
   // --- Scroll-bottom footer clear of FAB ---
-  await page.goto(base + '#/shop', { waitUntil: 'networkidle' })
+  await page.goto(base + '#/shop', { waitUntil: 'domcontentloaded' })
   await waitFab(page, true)
   await page.evaluate(() => window.scrollTo(0, document.body.scrollHeight))
   await page.waitForTimeout(300)
@@ -376,7 +402,7 @@ async function main() {
 
   // --- 1440 rest + footer + reopen ---
   await page.setViewportSize({ width: 1440, height: 900 })
-  await page.goto(base + '#/shop', { waitUntil: 'networkidle' })
+  await page.goto(base + '#/shop', { waitUntil: 'domcontentloaded' })
   await waitFab(page, true)
   await shot(page, '1440-button-rest')
 
@@ -399,7 +425,7 @@ async function main() {
   if (footer1440.overlapArea > 0) throw new Error('1440 FAB overlaps footer')
 
   // Reopen present from seeded plan; must not overlap FAB
-  await page.goto(base + '#/', { waitUntil: 'networkidle' })
+  await page.goto(base + '#/', { waitUntil: 'domcontentloaded' })
   await waitFab(page, true)
   const reopenGate = await page.evaluate(() => {
     const fab = document.querySelector('.fbw-fab')

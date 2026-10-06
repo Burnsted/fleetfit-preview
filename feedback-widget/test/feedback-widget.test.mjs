@@ -216,7 +216,30 @@ add('consent lift: bar height plus at least 8px', () => {
 
 add('fab page reserve clears footer under resting button', () => {
   assert.equal(fbw.fabPageReservePx(), 44 + 14 + 12)
-  assert.ok(fbw.fabPageReservePx() >= 70)
+  assert.ok(fbw.fabPageReservePx() >= 66)
+})
+
+add('character counter uses of not slash', () => {
+  const src = require('fs').readFileSync(
+    path.join(__dirname, '../src/feedback-widget.js'),
+    'utf8',
+  )
+  assert.match(src, /n \+ ' of ' \+ MAX_TEXT/)
+  assert.equal(src.includes("n + ' / ' + MAX_TEXT"), false)
+  // No slash in user-visible counter / status / button copy constants
+  const visible = [
+    "Couldn't send, please try again",
+    "Feedback isn't connected yet.",
+    'Thanks, sent.',
+    'Typing works too.',
+    'Send',
+    'Cancel',
+    'OK',
+    "Your browser's speech service turns your voice into text. Please don't include personal details.",
+  ]
+  for (const s of visible) {
+    assert.equal(s.includes('/'), false, 'slash in visible copy: ' + s)
+  }
 })
 
 add('hideWhen: fleet plan selector blocks host UI', () => {

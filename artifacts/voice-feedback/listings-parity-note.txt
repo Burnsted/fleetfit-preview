@@ -1,0 +1,3 @@
+Draft and live root both serve assets/index-C1ZW3Hmt.js (identical sha256).
+Shop filters to listingLive===true; both environments show: 0 of 0 trucks
+Confirmed via live https://burnsted.github.io/fleetfit-preview/#/shop and this staged draft.

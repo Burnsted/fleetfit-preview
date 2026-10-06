@@ -149,7 +149,7 @@ export function lookupBaselinePayload(opts: {
       : 'cab not entered'
     const isProxy = /proxy|inference/i.test(best.r.row_type + best.r.label)
     const reasonLabel = isProxy
-      ? `${best.min.toLocaleString()} lb (proxy / INFERENCE, ${year} ${make} ${model}; ${cabNote})`
+      ? `${best.min.toLocaleString()} lb (proxy, INFERENCE, ${year} ${make} ${model}; ${cabNote})`
       : `${best.min.toLocaleString()} lb (lowest per-trim value, ${year} ${make} ${model} ${engine || ''}${drivetrain ? ` ${drivetrain}` : ''}, ${cabNote}; cars.com base-equipped trim)`.replace(
           /\s+/g,
           ' ',
@@ -196,7 +196,7 @@ export function lookupBaselinePayload(opts: {
     }
     return {
       payloadLb: best.min,
-      reasonLabel: `${best.min.toLocaleString()} lb (INFERENCE / proxy range min, ${year} ${make} ${model})`,
+      reasonLabel: `${best.min.toLocaleString()} lb (INFERENCE, proxy range min, ${year} ${make} ${model})`,
       url: best.r.source_url || null,
       rowType: best.r.row_type,
       label: best.r.label,

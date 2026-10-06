@@ -653,7 +653,7 @@ function scoreLongevity(opts: {
 
   let reason: string
   if (opts.warrantyType === 'commercial' && /rivian/i.test(opts.make)) {
-    reason = `Commercial ${wYr} yr · ${(wMi / 1000).toFixed(0)}k: 20 × min(${yearsLeft.toFixed(2)}/${wYr}, ${(milesLeft / 1000).toFixed(1)}k/${(wMi / 1000).toFixed(0)}k) = ${(WARRANTY_MAX * frac).toFixed(1)}`
+    reason = `Commercial ${wYr} yr · ${(wMi / 1000).toFixed(0)}k: 20 × min(${yearsLeft.toFixed(2)} of ${wYr}, ${(milesLeft / 1000).toFixed(1)}k of ${(wMi / 1000).toFixed(0)}k) = ${(WARRANTY_MAX * frac).toFixed(1)}`
     if (opts.upfit === 'other' || opts.upfit === 'unknown') {
       reason +=
         opts.upfit === 'unknown'
