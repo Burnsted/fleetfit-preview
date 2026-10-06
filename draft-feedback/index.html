@@ -31,9 +31,9 @@
           return location.hash || ''
         }
       }
-      // endpointUrl empty until the Formspree form URL is set. Never fake success.
+      // Formspree intake. Never fake success in the widget.
       window.FEEDBACK_CONFIG = {
-        endpointUrl: '',
+        endpointUrl: 'https://formspree.io/f/mrpeegjd',
         fieldMap: {
           message: 'message',
           page: 'page',
@@ -49,7 +49,7 @@
       src="./feedback-widget/feedback-widget.min.js"
       data-app="fleetfit"
       data-build="C1ZW3Hmt"
-      data-endpoint-url=""
+      data-endpoint-url="https://formspree.io/f/mrpeegjd"
       data-field-message="message"
       data-field-page="page"
       data-field-screen="screen"
