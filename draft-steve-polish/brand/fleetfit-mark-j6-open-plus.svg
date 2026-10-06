@@ -1,0 +1,11 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64.00 64.00" width="64.00" height="64.00" role="img" aria-label="FleetFit">
+  <title>FleetFit open plus mark</title>
+  <!-- J6 open plus · Amber/Fit #F5A623 · Fleet #FFFFFF · FLEETFIT Space Grotesk Bold · Ted lock 2026-09-25 -->
+  <g id="open-plus">
+    <rect x="26.947" y="0.000" width="10.105" height="26.947" fill="#F5A623"/>
+    <rect x="37.053" y="26.947" width="26.947" height="10.105" fill="#F5A623"/>
+    <rect x="26.947" y="37.053" width="10.105" height="26.947" fill="#F5A623"/>
+    <rect x="0.000" y="26.947" width="26.947" height="10.105" fill="#F5A623"/>
+  </g>
+</svg>
