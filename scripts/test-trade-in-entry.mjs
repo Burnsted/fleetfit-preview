@@ -18,12 +18,14 @@ import {
   KBB_LOOKUP_TARGET,
   confirmedTradeInDollar,
   createTradeInRows,
+  createTradeInRowsFromIntake,
   kbbLookupLinkProps,
   missingSourceDateNote,
   parseTradeInDollar,
   resizeTradeInRows,
   rowNeedsSourceDate,
   sumTradeInEntries,
+  tradeInSeedFromIntake,
   unitsWithTradeInValues,
 } from '../src/lib/tradeInEntry.js'
 import { factKbbTradeIn } from '../src/lib/budget.js'
@@ -290,6 +292,54 @@ test('11. Total 1 of 1 with one trade-in typed → Net money', () => {
   assert.equal(s.net, 44177)
   assert.equal(s.netDisplay, '$44,177')
   assert.equal(s.netHelper, null)
+})
+
+test('12. Prefill trade-in row 1 from intake current vehicle (editable seed)', () => {
+  const seed = tradeInSeedFromIntake({
+    currentYear: '2019',
+    currentMake: 'Ford',
+    currentModel: 'Transit-250',
+    currentMiles: '62000',
+  })
+  assert.deepEqual(seed, {
+    year: '2019',
+    make: 'Ford',
+    model: 'Transit-250',
+    mileage: '62000',
+  })
+  assert.equal(tradeInSeedFromIntake({}), null)
+  assert.equal(tradeInSeedFromIntake(null), null)
+
+  const nested = tradeInSeedFromIntake({
+    current: { year: 2018, make: 'Ford', model: 'F-150', miles: 48000 },
+  })
+  assert.equal(nested.year, '2018')
+  assert.equal(nested.model, 'F-150')
+  assert.equal(nested.mileage, '48000')
+
+  const fromTradeInModel = tradeInSeedFromIntake({
+    tradeIn: 'Yes',
+    tradeInModel: 'Ram ProMaster 2500',
+  })
+  assert.equal(fromTradeInModel.model, 'Ram ProMaster 2500')
+
+  const rows = createTradeInRowsFromIntake(3, {
+    currentYear: '2019',
+    currentMake: 'Ford',
+    currentModel: 'Transit-250',
+    currentMiles: '62000',
+  })
+  assert.equal(rows.length, 3)
+  assert.equal(rows[0].year, '2019')
+  assert.equal(rows[0].make, 'Ford')
+  assert.equal(rows[0].model, 'Transit-250')
+  assert.equal(rows[0].mileage, '62000')
+  assert.equal(rows[0].value, '')
+  assert.equal(rows[1].year, '')
+  assert.equal(rows[1].make, '')
+  // Still editable shape
+  rows[0].make = 'Chevy'
+  assert.equal(rows[0].make, 'Chevy')
 })
 
 console.log(`\nAll ${passed} trade-in entry tests passed.`)

@@ -41,6 +41,48 @@ export function createTradeInRows(count) {
   return Array.from({ length: n }, () => createEmptyTradeInRow())
 }
 
+/**
+ * Pull year / make / model / mileage from intake current-vehicle fields.
+ * Returns null when intake has no vehicle identity (do not invent).
+ */
+export function tradeInSeedFromIntake(intake) {
+  if (!intake || typeof intake !== 'object') return null
+  const cur = intake.current && typeof intake.current === 'object' ? intake.current : {}
+  const year = cur.year ?? intake.currentYear
+  const make = cur.make ?? intake.currentMake
+  const model =
+    cur.model ??
+    intake.currentModel ??
+    (intake.tradeIn === 'Yes' ? intake.tradeInModel : null)
+  const mileage = cur.miles ?? intake.currentMiles
+  const hasAny = [year, make, model, mileage].some(
+    (v) => v != null && String(v).trim() !== '',
+  )
+  if (!hasAny) return null
+  return {
+    year: year != null && String(year).trim() !== '' ? String(year).trim() : '',
+    make: make != null && String(make).trim() !== '' ? String(make).trim() : '',
+    model: model != null && String(model).trim() !== '' ? String(model).trim() : '',
+    mileage:
+      mileage != null && String(mileage).trim() !== '' ? String(mileage).trim() : '',
+  }
+}
+
+/** Create trade-in rows, prefilling row 1 from intake when present. Editable after. */
+export function createTradeInRowsFromIntake(count, intake) {
+  const rows = createTradeInRows(count)
+  const seed = tradeInSeedFromIntake(intake)
+  if (!seed || rows.length === 0) return rows
+  rows[0] = {
+    ...rows[0],
+    year: seed.year,
+    make: seed.make,
+    model: seed.model,
+    mileage: seed.mileage,
+  }
+  return rows
+}
+
 export function resizeTradeInRows(rows, count) {
   const next = createTradeInRows(count)
   const prev = Array.isArray(rows) ? rows : []

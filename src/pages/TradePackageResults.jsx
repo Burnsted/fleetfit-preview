@@ -24,7 +24,7 @@ import { fleetUnitKey, useFleetPick } from '../lib/fleetPick'
 import { OUTBOUND_LISTING_BUILD } from '../lib/outboundListing'
 import { currentMilesForScore } from '../lib/replacementScore'
 import {
-  createTradeInRows,
+  createTradeInRowsFromIntake,
   readStoredTradeInRows,
   resizeTradeInRows,
   writeStoredTradeInRows,
@@ -118,7 +118,8 @@ export default function TradePackageResults({ pkg }) {
     }
     const stored = readStoredTradeInRows(pkg.id)
     if (stored?.length) return stored
-    return createTradeInRows(pkg.sizeDefault || 4)
+    const sizeGuess = pkg.sizeDefault || 4
+    return createTradeInRowsFromIntake(sizeGuess, intake)
   })
 
   const scoreCtx = useMemo(
