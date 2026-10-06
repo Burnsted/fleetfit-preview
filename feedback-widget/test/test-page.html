@@ -1,0 +1,158 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Feedback widget test page</title>
+    <style>
+      body {
+        margin: 0;
+        font-family: Georgia, 'Times New Roman', serif;
+        background: linear-gradient(160deg, #e8f0ea 0%, #d5e4f2 55%, #f0ebe3 100%);
+        min-height: 100vh;
+        color: #15202b;
+      }
+      main {
+        padding: 48px 24px 120px;
+        max-width: 40rem;
+      }
+      h1 {
+        font-size: 1.75rem;
+        margin: 0 0 8px;
+      }
+      p {
+        line-height: 1.45;
+      }
+      .demo-consent {
+        position: fixed;
+        left: 0;
+        right: 0;
+        bottom: 0;
+        z-index: 50;
+        background: #102033;
+        color: #f5f7fa;
+        padding: 14px 16px;
+        display: none;
+        gap: 12px;
+        align-items: center;
+        justify-content: space-between;
+        font-family: system-ui, sans-serif;
+        font-size: 14px;
+      }
+      .demo-consent[data-open='1'] {
+        display: flex;
+      }
+      .demo-consent button {
+        min-height: 40px;
+        border: 0;
+        border-radius: 6px;
+        padding: 0 12px;
+        background: #f5f7fa;
+        color: #102033;
+        font-weight: 600;
+        cursor: pointer;
+      }
+      .tools {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 8px;
+        margin-top: 20px;
+      }
+      .tools a,
+      .tools button {
+        font-family: system-ui, sans-serif;
+        font-size: 14px;
+        min-height: 40px;
+        padding: 0 12px;
+        border-radius: 6px;
+        border: 1px solid #334155;
+        background: #fff;
+        color: #15202b;
+        text-decoration: none;
+        display: inline-flex;
+        align-items: center;
+        cursor: pointer;
+      }
+      .panel-reopen-mock {
+        position: fixed;
+        right: 14px;
+        bottom: 18px;
+        width: 52px;
+        height: 52px;
+        border-radius: 50%;
+        background: #0b1220;
+        color: #fff;
+        display: grid;
+        place-items: center;
+        font-family: system-ui, sans-serif;
+        font-size: 12px;
+        z-index: 40;
+      }
+    </style>
+  </head>
+  <body>
+    <main>
+      <h1>Feedback widget test page</h1>
+      <p>
+        Interactive demo for the floating voice feedback control. Use the tools below to show a
+        consent bar, open an excluded route, or force typing mode.
+      </p>
+      <div class="tools">
+        <button type="button" id="show-consent">Show consent bar</button>
+        <a href="#/shop">Go interactive (#/shop)</a>
+        <a href="#/privacy">Go excluded (#/privacy)</a>
+        <a href="#/legal">Go excluded (#/legal)</a>
+      </div>
+      <p id="route-label"></p>
+    </main>
+
+    <div class="panel-reopen-mock" aria-hidden="true">plan</div>
+
+    <div class="demo-consent" data-consent-bar data-open="0" id="consent">
+      <span>We use cookies for this demo consent bar.</span>
+      <button type="button" id="dismiss-consent">Dismiss</button>
+    </div>
+
+    <script>
+      window.__fbwTestContext = function () {
+        return location.hash || '#/'
+      }
+      function paintRoute() {
+        document.getElementById('route-label').textContent = 'Route: ' + (location.hash || '#/')
+      }
+      paintRoute()
+      window.addEventListener('hashchange', paintRoute)
+      document.getElementById('show-consent').onclick = function () {
+        document.getElementById('consent').setAttribute('data-open', '1')
+        document.getElementById('consent').style.display = 'flex'
+      }
+      document.getElementById('dismiss-consent').onclick = function () {
+        document.getElementById('consent').setAttribute('data-open', '0')
+        document.getElementById('consent').style.display = 'none'
+      }
+      if (!location.hash) location.hash = '#/shop'
+    </script>
+    <script>
+      window.FEEDBACK_CONFIG = {
+        endpointUrl: '',
+        fieldMap: {
+          message: 'message',
+          page: 'page',
+          screen: 'screen',
+          browser: 'browser',
+          time: 'time',
+          honeypot: '_gotcha',
+        },
+      }
+    </script>
+    <script
+      src="../dist/feedback-widget.min.js"
+      data-app="fleetfit"
+      data-build="test"
+      data-endpoint-url=""
+      data-context-fn="__fbwTestContext"
+      data-consent-selector="[data-consent-bar]"
+      data-exclude="#/privacy,#/legal,#/terms,#/about,privacy,legal,terms,about"
+    ></script>
+  </body>
+</html>

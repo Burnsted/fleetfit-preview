@@ -20,5 +20,44 @@
   <body>
     <div id="root"></div>
     <script type="module" src="/src/main.jsx"></script>
+    <script>
+      window.__fleetfitFeedbackContext = function () {
+        try {
+          var hash = location.hash || ''
+          var title = document.title || ''
+          return (hash + ' ' + title).trim()
+        } catch (e) {
+          return location.hash || ''
+        }
+      }
+      // FormSubmit alias not confirmed yet. endpointUrl stays empty (no fake success).
+      window.FEEDBACK_CONFIG = {
+        endpointUrl: '',
+        fieldMap: {
+          message: 'message',
+          page: 'page',
+          screen: 'screen',
+          browser: 'browser',
+          time: 'time',
+          honeypot: '_gotcha',
+        },
+      }
+    </script>
+    <!-- data-build rewritten to the Vite JS asset hash on draft publish -->
+    <script
+      src="/fleetfit-preview/feedback-widget/feedback-widget.min.js"
+      data-app="fleetfit"
+      data-build="dev"
+      data-endpoint-url=""
+      data-field-message="message"
+      data-field-page="page"
+      data-field-screen="screen"
+      data-field-browser="browser"
+      data-field-time="time"
+      data-field-honeypot="_gotcha"
+      data-context-fn="__fleetfitFeedbackContext"
+      data-consent-selector="[data-consent-bar]"
+      data-exclude="#/privacy,#/legal,#/terms,#/about,/privacy,/legal,/terms,/about,privacy,legal,terms,about"
+    ></script>
   </body>
 </html>

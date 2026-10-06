@@ -1,0 +1,13 @@
+{
+  "buildHash": "CsXyLgTw",
+  "widgetSha256": "38407305c1ed8d3d3a05cdb20f400f8395c1a214e64cb4b09fa4ab10f5c83d4c",
+  "indexSha256": "0206180e08179414df6d32f88e81dba6f95c8b5a37eb6a565b29c406fe13a512",
+  "css": {
+    "name": "index-B9ThpCGB.css",
+    "sha256": "e7ee2d2502a77487d9f3467da983e1be4b895ca67cc5b87e24bbdce68f9267d4"
+  },
+  "js": {
+    "name": "index-CsXyLgTw.js",
+    "sha256": "03f1cea668192e34b19a215b7ce9bc25c49ee1d1cadf3af53bf22639b943fc98"
+  }
+}
