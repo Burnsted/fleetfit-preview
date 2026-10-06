@@ -1,2 +1,3 @@
 VM has no mic; SpeechRecognition stubbed to inject interim text: "stub interim: package total looks clear"
 Captured textarea: stub interim: package total looks clear
+Compose UI opened with a throwaway endpointUrl for the stub shot only; no submission sent.

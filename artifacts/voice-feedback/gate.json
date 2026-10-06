@@ -15,6 +15,10 @@
     "gap": 21.703125,
     "clearance": "60px"
   },
+  "keepOverlap": {
+    "error": "no keep adding",
+    "skipped": true
+  },
   "overlap": {
     "fab": {
       "left": 14,
@@ -29,5 +33,6 @@
     "overlapArea": 0
   },
   "speechStub": true,
-  "excludedPrivacyNoButton": true
+  "excludedPrivacyNoButton": true,
+  "notConnected": true
 }
