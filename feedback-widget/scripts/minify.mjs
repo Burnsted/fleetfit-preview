@@ -21,7 +21,7 @@ code = code.replace(/(^|[^:\\])\/\/.*$/gm, '$1')
 code = code.replace(/\s+/g, ' ').trim()
 // Keep a short banner
 const banner =
-  '/*! Fleet Feedback Widget (fbw) v1 — vanilla, zero deps. See feedback-widget/README.md */\n'
+  '/*! Fleet Feedback Widget (fbw) v1 - vanilla, zero deps. See feedback-widget/README.md */\n'
 fs.mkdirSync(distDir, { recursive: true })
 fs.writeFileSync(out, banner + code + '\n')
 const hash = crypto.createHash('sha256').update(fs.readFileSync(out)).digest('hex')
