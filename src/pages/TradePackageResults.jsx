@@ -38,6 +38,7 @@ import {
   undoReplace,
 } from '../lib/tradePackageSet'
 import { displayWorkSpec } from '../lib/workSpec'
+import { fleetSizeFromIntake } from '../lib/fleetSize'
 
 const SIZE_OPTIONS = [1, 2, 3, 4, 5]
 
@@ -98,7 +99,8 @@ export default function TradePackageResults({ pkg }) {
 
   const storedJob = useMemo(() => readStoredJob(pkg.id), [pkg.id])
   const [job, setJob] = useState(() => mergeJob(pkg, intake, storedJob))
-  const [size, setSize] = useState(pkg.sizeDefault || 4)
+  const initialSize = fleetSizeFromIntake(intake, pkg.sizeDefault || 4)
+  const [size, setSize] = useState(initialSize)
   const [active, setActive] = useState([])
   const [eligible, setEligible] = useState([])
   const [eligibleCount, setEligibleCount] = useState(0)
@@ -118,8 +120,7 @@ export default function TradePackageResults({ pkg }) {
     }
     const stored = readStoredTradeInRows(pkg.id)
     if (stored?.length) return stored
-    const sizeGuess = pkg.sizeDefault || 4
-    return createTradeInRowsFromIntake(sizeGuess, intake)
+    return createTradeInRowsFromIntake(initialSize, intake)
   })
 
   const scoreCtx = useMemo(
