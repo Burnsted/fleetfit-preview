@@ -1,4 +1,4 @@
-import { Routes, Route, useLocation } from 'react-router-dom'
+import { Routes, Route } from 'react-router-dom'
 import Header from './components/Header'
 import Footer from './components/Footer'
 import Home from './pages/Home'
@@ -14,13 +14,9 @@ import Checkout from './pages/Checkout'
 import Budget from './pages/Budget'
 
 export default function App() {
-  const location = useLocation()
-  const path = location.pathname
-  const isHome = path === '/' || path === ''
-
   return (
-    <div className={`app-shell ${isHome ? 'chrome-home' : ''}`}>
-      {!isHome && <Header />}
+    <div className="app-shell">
+      <Header />
       <main className="main">
         <Routes>
           <Route path="/" element={<Home />} />
@@ -37,7 +33,7 @@ export default function App() {
           <Route path="/listing/:id" element={<ListingRedirect />} />
         </Routes>
       </main>
-      {!isHome && <Footer />}
+      <Footer />
     </div>
   )
 }

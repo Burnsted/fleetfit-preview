@@ -1,7 +1,6 @@
 import { Link } from 'react-router-dom'
 import { TRADE_PACKAGE_IDS } from '../data/tradePackages'
 import PathChrome from '../components/PathChrome'
-import Wordmark from '../components/Wordmark'
 
 import landscapingPhoto from '../assets/home-trades/fleetfit-wrap-card-landscaping.png'
 import hvacPhoto from '../assets/home-trades/fleetfit-wrap-card-hvac.png'
@@ -43,16 +42,7 @@ const HOME_TRADE_CARDS = [
 export default function Home() {
   return (
     <div className="locked-home is-mood is-trade-home">
-      <header className="locked-hero trade-home-hero" aria-label="FleetFit">
-        <nav className="locked-topnav" aria-label="Preview">
-          <Link to="/" className="locked-topnav-brand" aria-label="FleetFit">
-            <Wordmark size="nav" tone="light" decorative />
-          </Link>
-          <div className="locked-topnav-links">
-            <Link to="/intake">Intake</Link>
-            <Link to="/shop">Shop</Link>
-          </div>
-        </nav>
+      <header className="locked-hero trade-home-hero" aria-label="FleetFit home">
         <div className="locked-hero-inner trade-home-hero-inner">
           <h1 className="locked-hero-title">
             Used EV fleet packages that fit the work day.
