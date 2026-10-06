@@ -214,6 +214,35 @@ add('consent lift: bar height plus at least 8px', () => {
   assert.equal(fbw.consentClearancePx(48, 12), 60)
 })
 
+add('fab page reserve clears footer under resting button', () => {
+  assert.equal(fbw.fabPageReservePx(), 44 + 14 + 12)
+  assert.ok(fbw.fabPageReservePx() >= 70)
+})
+
+add('hideWhen: fleet plan selector blocks host UI', () => {
+  const doc = {
+    querySelector(sel) {
+      if (sel === '[data-fleet-plan]') return { tag: 'div' }
+      return null
+    },
+  }
+  assert.equal(fbw.isHostUiBlocking(doc, '[data-fleet-plan]'), true)
+  assert.equal(fbw.isHostUiBlocking(doc, ''), true) // default hideWhen
+  assert.equal(fbw.isHostUiBlocking({ querySelector: () => null }, '[data-fleet-plan]'), false)
+  assert.equal(fbw.DEFAULT_HIDE_WHEN, '[data-fleet-plan]')
+})
+
+add('sheet CSS uses consent clearance bottom (not hard-coded 0)', () => {
+  const src = require('fs').readFileSync(
+    path.join(__dirname, '../src/feedback-widget.js'),
+    'utf8',
+  )
+  assert.match(src, /\.fbw-sheet\{[^}]*bottom:var\(--fbw-consent-clearance/)
+  assert.match(src, /\.fbw-backdrop\{[^}]*bottom:var\(--fbw-consent-clearance/)
+  assert.match(src, /data-fbw-pad/)
+  assert.equal(/[–—]/.test(src), false)
+})
+
 // --- exclude / opt-out ---
 add('exclude: hash and path patterns', () => {
   const loc = { pathname: '/fleetfit-preview/', hash: '#/privacy', href: 'https://x/#/privacy' }

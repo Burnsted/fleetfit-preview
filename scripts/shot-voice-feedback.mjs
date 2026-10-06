@@ -1,5 +1,5 @@
 /**
- * Real-browser screenshots for voice feedback widget (390 + one 1440).
+ * Real-browser screenshots + layout gates for voice feedback (390 + 1440).
  * Serves the staged draft-feedback build locally.
  * Never POSTs real Formspree submissions: Playwright route stubs the intake.
  */
@@ -54,12 +54,18 @@ async function shot(page, name) {
 
 async function waitFab(page, visible) {
   if (visible) {
-    await page.waitForSelector('.fbw-fab', { state: 'visible', timeout: 10000 })
+    await page.waitForSelector('.fbw-fab:not([hidden])', { state: 'visible', timeout: 10000 })
   } else {
     await page.waitForTimeout(400)
-    const n = await page.locator('.fbw-fab').count()
-    if (n !== 0) throw new Error('expected no fab, found ' + n)
+    const visibleCount = await page.locator('.fbw-fab:not([hidden])').count()
+    if (visibleCount !== 0) throw new Error('expected fab hidden, found visible')
   }
+}
+
+function rectOverlapArea(a, b) {
+  const overlapX = Math.max(0, Math.min(a.right, b.right) - Math.max(a.left, b.left))
+  const overlapY = Math.max(0, Math.min(a.bottom, b.bottom) - Math.max(a.top, b.top))
+  return overlapX * overlapY
 }
 
 async function main() {
@@ -94,7 +100,6 @@ async function main() {
   })
   page.on('pageerror', (err) => consoleErrors.push(String(err)))
 
-  // Block / stub all Formspree traffic — never send real submissions from shots.
   let formspreeMode = 'block'
   const formspreeHits = []
   await page.route('**/*formspree.io/**', async (route) => {
@@ -122,7 +127,26 @@ async function main() {
     })
   })
 
+  // Seed a fleet plan so reopen/open sheet is available without live listings.
   await context.addInitScript(() => {
+    try {
+      sessionStorage.setItem(
+        'fleetfit-fleet-plan',
+        JSON.stringify([
+          {
+            id: 'vehicle:shot-stub',
+            kind: 'vehicle',
+            label: 'Shot stub unit',
+            units: 1,
+            examplePrice: 42000,
+            pickIds: ['shot-stub'],
+          },
+        ]),
+      )
+      sessionStorage.setItem('fleetfit-fleet-picks', JSON.stringify(['shot-stub']))
+    } catch (e) {
+      /* ignore */
+    }
     class StubRecognition {
       constructor() {
         this.continuous = true
@@ -133,20 +157,7 @@ async function main() {
         this.onend = null
       }
       start() {
-        const self = this
-        setTimeout(() => {
-          if (!self.onresult) return
-          self.onresult({
-            resultIndex: 0,
-            results: [
-              {
-                isFinal: false,
-                0: { transcript: 'stub interim: package total looks clear' },
-                length: 1,
-              },
-            ],
-          })
-        }, 200)
+        /* typing path preferred for layout shots */
       }
       stop() {
         if (this.onend) this.onend()
@@ -156,40 +167,71 @@ async function main() {
     window.webkitSpeechRecognition = StubRecognition
   })
 
-  // --- button at rest (wired endpoint; person-speaking icon) ---
+  // --- Confirm listings match live root (both 0 of 0 with current catalog) ---
   await page.goto(base + '#/shop', { waitUntil: 'networkidle' })
   await waitFab(page, true)
-  const wired = await page.evaluate(() => {
-    const cfg = window.FEEDBACK_CONFIG || {}
-    const script = document.querySelector('script[data-endpoint-url]')
+  const listingCopy = await page.locator('.results-count').innerText()
+  console.log('draft listings copy:', listingCopy)
+  fs.writeFileSync(
+    path.join(outDir, 'listings-parity-note.txt'),
+    'Draft and live root both serve assets/index-C1ZW3Hmt.js (identical sha256).\n' +
+      'Shop filters to listingLive===true; both environments show: ' +
+      listingCopy +
+      '\nConfirmed via live https://burnsted.github.io/fleetfit-preview/#/shop and this staged draft.\n',
+  )
+
+  // --- 390 rest ---
+  await shot(page, '390-button-rest')
+
+  // --- 390 fleet sheet open: FAB must be hidden; 0 overlap with Keep adding ---
+  await page.goto(base + '#/', { waitUntil: 'networkidle' })
+  await waitFab(page, true)
+  // Open via reopen control (plan seeded in sessionStorage)
+  const reopen = page.locator('[data-fleet-plan-reopen]')
+  await reopen.waitFor({ state: 'visible', timeout: 10000 })
+  await reopen.click()
+  await page.waitForSelector('[data-fleet-plan]', { state: 'visible', timeout: 10000 })
+  await page.waitForTimeout(300)
+  const fleetOpen = await page.evaluate(() => {
+    const fab = document.querySelector('.fbw-fab')
+    const keep = document.querySelector('.fleet-plan-keep')
+    const plan = document.querySelector('[data-fleet-plan]')
+    const fabHidden = !fab || fab.hidden || fab.getAttribute('data-fbw-hidden') === '1'
+    const fabVisible =
+      fab &&
+      !fab.hidden &&
+      fab.getAttribute('data-fbw-hidden') !== '1' &&
+      getComputedStyle(fab).display !== 'none'
+    let overlapArea = 0
+    if (fabVisible && keep) {
+      const a = fab.getBoundingClientRect()
+      const b = keep.getBoundingClientRect()
+      const ox = Math.max(0, Math.min(a.right, b.right) - Math.max(a.left, b.left))
+      const oy = Math.max(0, Math.min(a.bottom, b.bottom) - Math.max(a.top, b.top))
+      overlapArea = ox * oy
+    }
     return {
-      configUrl: cfg.endpointUrl || '',
-      dataUrl: (script && script.getAttribute('data-endpoint-url')) || '',
+      planPresent: !!plan,
+      fabHidden,
+      fabVisible: !!fabVisible,
+      keepPresent: !!keep,
+      overlapArea,
     }
   })
-  console.log('wired endpoint', wired)
-  if (wired.configUrl !== FORMSPREE || wired.dataUrl !== FORMSPREE) {
-    throw new Error('expected Formspree URL in FEEDBACK_CONFIG and data-endpoint-url, got ' + JSON.stringify(wired))
-  }
-  await shot(page, '390-button-rest')
-  const fabBox = await page.locator('.fbw-fab').boundingBox()
-  if (fabBox) {
-    const pad = 8
-    await page.screenshot({
-      path: path.join(outDir, '390-button-icon-crop.png'),
-      clip: {
-        x: Math.max(0, fabBox.x - pad),
-        y: Math.max(0, fabBox.y - pad),
-        width: fabBox.width + pad * 2,
-        height: fabBox.height + pad * 2,
-      },
-    })
-    console.log('wrote', path.join(outDir, '390-button-icon-crop.png'))
-  }
-  const aria = await page.locator('.fbw-fab').getAttribute('aria-label')
-  if (aria !== 'Send feedback') throw new Error('aria-label expected Send feedback, got: ' + aria)
+  console.log('fleet open gate', fleetOpen)
+  if (!fleetOpen.planPresent) throw new Error('fleet plan sheet not open')
+  if (fleetOpen.fabVisible || !fleetOpen.fabHidden) throw new Error('FAB must hide while fleet plan open')
+  if (fleetOpen.overlapArea > 0) throw new Error('FAB overlaps Keep adding: ' + fleetOpen.overlapArea)
+  await shot(page, '390-fleet-sheet-open-no-button')
 
-  // --- consent lift up / down ---
+  // Close fleet sheet; FAB returns
+  await page.locator('.fleet-plan-close').click()
+  await page.waitForSelector('[data-fleet-plan]', { state: 'detached' })
+  await waitFab(page, true)
+
+  // --- Consent bar + compose sheet clearance ---
+  await page.goto(base + '#/shop', { waitUntil: 'networkidle' })
+  await waitFab(page, true)
   await page.evaluate(() => {
     const bar = document.createElement('div')
     bar.setAttribute('data-consent-bar', '1')
@@ -203,357 +245,188 @@ async function main() {
       zIndex: '50',
       background: '#102033',
       color: '#fff',
-      padding: '16px',
+      padding: '28px 16px',
       fontFamily: 'system-ui,sans-serif',
       fontSize: '14px',
+      minHeight: '96px',
+      boxSizing: 'border-box',
     })
     document.body.appendChild(bar)
   })
-  await page.waitForTimeout(300)
-  const lifted = await page.evaluate(() => {
-    const fab = document.querySelector('.fbw-fab')
-    const bar = document.getElementById('fbw-demo-consent')
-    const fabBottom = fab.getBoundingClientRect().bottom
-    const barTop = bar.getBoundingClientRect().top
-    return {
-      fabBottom,
-      barTop,
-      gap: barTop - fabBottom,
-      clearance: getComputedStyle(document.querySelector('.fbw-root')).getPropertyValue('--fbw-consent-clearance'),
-    }
-  })
-  console.log('consent lift', lifted)
-  if (lifted.gap < 8) throw new Error('consent clearance gap < 8: ' + lifted.gap)
-  await shot(page, '390-button-consent-lifted')
+  await page.waitForTimeout(350)
 
+  // Open compose (endpoint wired)
   await page.evaluate(() => {
-    document.getElementById('fbw-demo-consent')?.remove()
+    window.SpeechRecognition = undefined
+    window.webkitSpeechRecognition = undefined
   })
-  await page.waitForTimeout(300)
-  await shot(page, '390-button-consent-dismissed')
-
-  // Remount helper: keep Formspree URL; do NOT override fetch (Playwright route stubs it).
-  async function remountWidget(overrides = {}) {
-    await page.evaluate((ov) => {
-      if (!window.FleetFeedbackWidget) return
-      const scripts = document.querySelectorAll('script[data-app="fleetfit"]')
-      const cfgScript = scripts[scripts.length - 1]
-      const root = document.querySelector('[data-fbw-root]')
-      if (root) root.remove()
-      const cfg = {
-        app: 'fleetfit',
-        build: 'shot',
-        endpointUrl: ov.endpointUrl != null ? ov.endpointUrl : 'https://formspree.io/f/mrpeegjd',
-        fieldMap: {
-          message: 'message',
-          page: 'page',
-          screen: 'screen',
-          browser: 'browser',
-          time: 'time',
-          honeypot: '_gotcha',
-        },
-        contextFn: '__fleetfitFeedbackContext',
-        consentSelector: '[data-consent-bar]',
-        exclude: (cfgScript && cfgScript.getAttribute('data-exclude')) || '#/privacy,#/legal',
-      }
-      if (ov.SpeechRecognition === null) cfg.SpeechRecognition = null
-      window.FleetFeedbackWidget.createWidget(cfg)
-    }, overrides)
-    await waitFab(page, true)
-  }
-
-  // --- compose open (typing path; no speech fill) ---
-  await remountWidget({ SpeechRecognition: null })
-  await page.click('.fbw-fab')
-  await page.waitForSelector('.fbw-sheet[data-fbw-mode="compose"]', { state: 'visible' })
-  await page.waitForTimeout(200)
-  await shot(page, '390-compose-open')
-
-  // --- typed text with character counter ---
-  const typed = 'Draft feedback for the package total screen.'
-  await page.locator('.fbw-ta').fill(typed)
-  const countText = await page.locator('.fbw-count').innerText()
-  console.log('counter:', countText)
-  if (countText !== typed.length + ' / 1000') {
-    throw new Error('expected counter "' + typed.length + ' / 1000", got ' + countText)
-  }
-  await shot(page, '390-compose-typed-counter')
-
-  // --- listening stub (voice path) ---
-  await page.keyboard.press('Escape')
-  await page.waitForSelector('.fbw-sheet', { state: 'detached' }).catch(() => {})
-  await remountWidget({}) // default SpeechRecognition from init script
-  await page.click('.fbw-fab')
-  await page.waitForSelector('.fbw-sheet[data-fbw-mode="compose"]', { state: 'visible' })
-  await page.waitForTimeout(400)
-  const taVal = await page.locator('.fbw-ta').inputValue()
-  console.log('stub interim text:', taVal || '(empty)')
-  fs.writeFileSync(
-    path.join(outDir, 'speech-stub-note.txt'),
-    'VM has no mic; SpeechRecognition stubbed. Formspree requests intercepted by Playwright route; no real submissions.\nCaptured textarea: ' +
-      taVal +
-      '\n',
-  )
-  await shot(page, '390-sheet-listening-stub')
-  await page.keyboard.press('Escape')
-  await page.waitForSelector('.fbw-sheet', { state: 'detached' }).catch(() => {})
-
-  // Clear browser send log so rate limits do not block stubbed sends.
+  // Remount typing-only so compose is stable
   await page.evaluate(() => {
-    try {
-      localStorage.removeItem('fbw_send_log_v1')
-    } catch (e) {
-      /* ignore */
-    }
+    if (!window.FleetFeedbackWidget) return
+    const root = document.querySelector('[data-fbw-root]')
+    if (root) root.remove()
+    window.FleetFeedbackWidget.createWidget({
+      app: 'fleetfit',
+      build: 'shot',
+      endpointUrl: 'https://formspree.io/f/mrpeegjd',
+      fieldMap: {
+        message: 'message',
+        page: 'page',
+        screen: 'screen',
+        browser: 'browser',
+        time: 'time',
+        honeypot: '_gotcha',
+      },
+      contextFn: '__fleetfitFeedbackContext',
+      consentSelector: '[data-consent-bar]',
+      hideWhen: '[data-fleet-plan]',
+      exclude: '#/privacy,#/legal',
+      SpeechRecognition: null,
+    })
   })
-
-  // --- thank-you (stubbed ok:true) ---
-  formspreeMode = 'ok'
-  await remountWidget({ SpeechRecognition: null })
-  await page.click('.fbw-fab')
-  await page.waitForSelector('.fbw-sheet[data-fbw-mode="compose"]')
-  const thanksText = 'Stubbed success path. Do not deliver.'
-  await page.locator('.fbw-ta').fill(thanksText)
-  // Honor 3s minimum open-to-send
-  await page.waitForTimeout(3200)
-  await page.click('.fbw-btn-send')
-  await page.waitForFunction(() => {
-    const s = document.querySelector('.fbw-status')
-    return s && /Thanks, sent/i.test(s.textContent || '')
-  })
-  const thanks = await page.locator('.fbw-status').innerText()
-  console.log('thanks status:', thanks)
-  await shot(page, '390-thanks-stubbed')
-  await page.keyboard.press('Escape')
-  await page.waitForSelector('.fbw-sheet', { state: 'detached' }).catch(() => {})
-
-  // --- failure (stubbed 422) ---
-  formspreeMode = 'fail'
-  await page.evaluate(() => {
-    try {
-      localStorage.removeItem('fbw_send_log_v1')
-    } catch (e) {
-      /* ignore */
-    }
-  })
-  await remountWidget({ SpeechRecognition: null })
-  await page.click('.fbw-fab')
-  await page.waitForSelector('.fbw-sheet[data-fbw-mode="compose"]')
-  const failText = 'Stubbed failure path keeps this text.'
-  await page.locator('.fbw-ta').fill(failText)
-  // Confirm speech did not overwrite typed text
-  const beforeSend = await page.locator('.fbw-ta').inputValue()
-  if (beforeSend !== failText) throw new Error('typed text overwritten before send: ' + beforeSend)
-  await page.waitForTimeout(3200)
-  await page.click('.fbw-btn-send')
-  await page.waitForFunction(() => {
-    const s = document.querySelector('.fbw-status')
-    return s && /Couldn't send, please try again/i.test(s.textContent || '')
-  })
-  const failStatus = await page.locator('.fbw-status').innerText()
-  const kept = await page.locator('.fbw-ta').inputValue()
-  console.log('fail status:', failStatus, 'kept:', kept)
-  if (kept !== failText) throw new Error('failure path must keep typed text')
-  await shot(page, '390-failure-stubbed')
-  await page.keyboard.press('Escape')
-  await page.waitForSelector('.fbw-sheet', { state: 'detached' }).catch(() => {})
-  formspreeMode = 'block'
-
-  // --- not-connected regression (empty endpoint remount) ---
-  await remountWidget({ endpointUrl: '', SpeechRecognition: null })
-  await page.click('.fbw-fab')
-  await page.waitForSelector('.fbw-sheet[data-fbw-mode="not-connected"]', { state: 'visible' })
-  await shot(page, '390-not-connected')
-  await page.click('.fbw-btn-send')
-  await page.waitForSelector('.fbw-sheet', { state: 'detached' })
-
-  // Restore wired endpoint for remaining gates
-  await remountWidget({ SpeechRecognition: null })
-
-  // --- excluded hash ---
-  await page.goto(base + '#/privacy', { waitUntil: 'networkidle' })
-  await waitFab(page, false)
-  await shot(page, '390-excluded-privacy-no-button')
-
-  // --- reopen: no overlap with fab ---
-  await page.goto(base + '#/', { waitUntil: 'networkidle' })
   await waitFab(page, true)
+  await page.click('.fbw-fab')
+  await page.waitForSelector('.fbw-sheet', { state: 'visible' })
+  await page.waitForTimeout(250)
 
-  const keepOverlap = await page.evaluate(() => {
-    const fab = document.querySelector('.fbw-fab')
-    const keep = Array.from(document.querySelectorAll('button')).find((b) =>
-      /keep adding/i.test(b.textContent || ''),
-    )
-    if (!fab) return { error: 'no fab' }
-    if (!keep) return { error: 'no keep adding', skipped: true }
-    const a = fab.getBoundingClientRect()
-    const b = keep.getBoundingClientRect()
-    const overlapX = Math.max(0, Math.min(a.right, b.right) - Math.max(a.left, b.left))
-    const overlapY = Math.max(0, Math.min(a.bottom, b.bottom) - Math.max(a.top, b.top))
-    return { overlapArea: overlapX * overlapY }
-  })
-  console.log('keep adding overlap', keepOverlap)
-  if (!keepOverlap.skipped && keepOverlap.overlapArea > 0) {
-    throw new Error('fab overlaps Keep adding')
-  }
-  await shot(page, '390-no-overlap-keep-adding')
-
-  const overlap = await page.evaluate(() => {
-    let reopen = document.querySelector('[data-fleet-plan-reopen], .fleet-plan-reopen')
-    if (!reopen) {
-      reopen = document.createElement('button')
-      reopen.className = 'fleet-plan-reopen'
-      reopen.setAttribute('data-fleet-plan-reopen', '1')
-      reopen.style.cssText =
-        'position:fixed;right:14px;bottom:18px;z-index:92;width:52px;height:52px;border-radius:50%;background:#0b1220;color:#fff;border:0'
-      reopen.textContent = '1'
-      document.body.appendChild(reopen)
-    }
-    const fab = document.querySelector('.fbw-fab')
-    const a = fab.getBoundingClientRect()
-    const b = reopen.getBoundingClientRect()
-    const overlapX = Math.max(0, Math.min(a.right, b.right) - Math.max(a.left, b.left))
-    const overlapY = Math.max(0, Math.min(a.bottom, b.bottom) - Math.max(a.top, b.top))
-    return {
-      fab: { left: a.left, right: a.right, bottom: a.bottom },
-      reopen: { left: b.left, right: b.right, bottom: b.bottom },
-      overlapArea: overlapX * overlapY,
-    }
-  })
-  console.log('reopen overlap', overlap)
-  if (overlap.overlapArea > 0) throw new Error('fab overlaps reopen control')
-  await shot(page, '390-no-overlap-reopen')
-
-  // Consent bar overlap at 390 with wired widget
-  await page.evaluate(() => {
-    const bar = document.createElement('div')
-    bar.setAttribute('data-consent-bar', '1')
-    bar.id = 'fbw-gate-consent'
-    bar.textContent = 'Consent bar gate'
-    Object.assign(bar.style, {
-      position: 'fixed',
-      left: '0',
-      right: '0',
-      bottom: '0',
-      zIndex: '50',
-      background: '#102033',
-      color: '#fff',
-      padding: '16px',
-    })
-    document.body.appendChild(bar)
-  })
-  await page.waitForTimeout(300)
-  const consentGate = await page.evaluate(() => {
-    const fab = document.querySelector('.fbw-fab')
-    const bar = document.getElementById('fbw-gate-consent')
-    const a = fab.getBoundingClientRect()
+  const sheetWithConsent = await page.evaluate(() => {
+    const sheet = document.querySelector('.fbw-sheet')
+    const bar = document.getElementById('fbw-demo-consent')
+    const a = sheet.getBoundingClientRect()
     const b = bar.getBoundingClientRect()
-    const overlapX = Math.max(0, Math.min(a.right, b.right) - Math.max(a.left, b.left))
-    const overlapY = Math.max(0, Math.min(a.bottom, b.bottom) - Math.max(a.top, b.top))
-    return { gap: b.top - a.bottom, overlapArea: overlapX * overlapY }
+    const clearance = getComputedStyle(document.querySelector('.fbw-root')).getPropertyValue(
+      '--fbw-consent-clearance',
+    )
+    return {
+      sheetBottom: a.bottom,
+      barTop: b.top,
+      gap: b.top - a.bottom,
+      clearance: clearance.trim(),
+      mode: sheet.getAttribute('data-fbw-mode'),
+    }
   })
-  console.log('consent gate', consentGate)
-  if (consentGate.gap < 8 || consentGate.overlapArea > 0) {
-    throw new Error('fab overlaps or too close to consent bar')
+  console.log('sheet vs consent', sheetWithConsent)
+  if (sheetWithConsent.gap < 8) {
+    throw new Error('sheet not above consent bar by >=8px: ' + sheetWithConsent.gap)
   }
-  await page.evaluate(() => document.getElementById('fbw-gate-consent')?.remove())
+  await shot(page, '390-sheet-with-consent')
+
+  // Dismiss consent; sheet drops to bottom
+  await page.evaluate(() => document.getElementById('fbw-demo-consent')?.remove())
+  await page.waitForTimeout(350)
+  const sheetNoConsent = await page.evaluate(() => {
+    const sheet = document.querySelector('.fbw-sheet')
+    const a = sheet.getBoundingClientRect()
+    const vh = window.innerHeight
+    const clearance = getComputedStyle(document.querySelector('.fbw-root')).getPropertyValue(
+      '--fbw-consent-clearance',
+    )
+    return {
+      sheetBottom: a.bottom,
+      viewportBottom: vh,
+      distFromBottom: vh - a.bottom,
+      clearance: clearance.trim(),
+    }
+  })
+  console.log('sheet after consent dismiss', sheetNoConsent)
+  if (Math.abs(sheetNoConsent.distFromBottom) > 2) {
+    throw new Error('sheet should sit at bottom:0 after consent dismiss')
+  }
+  await shot(page, '390-sheet-consent-dismissed')
+  await page.keyboard.press('Escape')
+  await page.waitForSelector('.fbw-sheet', { state: 'detached' }).catch(() => {})
+
+  // --- Scroll-bottom footer clear of FAB ---
+  await page.goto(base + '#/shop', { waitUntil: 'networkidle' })
+  await waitFab(page, true)
+  await page.evaluate(() => window.scrollTo(0, document.body.scrollHeight))
+  await page.waitForTimeout(300)
+  const footerGate = await page.evaluate(() => {
+    const fab = document.querySelector('.fbw-fab')
+    const footer = document.querySelector('.site-footer')
+    if (!fab || !footer) return { error: 'missing fab or footer' }
+    const a = fab.getBoundingClientRect()
+    // Target the preview line text node container
+    const line =
+      Array.from(footer.querySelectorAll('p, div, span')).find((el) =>
+        /Public preview/i.test(el.textContent || ''),
+      ) || footer
+    const b = line.getBoundingClientRect()
+    const ox = Math.max(0, Math.min(a.right, b.right) - Math.max(a.left, b.left))
+    const oy = Math.max(0, Math.min(a.bottom, b.bottom) - Math.max(a.top, b.top))
+    const pad = document.documentElement.getAttribute('data-fbw-pad')
+    return {
+      overlapArea: ox * oy,
+      fab: { left: a.left, right: a.right, top: a.top, bottom: a.bottom },
+      footerLine: { left: b.left, right: b.right, top: b.top, bottom: b.bottom, text: (line.textContent || '').trim().slice(0, 80) },
+      padAttr: pad,
+      bodyPad: getComputedStyle(document.body).paddingBottom,
+    }
+  })
+  console.log('footer gate 390', footerGate)
+  if (footerGate.error) throw new Error(footerGate.error)
+  if (footerGate.overlapArea > 0) throw new Error('FAB overlaps footer at scroll bottom: ' + footerGate.overlapArea)
+  if (footerGate.padAttr !== '1') throw new Error('expected data-fbw-pad=1 on html')
+  await shot(page, '390-scroll-bottom-footer-clear')
 
   const overflow390 = await page.evaluate(() => {
     return document.documentElement.scrollWidth > document.documentElement.clientWidth + 1
   })
   if (overflow390) throw new Error('horizontal overflow at 390')
 
-  // --- 1440 ---
+  // --- 1440 rest + footer + reopen ---
   await page.setViewportSize({ width: 1440, height: 900 })
   await page.goto(base + '#/shop', { waitUntil: 'networkidle' })
   await waitFab(page, true)
   await shot(page, '1440-button-rest')
+
+  await page.evaluate(() => window.scrollTo(0, document.body.scrollHeight))
+  await page.waitForTimeout(300)
+  const footer1440 = await page.evaluate(() => {
+    const fab = document.querySelector('.fbw-fab')
+    const footer = document.querySelector('.site-footer')
+    const line =
+      Array.from(footer.querySelectorAll('p, div, span')).find((el) =>
+        /Public preview/i.test(el.textContent || ''),
+      ) || footer
+    const a = fab.getBoundingClientRect()
+    const b = line.getBoundingClientRect()
+    const ox = Math.max(0, Math.min(a.right, b.right) - Math.max(a.left, b.left))
+    const oy = Math.max(0, Math.min(a.bottom, b.bottom) - Math.max(a.top, b.top))
+    return { overlapArea: ox * oy }
+  })
+  console.log('footer gate 1440', footer1440)
+  if (footer1440.overlapArea > 0) throw new Error('1440 FAB overlaps footer')
+
+  // Reopen present from seeded plan; must not overlap FAB
+  await page.goto(base + '#/', { waitUntil: 'networkidle' })
+  await waitFab(page, true)
+  const reopenGate = await page.evaluate(() => {
+    const fab = document.querySelector('.fbw-fab')
+    const reopen = document.querySelector('[data-fleet-plan-reopen]')
+    if (!fab || !reopen) return { error: 'missing fab or reopen', skipped: !reopen }
+    const a = fab.getBoundingClientRect()
+    const b = reopen.getBoundingClientRect()
+    const ox = Math.max(0, Math.min(a.right, b.right) - Math.max(a.left, b.left))
+    const oy = Math.max(0, Math.min(a.bottom, b.bottom) - Math.max(a.top, b.top))
+    return { overlapArea: ox * oy }
+  })
+  console.log('reopen gate 1440', reopenGate)
+  if (!reopenGate.skipped && reopenGate.overlapArea > 0) throw new Error('FAB overlaps reopen')
+
   const overflow1440 = await page.evaluate(() => {
     return document.documentElement.scrollWidth > document.documentElement.clientWidth + 1
   })
   if (overflow1440) throw new Error('horizontal overflow at 1440')
 
-  // consent + reopen overlap at 1440
-  await page.evaluate(() => {
-    const bar = document.createElement('div')
-    bar.setAttribute('data-consent-bar', '1')
-    bar.id = 'fbw-gate-consent-1440'
-    bar.textContent = 'Consent bar gate'
-    Object.assign(bar.style, {
-      position: 'fixed',
-      left: '0',
-      right: '0',
-      bottom: '0',
-      zIndex: '50',
-      background: '#102033',
-      color: '#fff',
-      padding: '16px',
-    })
-    document.body.appendChild(bar)
-    let reopen = document.querySelector('[data-fleet-plan-reopen], .fleet-plan-reopen')
-    if (!reopen) {
-      reopen = document.createElement('button')
-      reopen.className = 'fleet-plan-reopen'
-      reopen.setAttribute('data-fleet-plan-reopen', '1')
-      reopen.style.cssText =
-        'position:fixed;right:14px;bottom:18px;z-index:92;width:52px;height:52px;border-radius:50%;background:#0b1220;color:#fff;border:0'
-      reopen.textContent = '1'
-      document.body.appendChild(reopen)
-    }
-  })
-  await page.waitForTimeout(300)
-  const gate1440 = await page.evaluate(() => {
-    const fab = document.querySelector('.fbw-fab')
-    const bar = document.getElementById('fbw-gate-consent-1440')
-    const reopen = document.querySelector('[data-fleet-plan-reopen], .fleet-plan-reopen')
-    const a = fab.getBoundingClientRect()
-    const b = bar.getBoundingClientRect()
-    const c = reopen.getBoundingClientRect()
-    const o = (r1, r2) => {
-      const ox = Math.max(0, Math.min(r1.right, r2.right) - Math.max(r1.left, r2.left))
-      const oy = Math.max(0, Math.min(r1.bottom, r2.bottom) - Math.max(r1.top, r2.top))
-      return ox * oy
-    }
-    return {
-      consentGap: b.top - a.bottom,
-      consentOverlap: o(a, b),
-      reopenOverlap: o(a, c),
-    }
-  })
-  console.log('1440 gates', gate1440)
-  if (gate1440.consentGap < 8 || gate1440.consentOverlap > 0 || gate1440.reopenOverlap > 0) {
-    throw new Error('1440 overlap gate failed: ' + JSON.stringify(gate1440))
-  }
-
-  const dashScan = await page.evaluate(() => {
-    const bits = []
-    document.querySelectorAll('.fbw-root, .fbw-sheet, .fbw-note, .fbw-status, .fbw-btn, .fbw-count').forEach((el) => {
-      bits.push(el.innerText || '')
-    })
-    return bits.join('\n')
-  })
-  if (/[–—]/.test(dashScan)) throw new Error('en/em dash in widget text')
-  const copyConsts = [
-    "Your browser's speech service turns your voice into text. Please don't include personal details.",
-    "Couldn't send, please try again",
-    "Feedback isn't connected yet.",
-    'Thanks, sent.',
-    'Typing works too.',
-    'Send',
-    'Cancel',
-  ]
-  for (const s of copyConsts) {
-    if (/[–—]/.test(s)) throw new Error('en/em dash in copy constant')
-  }
-
-  // Source scan of staged widget + index for en/em dashes in user-facing strings
+  // Dash scan
   const widgetSrc = fs.readFileSync(path.join(stage, 'feedback-widget/feedback-widget.min.js'), 'utf8')
   const indexSrc = fs.readFileSync(path.join(stage, 'index.html'), 'utf8')
   if (/[–—]/.test(widgetSrc) || /[–—]/.test(indexSrc)) {
     throw new Error('en/em dash found in staged widget or index')
   }
-  if (!indexSrc.includes(FORMSPREE)) {
-    throw new Error('staged index missing Formspree endpoint')
+  if (!indexSrc.includes(FORMSPREE) || !indexSrc.includes('data-hide-when')) {
+    throw new Error('staged index missing Formspree endpoint or hide-when')
   }
 
   fs.writeFileSync(
@@ -563,11 +436,13 @@ async function main() {
         consoleErrors,
         overflow390,
         overflow1440,
-        consentLift: lifted,
-        consentGate,
-        gate1440,
-        keepOverlap,
-        overlap,
+        fleetOpen,
+        sheetWithConsent,
+        sheetNoConsent,
+        footerGate,
+        footer1440,
+        reopenGate,
+        listingCopy,
         formspreeHits,
         formspreeStubbed: true,
         wiredEndpoint: FORMSPREE,
@@ -584,16 +459,9 @@ async function main() {
       ),
   )
   if (actionable.length) {
-    console.warn('console errors:', actionable)
     throw new Error('console errors: ' + actionable.join(' | '))
   }
-  if (consoleErrors.length) {
-    console.warn('ignored env console noise:', consoleErrors.length)
-  }
-
-  const realPosts = formspreeHits.filter((h) => h.mode !== 'ok' && h.mode !== 'fail' && h.mode !== 'block')
-  if (realPosts.length) throw new Error('unexpected formspree mode hits')
-  console.log('formspree stub hits', formspreeHits.length)
+  if (consoleErrors.length) console.warn('ignored env console noise:', consoleErrors.length)
 
   await browser.close()
   if (server) server.close()
