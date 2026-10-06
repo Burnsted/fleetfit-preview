@@ -3230,6 +3230,72 @@ img { max-width: 100%; display: block; }
   max-width: 76px;
   overflow: visible;
 }
+
+/*
+ * Light-surface dial (trade card body, white panels).
+ * White-on-white fails WCAG AA; force near-black ink ≥4.5:1 on #fff.
+ */
+.trade-unit-score .score-dial,
+.score-dial.is-on-light {
+  filter: none;
+  color: #0b1220;
+}
+.trade-unit-score .score-dial-readout,
+.score-dial.is-on-light .score-dial-readout {
+  color: #0b1220;
+  text-shadow: none;
+}
+.trade-unit-score .score-dial-value,
+.score-dial.is-on-light .score-dial-value {
+  color: #0b1220;
+}
+.trade-unit-score .score-dial-max,
+.score-dial.is-on-light .score-dial-max {
+  color: #333333;
+}
+.trade-unit-score .score-dial-diff,
+.score-dial.is-on-light .score-dial-diff {
+  color: #1a1a1a;
+}
+.trade-unit-score .score-dial-current,
+.score-dial.is-on-light .score-dial-current {
+  color: #333333;
+}
+.trade-unit-score .score-dial-incomplete,
+.score-dial.is-on-light .score-dial-incomplete {
+  color: #0b1220;
+}
+.trade-unit-score .score-dial-track,
+.score-dial.is-on-light .score-dial-track {
+  stroke: rgba(11, 18, 32, 0.22);
+}
+.trade-unit-score .score-dial-rank,
+.score-dial.is-on-light .score-dial-rank {
+  background: #0b1220;
+  border-color: #0b1220;
+  color: #fff;
+}
+/* Photo-band dials stay light-on-dark for contrast on imagery */
+.unit-photo-price-band .score-dial .score-dial-readout {
+  color: #fff;
+  text-shadow: 0 1px 2px rgba(0, 0, 0, 0.65);
+}
+.unit-photo-price-band .score-dial .score-dial-value,
+.unit-photo-price-band .score-dial .score-dial-incomplete {
+  color: #fff;
+}
+.unit-photo-price-band .score-dial .score-dial-max {
+  color: rgba(255, 255, 255, 0.92);
+}
+.unit-photo-price-band .score-dial .score-dial-diff {
+  color: rgba(255, 255, 255, 0.95);
+}
+.unit-photo-price-band .score-dial .score-dial-current {
+  color: rgba(255, 255, 255, 0.88);
+}
+.unit-photo-price-band .score-dial .score-dial-track {
+  stroke: rgba(255, 255, 255, 0.22);
+}
 @media (max-width: 420px) {
   .unit-photo-price-band {
     align-items: flex-end;
