@@ -171,7 +171,7 @@ export default function Listing() {
         <section className="module">
           <h2 className="module-title"><span className="num">6</span> History report</h2>
           <div className="vhr-stub">
-            Vehicle history report slot — preview stub. In production: free or bundled VHR (title brands, odometer, accidents) attached to every listing.
+            Vehicle history report slot. Preview stub. In production: free or bundled VHR (title brands, odometer, accidents) attached to every listing.
             <div style={{ marginTop: 10 }}>
               <button type="button" className="btn btn-sm" disabled title="Stub">Request VHR (stub)</button>
             </div>
@@ -213,7 +213,7 @@ export default function Listing() {
         <section className="module">
           <h2 className="module-title"><span className="num">9</span> Q&amp;A</h2>
           <div className="qa-stub">
-            Public diligence thread stub — ask about pack report, upfit electrical, and yard visit windows.
+            Public diligence thread stub. Ask about pack report, upfit electrical, and yard visit windows.
             <div style={{ marginTop: 10, display: 'flex', gap: 8, flexWrap: 'wrap' }}>
               <input
                 type="text"
@@ -273,7 +273,7 @@ export default function Listing() {
             <button
               type="button"
               className="btn"
-              onClick={() => setPpiNote('PPI booking stub — independent pre-purchase inspection partner not wired yet.')}
+            onClick={() => setPpiNote('PPI booking stub. Independent pre-purchase inspection partner not wired yet.')}
             >
               Book PPI
             </button>

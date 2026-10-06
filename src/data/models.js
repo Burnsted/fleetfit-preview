@@ -17,7 +17,7 @@ function bodyType(listing) {
 function oneLiner(listing) {
   const doors = listing.cab?.toLowerCase().includes('super') || listing.cab?.toLowerCase().includes('crew')
     ? '4 doors'
-    : '2–4 doors'
+    : '2 to 4 doors'
   const seats = listing.cab?.toLowerCase().includes('crew') || listing.cab?.toLowerCase().includes('super')
     ? 'up to 5 seats'
     : 'up to 3 seats'
@@ -32,13 +32,13 @@ function workBlurb(make, model) {
     'Ford F-150 Lightning':
       'Familiar full-size work truck packaging with onboard power and a usable frunk for jobsite tools. Fits trades that already run F-150s and need a documented pack report.',
     'Chevrolet Silverado EV':
-      'Work-trim electric pickup with large usable packs and fleet-friendly upfit paths. Built for routes that need range, payload, and a true service body — not lifestyle trim.',
+      'Work-trim electric pickup with large usable packs and fleet-friendly upfit paths. Built for routes that need range, payload, and a true service body. Not lifestyle trim.',
     'GMC Sierra EV':
       'Ultium-platform sibling to Silverado EV with Elevation-class comfort. Same capability class for crews that want GMC dealer support and a documented pack report before the buy.',
     'Rivian R1T':
       'Adventure-oriented electric pickup with gear-tunnel storage. Useful for solar and field crews; confirm service coverage on your routes before fleet adoption.',
     'Tesla Cybertruck':
-      'High-capability exoskeleton pickup with Supercharger access. Bed and body are atypical for traditional trades — verify vault upfits and hitch logistics for your work.',
+      'High-capability exoskeleton pickup with Supercharger access. Bed and body are atypical for traditional trades. Verify vault upfits and hitch logistics for your work.',
     'GMC Hummer EV':
       'Extreme off-road electric pickup. Listed for completeness: width, curb weight, and energy use limit classic fleet routes even when payload and pack report look fine on paper.',
   }
@@ -116,7 +116,7 @@ export function getModels() {
           value: sohs.length ? Math.round(sohs.reduce((a, b) => a + b, 0) / sohs.length) : null,
           max: sohs.length ? Math.max(...sohs) : null,
           missing: sohs.length < m.listings.length,
-          caption: 'Usable pack — typical across listings',
+          caption: 'Usable pack. Typical across listings',
           footnote: 'From listing pack readings when present. Units without a reading show Incomplete Data on the listing.',
         },
         gvwrLb: {

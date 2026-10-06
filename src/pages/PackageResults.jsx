@@ -38,8 +38,8 @@ export const PACKAGE_TOTAL_BUILD = 'package-total-home-20261001'
 
 const DAY_NEED = {
   'under-60': 'Under 60 mi',
-  '80-120': '80–120 mi',
-  '120-180': '120–180 mi',
+  '80-120': '80 to 120 mi',
+  '120-180': '120 to 180 mi',
   '180+': '180+ mi',
   mixed: 'Mixed day',
 }
@@ -51,8 +51,8 @@ function dayNeedLabel(pkg, intake) {
     if (/^\d+(\.\d+)?$/.test(miles)) return `${miles} mi`
     return miles
   }
-  const fromNote = String(pkg.workDayNote || '').match(/(\d+[–-]\d+\s*mi)/i)
-  if (fromNote) return fromNote[1].replace('-', '–')
+  const fromNote = String(pkg.workDayNote || '').match(/(\d+)[–-](\d+)\s*mi/i)
+  if (fromNote) return `${fromNote[1]} to ${fromNote[2]} mi`
   if (/trailer/i.test(pkg.workDayNote || '')) return 'Trailer day'
   return null
 }
@@ -230,7 +230,7 @@ export default function PackageResults() {
           )}
           {reco.hasFreshMy ? (
             <span className="recommendation-mix-chip is-fresh" data-fresh-my="true">
-              Includes 2025–2026
+              Includes 2025 to 2026
             </span>
           ) : null}
         </div>

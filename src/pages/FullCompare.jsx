@@ -154,7 +154,7 @@ export default function FullCompare() {
         <p className="locked-eyebrow">Compare · vs your current work vehicle</p>
         <h1>Compare {candidates.length === 1 ? 'this EV' : `${candidates.length} candidates`}</h1>
         <p className="locked-page-lead">
-          Payload, bed, cab, and tow first. Energy is one row — tank miles (MPG) on your
+          Payload, bed, cab, and tow first. Energy is one row. Tank miles (MPG) on your
           current work vehicle, range (kWh) on the EV. A dash means that figure is not on file.
         </p>
       </header>

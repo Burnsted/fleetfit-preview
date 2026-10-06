@@ -85,7 +85,7 @@ export default function CompareChrome() {
           <div className="compare-max-card">
             <h2 id="compare-max-title" className="compare-max-title">Compare up to {COMPARE_MAX}</h2>
             <p className="compare-max-lead">
-              Remove one to add this unit. No rush — keep the set that helps.
+              Remove one to add this unit. No rush. Keep the set that helps.
             </p>
             <ul className="compare-max-thumbs">
               {units.map((unit) => (

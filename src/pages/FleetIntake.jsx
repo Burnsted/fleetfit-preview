@@ -37,9 +37,9 @@ function formTradeToPreset(trade) {
 
 const FLEET_SIZE_OPTIONS = [
   { value: '', label: 'Not surveyed yet' },
-  { value: '1-2', label: '1–2 vehicles' },
-  { value: '3-5', label: '3–5 vehicles (typical package)' },
-  { value: '6-10', label: '6–10 vehicles' },
+  { value: '1-2', label: '1 to 2 vehicles' },
+  { value: '3-5', label: '3 to 5 vehicles (typical package)' },
+  { value: '6-10', label: '6 to 10 vehicles' },
   { value: '10+', label: 'More than 10' },
 ]
 

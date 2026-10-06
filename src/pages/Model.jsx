@@ -145,7 +145,7 @@ export default function Model() {
           )}
           <p className="model-stats-footnote">
             Figures use only values already on demo listings (range, payload, usable pack kWh, GVWR, charge rates).
-            Tow ratings are omitted — not present in seed data. Measuring notes: rated range is seller sticker/displayed class; pack report methods vary by listing.
+            Tow ratings are omitted. Not present in seed data. Measuring notes: rated range is seller sticker or displayed class; pack report methods vary by listing.
           </p>
         </section>
 
@@ -165,7 +165,7 @@ export default function Model() {
             ))}
           </div>
           <p className="model-inventory-foot">
-            <Link to="/shop">Shop all trucks</Link> · Each listing keeps modules 1–11 and all EV/work fields.
+            <Link to="/shop">Shop all trucks</Link> · Each listing keeps modules 1 to 11 and all EV and work fields.
           </p>
         </section>
       </div>

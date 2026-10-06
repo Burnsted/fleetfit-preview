@@ -282,7 +282,7 @@ function scoreRange(
     })
   }
   return cell(pts, {
-    reason: `${publishedRange} mi ${basisNote} × ${RANGE_BUFFER} = ${round1(usable)} mi usable vs ${dailyMiles} mi/day (ratio ${ratio.toFixed(2)})`,
+    reason: `${publishedRange} mi ${basisNote} × ${RANGE_BUFFER} = ${round1(usable)} mi usable vs ${dailyMiles} miles a day (ratio ${ratio.toFixed(2)})`,
     url,
   })
 }
@@ -452,7 +452,7 @@ function scoreReliability(
   const patStr = countedPatterns.length
     ? countedPatterns.map((p) => `${p.evidenceType || 'pattern'} (${p.pattern})`).join(', ')
     : 'no sourced failure patterns counted'
-  const reason = `${campaigns} NHTSA campaigns MY${allEnginesNote ? ' (all engines/body styles; open status not checked; no VIN lookup)' : ' (open status not checked; no VIN lookup)'} · ${patStr}`
+  const reason = `${campaigns} NHTSA campaigns MY${allEnginesNote ? ' (all engines and body styles; open status not checked; no VIN lookup)' : ' (open status not checked; no VIN lookup)'} · ${patStr}`
   return cell(pts, { reason, url })
 }
 
@@ -728,7 +728,7 @@ function scoreEnergyGas(
       })
     }
     useMpg = fuelly.mpg
-    reasonMpg = `Fuelly crowd-sourced mpg (not EPA-rated: GVWR >8,500)`
+    reasonMpg = `Fuelly crowd-sourced mpg (not EPA-rated: GVWR over 8,500)`
     mpgUrl = fuelly.url
   }
   if (useMpg == null) {

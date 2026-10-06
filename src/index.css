@@ -5005,7 +5005,7 @@ img { max-width: 100%; display: block; }
 .fleet-plan-sheet {
   position: fixed;
   inset: 0;
-  z-index: 95;
+  z-index: 120;
   display: grid;
   justify-items: end;
   align-items: stretch;
@@ -5030,7 +5030,7 @@ img { max-width: 100%; display: block; }
   background: #fff;
   color: var(--text, #111);
   box-shadow: -8px 0 28px rgba(0, 0, 0, 0.18);
-  padding: 16px 16px calc(24px + env(safe-area-inset-bottom, 0px));
+  padding: 16px 16px calc(24px + env(safe-area-inset-bottom, 0px) + var(--consent-clearance, 0px));
   overflow: hidden;
 }
 .fleet-plan-head {
@@ -5151,8 +5151,8 @@ img { max-width: 100%; display: block; }
 .fleet-plan-reopen {
   position: fixed;
   right: 14px;
-  bottom: calc(18px + env(safe-area-inset-bottom, 0px));
-  z-index: 92;
+  bottom: calc(18px + env(safe-area-inset-bottom, 0px) + var(--consent-clearance, 0px));
+  z-index: 110;
   width: 52px;
   height: 52px;
   border: 0;

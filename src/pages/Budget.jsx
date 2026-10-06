@@ -30,7 +30,7 @@ export default function Budget() {
     }
     const maxSpend = parseSpend(raw)
     if (maxSpend == null) {
-      setError('Enter a max spend — 200k is fine. Blank is OK.')
+      setError('Enter a max spend. 200k is fine. Blank is OK.')
       return
     }
     writeBudget({ maxSpend })

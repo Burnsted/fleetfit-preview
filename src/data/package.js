@@ -511,9 +511,9 @@ export const PACKAGES = [
     unitCount: null,
     statedCountNote: 'Fleet size from live listings only',
     workDayNote:
-      'Typical day: 80–120 mi across coastal jobsites; overnight Level 2 at shop; occasional DC fast on longer runs.',
+      'Typical day: 80 to 120 mi across coastal jobsites; overnight Level 2 at shop; occasional DC fast on longer runs.',
     matchNote:
-      'Package matched from dealer listings with a verified seller page to the intake profile. Vehicle prices shown are listing asks only — buyer’s fee appears only at checkout.',
+      'Package matched from dealer listings with a verified seller page to the intake profile. Vehicle prices shown are listing asks only. Buyer’s fee appears only at checkout.',
     packageFit: {
       band: 'Package notes',
       detail: 'OEM pack kWh on file · recalls Not checked per stock ID · live listings only',
@@ -524,15 +524,15 @@ export const PACKAGES = [
     units: ELECTRICAL_UNITS,
     newVsUsed: {
       usedLabel: 'This used package',
-      newLabel: 'New cargo EV — labeled desk note',
+      newLabel: 'New cargo EV. Labeled desk note',
       newPriceLabel: 'Starting $79,900*',
       newDetail:
-        '*Desk note only — not a quote. Two new vans would be ≥ ~$159,800 before trucks. No fuel-savings $ invented on this screen.',
+        '*Desk note only. Not a quote. Two new vans would be ≥ ~$159,800 before trucks. No fuel-savings $ invented on this screen.',
     },
     tradeIn: {
       status: 'Pending dealer appraisal',
       detail:
-        'Count stated (~4) — outgoing units not inventoried by FleetFit. No ACV shown — not invented.',
+        'Count stated (~4). Outgoing units not inventoried by FleetFit. No ACV shown. Not invented.',
     },
     sourcedNote:
       'Sourced from dealer listings and your fleet inputs. We have not seen these vehicles in person.',
@@ -552,7 +552,7 @@ export const PACKAGES = [
     workDayNote:
       'Typical day: trailer + crew to coastal jobs; overnight L2 if the shop already has it; tow rating is the open item, not a promise.',
     matchNote:
-      'Package matched from dealer listings with a verified seller page. Listing asks only — buyer’s fee appears only at checkout. No fee $ or % on this screen.',
+      'Package matched from dealer listings with a verified seller page. Listing asks only. Buyer’s fee appears only at checkout. No fee $ or % on this screen.',
     packageFit: {
       band: 'Package notes',
       detail:
@@ -566,12 +566,12 @@ export const PACKAGES = [
       { label: 'Battery (OEM)', value: 'On file when listed' },
     ],
     fitShortNote:
-      'Shop already runs battery-electric tools — pairing matches the trucks to the same work. No invented GVWR and fuel $.',
+      'Shop already runs battery-electric tools. Pairing matches the trucks to the same work. No invented GVWR and fuel $.',
     newVsUsed: null,
     tradeIn: {
       status: 'Pending dealer appraisal',
       detail:
-        'Hauler yes (current truck year unconfirmed); second unit only if it exists. Estimate pending — no invented ACV.',
+        'Hauler yes (current truck year unconfirmed); second unit only if it exists. Estimate pending. No invented ACV.',
     },
     sourcedNote:
       'Sourced from dealer listings and your fleet inputs. We have not seen these trucks or the current hauler in person.',

@@ -2,15 +2,25 @@ import { useEffect } from 'react'
 import { createPortal } from 'react-dom'
 import { useFleetPick } from '../lib/fleetPick'
 import { formatMoney } from '../lib/fit'
+import { measureConsentClearance } from '../lib/consentClearance'
 
 function unitsLabel(n) {
   const count = Number(n) || 0
   return count === 1 ? '1 unit' : `${count} units`
 }
 
+const CONSENT_CSS_VAR = '--consent-clearance'
+
+function applyConsentClearance() {
+  const { clearance } = measureConsentClearance(document)
+  document.documentElement.style.setProperty(CONSENT_CSS_VAR, `${clearance}px`)
+  return clearance
+}
+
 /**
  * Session-only fleet plan slide-out. Opens on every add.
- * At 390: full-height, own scroll, bottom padding clears consent/safe area.
+ * At 390: full-height, own scroll. Foot and reopen lift above a consent bar
+ * via --consent-clearance (same bottom-spacer idea as card safe padding).
  */
 export default function FleetPlanPanel() {
   const fleet = useFleetPick()
@@ -30,6 +40,28 @@ export default function FleetPlanPanel() {
       document.body.style.overflow = prev
     }
   }, [open, fleet])
+
+  // Watch consent bar presence / size; clear when dismissed.
+  useEffect(() => {
+    applyConsentClearance()
+    const root = document.documentElement
+    const mo = new MutationObserver(() => applyConsentClearance())
+    mo.observe(document.body, {
+      childList: true,
+      subtree: true,
+      attributes: true,
+      attributeFilter: ['style', 'class', 'hidden', 'aria-hidden'],
+    })
+    const onResize = () => applyConsentClearance()
+    window.addEventListener('resize', onResize)
+    const interval = window.setInterval(applyConsentClearance, 500)
+    return () => {
+      mo.disconnect()
+      window.removeEventListener('resize', onResize)
+      window.clearInterval(interval)
+      root.style.setProperty(CONSENT_CSS_VAR, '0px')
+    }
+  }, [])
 
   const panel =
     open && typeof document !== 'undefined'
@@ -93,7 +125,7 @@ export default function FleetPlanPanel() {
                 })}
               </ul>
 
-              <footer className="fleet-plan-foot">
+              <footer className="fleet-plan-foot" data-fleet-plan-foot="1">
                 <div className="fleet-plan-total-row">
                   <span className="fleet-plan-total-label">Running total</span>
                   <span className="fleet-plan-total-value">

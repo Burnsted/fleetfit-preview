@@ -354,34 +354,34 @@ export const BASELINE_VEHICLES: BaselineVehicle[] = [
   ...VAN_BASELINES.map(withTransitResale),
 ]
 
-/** G-final Argonne van M&R at year 8 — low end $0.31/mi (shrink-the-lead for current). */
+/** G-final Argonne van M&R at year 8 — low end $0.31 a mile (shrink-the-lead for current). */
 export const ARGONNE_VAN_MAINT_CPM = {
-  cpm: 31, // ¢/mi
+  cpm: 31, // cents a mile
   url: 'https://publications.anl.gov/anlpubs/2021/05/167399.pdf',
   label: 'INFERENCE',
   detail:
-    'Class-level, not model-specific: Argonne 2021 Utilimarc medium-duty M&R ~$0.31/mi at year 8 (estimate, low end of $0.31–0.40)',
+    'Class-level, not model-specific: Argonne 2021 Utilimarc medium-duty M&R about $0.31 a mile at year 8 (estimate, low end of $0.31 to 0.40)',
 } as const
 
-/** AAA 2026 class maintenance ¢/mi (same-basis rule). */
+/** AAA 2026 class maintenance cents a mile (same-basis rule). */
 export const MAINT_CLASS_AAA = {
   'ev-pickup': {
     cpm: 10.79,
     url: 'https://newsroom.aaa.com/wp-content/uploads/2026/09/8-YDC-Brochure_2026-1.pdf',
     label: 'FACT/INFERENCE',
-    detail: 'AAA 2026 EV pickup 10.79¢/mi',
+    detail: 'AAA 2026 EV pickup 10.79 cents a mile',
   },
   'half-ton': {
     cpm: 11.82,
     url: 'https://newsroom.aaa.com/wp-content/uploads/2026/09/8-YDC-Brochure_2026-1.pdf',
     label: 'FACT',
-    detail: 'AAA 2026 half-ton pickup 11.82¢/mi',
+    detail: 'AAA 2026 half-ton pickup 11.82 cents a mile',
   },
   midsize: {
     cpm: 11.26,
     url: 'https://newsroom.aaa.com/wp-content/uploads/2026/09/8-YDC-Brochure_2026-1.pdf',
     label: 'FACT',
-    detail: 'AAA 2026 midsize pickup 11.26¢/mi',
+    detail: 'AAA 2026 midsize pickup 11.26 cents a mile',
   },
   argonneEv: {
     cpm: 6.1,

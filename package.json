@@ -9,7 +9,7 @@
     "lint": "oxlint",
     "preview": "vite preview",
     "check-listings": "node scripts/check-listings.mjs",
-    "test": "node scripts/test-package-total.mjs && node scripts/test-trade-in-entry.mjs && npx vite-node scripts/test-fleet-size.mjs && npx vite-node scripts/test-suggestion-eligibility.mjs && npx vite-node scripts/test-listing-page-kind.mjs && npx vite-node scripts/test-trade-packages.mjs && npx vite-node scripts/test-new-catalog.mjs && node scripts/test-photo-add.mjs && node scripts/test-fleet-panel.mjs",
+    "test": "node scripts/test-package-total.mjs && node scripts/test-trade-in-entry.mjs && npx vite-node scripts/test-fleet-size.mjs && npx vite-node scripts/test-suggestion-eligibility.mjs && npx vite-node scripts/test-listing-page-kind.mjs && npx vite-node scripts/test-trade-packages.mjs && npx vite-node scripts/test-new-catalog.mjs && node scripts/test-photo-add.mjs && node scripts/test-fleet-panel.mjs && node scripts/test-steve-polish.mjs",
     "test:package-total": "node scripts/test-package-total.mjs",
     "test:trade-in-entry": "node scripts/test-trade-in-entry.mjs",
     "test:fleet-size": "npx vite-node scripts/test-fleet-size.mjs",
@@ -19,6 +19,7 @@
     "test:new-catalog": "npx vite-node scripts/test-new-catalog.mjs",
     "test:photo-add": "node scripts/test-photo-add.mjs",
     "test:fleet-panel": "node scripts/test-fleet-panel.mjs",
+    "test:steve-polish": "node scripts/test-steve-polish.mjs",
     "test:score": "npx vite-node scripts/validate-score-v2-g-final.mjs"
   },
   "dependencies": {

@@ -317,7 +317,7 @@ export function packageBatteryKwhFact(units = []) {
   const max = Math.max(...vals)
   const fmt = (n) => (Number.isInteger(n) ? String(n) : String(n))
   if (min === max) return { text: `${fmt(min)} kWh`, known: true }
-  return { text: `${fmt(min)}–${fmt(max)} kWh`, known: true }
+  return { text: `${fmt(min)} to ${fmt(max)} kWh`, known: true }
 }
 
 /** Package + unit cards: payload · bed/cab · tow */
