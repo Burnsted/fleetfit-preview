@@ -1,18 +1,19 @@
 /**
  * Real-browser screenshots for voice feedback widget (390 + one 1440).
  * Serves the staged draft-feedback build locally.
+ * Never POSTs real Formspree submissions: Playwright route stubs the intake.
  */
 import { chromium } from 'playwright'
 import fs from 'fs'
 import path from 'path'
 import { fileURLToPath } from 'url'
 import { createServer } from 'http'
-import { spawn } from 'child_process'
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url))
 const root = path.join(__dirname, '..')
 const outDir = path.join(root, 'artifacts/voice-feedback')
 const stage = path.join(root, '.draft-feedback-stage')
+const FORMSPREE = 'https://formspree.io/f/mrpeegjd'
 
 fs.mkdirSync(outDir, { recursive: true })
 
@@ -93,7 +94,34 @@ async function main() {
   })
   page.on('pageerror', (err) => consoleErrors.push(String(err)))
 
-  // Inject SpeechRecognition stub for listening shot (VM often has no mic)
+  // Block / stub all Formspree traffic — never send real submissions from shots.
+  let formspreeMode = 'block'
+  const formspreeHits = []
+  await page.route('**/*formspree.io/**', async (route) => {
+    formspreeHits.push({ mode: formspreeMode, url: route.request().url() })
+    if (formspreeMode === 'ok') {
+      await route.fulfill({
+        status: 200,
+        contentType: 'application/json',
+        body: JSON.stringify({ ok: true }),
+      })
+      return
+    }
+    if (formspreeMode === 'fail') {
+      await route.fulfill({
+        status: 422,
+        contentType: 'application/json',
+        body: JSON.stringify({ errors: [{ message: 'stub failure' }] }),
+      })
+      return
+    }
+    await route.fulfill({
+      status: 418,
+      contentType: 'application/json',
+      body: JSON.stringify({ ok: false, error: 'shot blocked real Formspree' }),
+    })
+  })
+
   await context.addInitScript(() => {
     class StubRecognition {
       constructor() {
@@ -128,11 +156,22 @@ async function main() {
     window.webkitSpeechRecognition = StubRecognition
   })
 
-  // --- button at rest ---
+  // --- button at rest (wired endpoint; person-speaking icon) ---
   await page.goto(base + '#/shop', { waitUntil: 'networkidle' })
   await waitFab(page, true)
+  const wired = await page.evaluate(() => {
+    const cfg = window.FEEDBACK_CONFIG || {}
+    const script = document.querySelector('script[data-endpoint-url]')
+    return {
+      configUrl: cfg.endpointUrl || '',
+      dataUrl: (script && script.getAttribute('data-endpoint-url')) || '',
+    }
+  })
+  console.log('wired endpoint', wired)
+  if (wired.configUrl !== FORMSPREE || wired.dataUrl !== FORMSPREE) {
+    throw new Error('expected Formspree URL in FEEDBACK_CONFIG and data-endpoint-url, got ' + JSON.stringify(wired))
+  }
   await shot(page, '390-button-rest')
-  // Close crop of the launcher icon (person-speaking)
   const fabBox = await page.locator('.fbw-fab').boundingBox()
   if (fabBox) {
     const pad = 8
@@ -176,7 +215,12 @@ async function main() {
     const bar = document.getElementById('fbw-demo-consent')
     const fabBottom = fab.getBoundingClientRect().bottom
     const barTop = bar.getBoundingClientRect().top
-    return { fabBottom, barTop, gap: barTop - fabBottom, clearance: getComputedStyle(document.querySelector('.fbw-root')).getPropertyValue('--fbw-consent-clearance') }
+    return {
+      fabBottom,
+      barTop,
+      gap: barTop - fabBottom,
+      clearance: getComputedStyle(document.querySelector('.fbw-root')).getPropertyValue('--fbw-consent-clearance'),
+    }
   })
   console.log('consent lift', lifted)
   if (lifted.gap < 8) throw new Error('consent clearance gap < 8: ' + lifted.gap)
@@ -188,8 +232,8 @@ async function main() {
   await page.waitForTimeout(300)
   await shot(page, '390-button-consent-dismissed')
 
-  // Helper: remount widget with overrides (shots never POST to a real inbox)
-  async function remountWidget(overrides) {
+  // Remount helper: keep Formspree URL; do NOT override fetch (Playwright route stubs it).
+  async function remountWidget(overrides = {}) {
     await page.evaluate((ov) => {
       if (!window.FleetFeedbackWidget) return
       const scripts = document.querySelectorAll('script[data-app="fleetfit"]')
@@ -199,13 +243,18 @@ async function main() {
       const cfg = {
         app: 'fleetfit',
         build: 'shot',
-        endpointUrl: ov.endpointUrl || '',
+        endpointUrl: ov.endpointUrl != null ? ov.endpointUrl : 'https://formspree.io/f/mrpeegjd',
+        fieldMap: {
+          message: 'message',
+          page: 'page',
+          screen: 'screen',
+          browser: 'browser',
+          time: 'time',
+          honeypot: '_gotcha',
+        },
         contextFn: '__fleetfitFeedbackContext',
         consentSelector: '[data-consent-bar]',
         exclude: (cfgScript && cfgScript.getAttribute('data-exclude')) || '#/privacy,#/legal',
-        fetch: function () {
-          return Promise.reject(new Error('shot must not send'))
-        },
       }
       if (ov.SpeechRecognition === null) cfg.SpeechRecognition = null
       window.FleetFeedbackWidget.createWidget(cfg)
@@ -213,87 +262,103 @@ async function main() {
     await waitFab(page, true)
   }
 
-  // --- sheet listening with stub interim (needs non-empty endpoint for compose UI) ---
-  await remountWidget({
-    endpointUrl: 'https://example.invalid/feedback-shot-no-send',
-  })
+  // --- compose open (typing path; no speech fill) ---
+  await remountWidget({ SpeechRecognition: null })
+  await page.click('.fbw-fab')
+  await page.waitForSelector('.fbw-sheet[data-fbw-mode="compose"]', { state: 'visible' })
+  await page.waitForTimeout(200)
+  await shot(page, '390-compose-open')
+
+  // --- typed text with character counter ---
+  const typed = 'Draft feedback for the package total screen.'
+  await page.locator('.fbw-ta').fill(typed)
+  const countText = await page.locator('.fbw-count').innerText()
+  console.log('counter:', countText)
+  if (countText !== typed.length + ' / 1000') {
+    throw new Error('expected counter "' + typed.length + ' / 1000", got ' + countText)
+  }
+  await shot(page, '390-compose-typed-counter')
+
+  // --- listening stub (voice path) ---
+  await page.keyboard.press('Escape')
+  await page.waitForSelector('.fbw-sheet', { state: 'detached' }).catch(() => {})
+  await remountWidget({}) // default SpeechRecognition from init script
   await page.click('.fbw-fab')
   await page.waitForSelector('.fbw-sheet[data-fbw-mode="compose"]', { state: 'visible' })
   await page.waitForTimeout(400)
   const taVal = await page.locator('.fbw-ta').inputValue()
-  console.log('stub interim text:', taVal || '(empty - stub may not have fired)')
+  console.log('stub interim text:', taVal || '(empty)')
   fs.writeFileSync(
     path.join(outDir, 'speech-stub-note.txt'),
-    'VM has no mic; SpeechRecognition stubbed to inject interim text: "stub interim: package total looks clear"\nCaptured textarea: ' +
+    'VM has no mic; SpeechRecognition stubbed. Formspree requests intercepted by Playwright route; no real submissions.\nCaptured textarea: ' +
       taVal +
-      '\nCompose UI opened with a throwaway endpointUrl for the stub shot only; no submission sent.\n',
+      '\n',
   )
   await shot(page, '390-sheet-listening-stub')
   await page.keyboard.press('Escape')
   await page.waitForSelector('.fbw-sheet', { state: 'detached' }).catch(() => {})
 
-  // --- not connected yet: empty endpointUrl opens message-only dialog (no textarea / mic) ---
+  // --- thank-you (stubbed ok:true) ---
+  formspreeMode = 'ok'
+  await remountWidget({ SpeechRecognition: null })
+  await page.click('.fbw-fab')
+  await page.waitForSelector('.fbw-sheet[data-fbw-mode="compose"]')
+  await page.locator('.fbw-ta').fill('Stubbed success path. Do not deliver.')
+  // Honor 3s minimum open-to-send
+  await page.waitForTimeout(3200)
+  await page.click('.fbw-btn-send')
+  await page.waitForFunction(() => {
+    const s = document.querySelector('.fbw-status')
+    return s && /Thanks, sent/i.test(s.textContent || '')
+  })
+  const thanks = await page.locator('.fbw-status').innerText()
+  console.log('thanks status:', thanks)
+  await shot(page, '390-thanks-stubbed')
+  await page.keyboard.press('Escape')
+  await page.waitForSelector('.fbw-sheet', { state: 'detached' }).catch(() => {})
+
+  // --- failure (stubbed 422) ---
+  formspreeMode = 'fail'
+  await remountWidget({ SpeechRecognition: null })
+  await page.click('.fbw-fab')
+  await page.waitForSelector('.fbw-sheet[data-fbw-mode="compose"]')
+  const failText = 'Stubbed failure path keeps this text.'
+  await page.locator('.fbw-ta').fill(failText)
+  await page.waitForTimeout(3200)
+  await page.click('.fbw-btn-send')
+  await page.waitForFunction(() => {
+    const s = document.querySelector('.fbw-status')
+    return s && /Couldn't send, please try again/i.test(s.textContent || '')
+  })
+  const failStatus = await page.locator('.fbw-status').innerText()
+  const kept = await page.locator('.fbw-ta').inputValue()
+  console.log('fail status:', failStatus, 'kept:', kept)
+  if (kept !== failText) throw new Error('failure path must keep typed text')
+  await shot(page, '390-failure-stubbed')
+  await page.keyboard.press('Escape')
+  await page.waitForSelector('.fbw-sheet', { state: 'detached' }).catch(() => {})
+  formspreeMode = 'block'
+
+  // --- not-connected regression (empty endpoint remount) ---
   await remountWidget({ endpointUrl: '', SpeechRecognition: null })
   await page.click('.fbw-fab')
   await page.waitForSelector('.fbw-sheet[data-fbw-mode="not-connected"]', { state: 'visible' })
-  const status2 = await page.locator('.fbw-status').innerText()
-  console.log('not-connected status:', status2)
-  if (!/isn['']t connected yet/i.test(status2)) {
-    throw new Error('expected not-connected status, got: ' + status2)
-  }
-  const taCount = await page.locator('.fbw-ta').count()
-  if (taCount !== 0) throw new Error('not-connected dialog must not include textarea')
   await shot(page, '390-not-connected')
-  await page.click('.fbw-btn-send') // OK
+  await page.click('.fbw-btn-send')
   await page.waitForSelector('.fbw-sheet', { state: 'detached' })
 
-  // --- typing fallback: compose with endpoint, speech unavailable ---
-  await page.evaluate(() => {
-    window.SpeechRecognition = undefined
-    window.webkitSpeechRecognition = undefined
-  })
-  await remountWidget({
-    endpointUrl: 'https://example.invalid/feedback-shot-no-send',
-    SpeechRecognition: null,
-  })
-  await page.click('.fbw-fab')
-  await page.waitForSelector('.fbw-sheet[data-fbw-mode="compose"]')
-  const statusType = await page.locator('.fbw-status').innerText()
-  console.log('typing fallback status:', statusType)
-  await shot(page, '390-type-fallback')
-  await page.keyboard.press('Escape')
-  // Restore empty-endpoint widget for remaining gates (matches draft config)
-  await remountWidget({ endpointUrl: '', SpeechRecognition: null })
+  // Restore wired endpoint for remaining gates
+  await remountWidget({ SpeechRecognition: null })
 
-  // --- excluded hash: button absent (pattern only; no FleetFit privacy pages) ---
+  // --- excluded hash ---
   await page.goto(base + '#/privacy', { waitUntil: 'networkidle' })
   await waitFab(page, false)
   await shot(page, '390-excluded-privacy-no-button')
 
-  // --- fleet panel Keep adding + reopen: no overlap with fab ---
+  // --- reopen: no overlap with fab ---
   await page.goto(base + '#/', { waitUntil: 'networkidle' })
   await waitFab(page, true)
-  const addBtn = page
-    .locator(
-      'button:has-text("Add to fleet"), button[aria-label*="Add"], [data-photo-add], button.photo-add-chip, [data-photo-add-chip]',
-    )
-    .first()
-  try {
-    if (await addBtn.count()) {
-      await addBtn.click({ timeout: 4000 })
-      await page.waitForTimeout(600)
-    }
-  } catch (e) {
-    console.log('add setup note:', e.message)
-  }
 
-  function rectOverlap(a, b) {
-    const overlapX = Math.max(0, Math.min(a.right, b.right) - Math.max(a.left, b.left))
-    const overlapY = Math.max(0, Math.min(a.bottom, b.bottom) - Math.max(a.top, b.top))
-    return overlapX * overlapY
-  }
-
-  // Panel open: Keep adding must not overlap fab
   const keepOverlap = await page.evaluate(() => {
     const fab = document.querySelector('.fbw-fab')
     const keep = Array.from(document.querySelectorAll('button')).find((b) =>
@@ -305,28 +370,13 @@ async function main() {
     const b = keep.getBoundingClientRect()
     const overlapX = Math.max(0, Math.min(a.right, b.right) - Math.max(a.left, b.left))
     const overlapY = Math.max(0, Math.min(a.bottom, b.bottom) - Math.max(a.top, b.top))
-    return {
-      fab: { left: a.left, right: a.right, bottom: a.bottom, top: a.top },
-      keep: { left: b.left, right: b.right, bottom: b.bottom, top: b.top },
-      overlapArea: overlapX * overlapY,
-    }
+    return { overlapArea: overlapX * overlapY }
   })
   console.log('keep adding overlap', keepOverlap)
   if (!keepOverlap.skipped && keepOverlap.overlapArea > 0) {
     throw new Error('fab overlaps Keep adding')
   }
   await shot(page, '390-no-overlap-keep-adding')
-
-  // Close panel to show reopen
-  try {
-    const close = page
-      .locator('[data-fleet-plan-close], button:has-text("Close"), .fleet-plan-close, button[aria-label*="Close"]')
-      .first()
-    if (await close.count()) await close.click({ timeout: 2000 })
-  } catch (e) {
-    console.log('close panel note:', e.message)
-  }
-  await page.waitForTimeout(400)
 
   const overlap = await page.evaluate(() => {
     let reopen = document.querySelector('[data-fleet-plan-reopen], .fleet-plan-reopen')
@@ -354,7 +404,40 @@ async function main() {
   if (overlap.overlapArea > 0) throw new Error('fab overlaps reopen control')
   await shot(page, '390-no-overlap-reopen')
 
-  // horizontal overflow check 390
+  // Consent bar overlap at 390 with wired widget
+  await page.evaluate(() => {
+    const bar = document.createElement('div')
+    bar.setAttribute('data-consent-bar', '1')
+    bar.id = 'fbw-gate-consent'
+    bar.textContent = 'Consent bar gate'
+    Object.assign(bar.style, {
+      position: 'fixed',
+      left: '0',
+      right: '0',
+      bottom: '0',
+      zIndex: '50',
+      background: '#102033',
+      color: '#fff',
+      padding: '16px',
+    })
+    document.body.appendChild(bar)
+  })
+  await page.waitForTimeout(300)
+  const consentGate = await page.evaluate(() => {
+    const fab = document.querySelector('.fbw-fab')
+    const bar = document.getElementById('fbw-gate-consent')
+    const a = fab.getBoundingClientRect()
+    const b = bar.getBoundingClientRect()
+    const overlapX = Math.max(0, Math.min(a.right, b.right) - Math.max(a.left, b.left))
+    const overlapY = Math.max(0, Math.min(a.bottom, b.bottom) - Math.max(a.top, b.top))
+    return { gap: b.top - a.bottom, overlapArea: overlapX * overlapY }
+  })
+  console.log('consent gate', consentGate)
+  if (consentGate.gap < 8 || consentGate.overlapArea > 0) {
+    throw new Error('fab overlaps or too close to consent bar')
+  }
+  await page.evaluate(() => document.getElementById('fbw-gate-consent')?.remove())
+
   const overflow390 = await page.evaluate(() => {
     return document.documentElement.scrollWidth > document.documentElement.clientWidth + 1
   })
@@ -370,22 +453,87 @@ async function main() {
   })
   if (overflow1440) throw new Error('horizontal overflow at 1440')
 
-  // en/em dash scan on visible widget strings + sheet copy
+  // consent + reopen overlap at 1440
+  await page.evaluate(() => {
+    const bar = document.createElement('div')
+    bar.setAttribute('data-consent-bar', '1')
+    bar.id = 'fbw-gate-consent-1440'
+    bar.textContent = 'Consent bar gate'
+    Object.assign(bar.style, {
+      position: 'fixed',
+      left: '0',
+      right: '0',
+      bottom: '0',
+      zIndex: '50',
+      background: '#102033',
+      color: '#fff',
+      padding: '16px',
+    })
+    document.body.appendChild(bar)
+    let reopen = document.querySelector('[data-fleet-plan-reopen], .fleet-plan-reopen')
+    if (!reopen) {
+      reopen = document.createElement('button')
+      reopen.className = 'fleet-plan-reopen'
+      reopen.setAttribute('data-fleet-plan-reopen', '1')
+      reopen.style.cssText =
+        'position:fixed;right:14px;bottom:18px;z-index:92;width:52px;height:52px;border-radius:50%;background:#0b1220;color:#fff;border:0'
+      reopen.textContent = '1'
+      document.body.appendChild(reopen)
+    }
+  })
+  await page.waitForTimeout(300)
+  const gate1440 = await page.evaluate(() => {
+    const fab = document.querySelector('.fbw-fab')
+    const bar = document.getElementById('fbw-gate-consent-1440')
+    const reopen = document.querySelector('[data-fleet-plan-reopen], .fleet-plan-reopen')
+    const a = fab.getBoundingClientRect()
+    const b = bar.getBoundingClientRect()
+    const c = reopen.getBoundingClientRect()
+    const o = (r1, r2) => {
+      const ox = Math.max(0, Math.min(r1.right, r2.right) - Math.max(r1.left, r2.left))
+      const oy = Math.max(0, Math.min(r1.bottom, r2.bottom) - Math.max(r1.top, r2.top))
+      return ox * oy
+    }
+    return {
+      consentGap: b.top - a.bottom,
+      consentOverlap: o(a, b),
+      reopenOverlap: o(a, c),
+    }
+  })
+  console.log('1440 gates', gate1440)
+  if (gate1440.consentGap < 8 || gate1440.consentOverlap > 0 || gate1440.reopenOverlap > 0) {
+    throw new Error('1440 overlap gate failed: ' + JSON.stringify(gate1440))
+  }
+
   const dashScan = await page.evaluate(() => {
     const bits = []
-    document.querySelectorAll('.fbw-root, .fbw-sheet, .fbw-note, .fbw-status, .fbw-btn').forEach((el) => {
+    document.querySelectorAll('.fbw-root, .fbw-sheet, .fbw-note, .fbw-status, .fbw-btn, .fbw-count').forEach((el) => {
       bits.push(el.innerText || '')
     })
-    // Also static strings from sheet note when closed
     return bits.join('\n')
   })
   if (/[–—]/.test(dashScan)) throw new Error('en/em dash in widget text')
-  // Source-level check of widget visible copy
-  const noteCopy = "Your browser's speech service turns your voice into text. Please don't include personal details."
-  const failCopy = "Couldn't send, please try again"
-  const ncCopy = "Feedback isn't connected yet."
-  for (const s of [noteCopy, failCopy, ncCopy, 'Thanks, sent.', 'Typing works too.', 'Send', 'Cancel']) {
+  const copyConsts = [
+    "Your browser's speech service turns your voice into text. Please don't include personal details.",
+    "Couldn't send, please try again",
+    "Feedback isn't connected yet.",
+    'Thanks, sent.',
+    'Typing works too.',
+    'Send',
+    'Cancel',
+  ]
+  for (const s of copyConsts) {
     if (/[–—]/.test(s)) throw new Error('en/em dash in copy constant')
+  }
+
+  // Source scan of staged widget + index for en/em dashes in user-facing strings
+  const widgetSrc = fs.readFileSync(path.join(stage, 'feedback-widget/feedback-widget.min.js'), 'utf8')
+  const indexSrc = fs.readFileSync(path.join(stage, 'index.html'), 'utf8')
+  if (/[–—]/.test(widgetSrc) || /[–—]/.test(indexSrc)) {
+    throw new Error('en/em dash found in staged widget or index')
+  }
+  if (!indexSrc.includes(FORMSPREE)) {
+    throw new Error('staged index missing Formspree endpoint')
   }
 
   fs.writeFileSync(
@@ -396,19 +544,19 @@ async function main() {
         overflow390,
         overflow1440,
         consentLift: lifted,
+        consentGate,
+        gate1440,
         keepOverlap,
         overlap,
-        speechStub: true,
-        excludedPrivacyNoButton: true,
-        notConnected: true,
+        formspreeHits,
+        formspreeStubbed: true,
+        wiredEndpoint: FORMSPREE,
       },
       null,
       2,
     ),
   )
 
-  // Ignore env/network noise (Google Fonts DNS, absolute /fleetfit-preview/ brand paths on local static).
-  // Fail on app/widget JS exceptions only.
   const actionable = consoleErrors.filter(
     (e) =>
       !/ERR_NAME_NOT_RESOLVED|fonts\.googleapis|fonts\.gstatic|status of 404|Failed to load resource/i.test(
@@ -422,6 +570,10 @@ async function main() {
   if (consoleErrors.length) {
     console.warn('ignored env console noise:', consoleErrors.length)
   }
+
+  const realPosts = formspreeHits.filter((h) => h.mode !== 'ok' && h.mode !== 'fail' && h.mode !== 'block')
+  if (realPosts.length) throw new Error('unexpected formspree mode hits')
+  console.log('formspree stub hits', formspreeHits.length)
 
   await browser.close()
   if (server) server.close()

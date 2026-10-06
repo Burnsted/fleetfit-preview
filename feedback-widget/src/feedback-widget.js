@@ -347,6 +347,7 @@
       '.fbw-note{font-size:12px;line-height:1.35;color:#4b5563;margin:0}',
       '.fbw-ta{width:100%;min-height:96px;max-height:40vh;resize:vertical;border:1px solid #d1d5db;border-radius:8px;padding:10px 12px;font:inherit;font-size:15px;color:#111;background:#fff}',
       '.fbw-ta:focus{outline:2px solid #3b82f6;outline-offset:1px}',
+      '.fbw-count{font-size:12px;line-height:1.3;color:#6b7280;margin:0;text-align:right}',
       '.fbw-actions{display:flex;gap:8px;justify-content:flex-end}',
       '.fbw-btn{appearance:none;border:0;border-radius:8px;min-height:40px;padding:0 14px;font:inherit;font-size:14px;font-weight:600;cursor:pointer}',
       '.fbw-btn-cancel{background:#e5e7eb;color:#111}',
@@ -553,7 +554,14 @@
             else interim += t;
           }
           var text = stripControlChars((finalBits.join(' ') + ' ' + interim).trim());
-          if (ta) ta.value = text;
+          if (ta) {
+            ta.value = text;
+            try {
+              ta.dispatchEvent(new Event('input', { bubbles: true }));
+            } catch (e) {
+              /* ignore */
+            }
+          }
         };
         recognition.onerror = function () {
           listening = false;
@@ -806,6 +814,17 @@
       ta.setAttribute('aria-label', 'Feedback text');
       ta.placeholder = 'Speak or type your feedback…';
 
+      var countEl = doc.createElement('p');
+      countEl.className = 'fbw-count';
+      countEl.setAttribute('aria-live', 'polite');
+      function updateCount() {
+        var n = (ta.value || '').length;
+        if (n > MAX_TEXT) n = MAX_TEXT;
+        countEl.textContent = n + ' / ' + MAX_TEXT;
+      }
+      updateCount();
+      ta.addEventListener('input', updateCount);
+
       hp = doc.createElement('input');
       hp.type = 'text';
       hp.className = 'fbw-hp';
@@ -835,6 +854,7 @@
 
       sheet.appendChild(note);
       sheet.appendChild(ta);
+      sheet.appendChild(countEl);
       sheet.appendChild(hp);
       sheet.appendChild(statusEl);
       sheet.appendChild(actions);
