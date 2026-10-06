@@ -42,6 +42,14 @@ function intakeBoost(entry, intake) {
   return 0
 }
 
+/** Hard body filter from intake. Either / blank → null (keep both). */
+export function intakeBodyNeed(intake) {
+  const pref = String(intake?.body || '').trim()
+  if (pref === 'Van') return 'van'
+  if (pref === 'Pickup') return 'truck'
+  return null
+}
+
 function compareBoosted(a, b, intake) {
   const ka = (a.score?.sortKey ?? -1) + intakeBoost(a, intake)
   const kb = (b.score?.sortKey ?? -1) + intakeBoost(b, intake)
@@ -71,10 +79,16 @@ export function composeRecommendationSet(units, ctx = {}, options = {}) {
   const rejected = ranked.filter((r) => r.score?.hardReject)
 
   // Ted: real verified listing + dial is-high (GOOD_SCORE_RATIO). Drop the rest.
-  const eligible = afterHard.filter((r) => isSuggestibleUnit(r.unit, r.score))
+  const eligibleAll = afterHard.filter((r) => isSuggestibleUnit(r.unit, r.score))
   const droppedWeakOrUnreal = afterHard.filter(
     (r) => !isSuggestibleUnit(r.unit, r.score),
   )
+
+  // Hard body filter from intake Van / Pickup — never substitute the other class.
+  const bodyNeed = intakeBodyNeed(intake)
+  const eligible = bodyNeed
+    ? eligibleAll.filter((r) => bodyClassOf(r.unit) === bodyNeed)
+    : eligibleAll
 
   const trucks = eligible.filter((r) => bodyClassOf(r.unit) === 'truck')
   const vans = eligible.filter((r) => bodyClassOf(r.unit) === 'van')
@@ -106,9 +120,13 @@ export function composeRecommendationSet(units, ctx = {}, options = {}) {
   }
 
   let missingBodyNote = null
-  if (trucks.length && !vans.length) {
+  if (bodyNeed === 'van' && vans.length === 0) {
     missingBodyNote = noBodyRealGood('vans')
-  } else if (vans.length && !trucks.length) {
+  } else if (bodyNeed === 'truck' && trucks.length === 0) {
+    missingBodyNote = noBodyRealGood('trucks')
+  } else if (!bodyNeed && trucks.length && !vans.length) {
+    missingBodyNote = noBodyRealGood('vans')
+  } else if (!bodyNeed && vans.length && !trucks.length) {
     missingBodyNote = noBodyRealGood('trucks')
   }
 

@@ -103,6 +103,7 @@ export default function TradePackageResults({ pkg }) {
   const [eligible, setEligible] = useState([])
   const [eligibleCount, setEligibleCount] = useState(0)
   const [shortfall, setShortfall] = useState(0)
+  const [bodyShortfallNote, setBodyShortfallNote] = useState(null)
   const [removedRow, setRemovedRow] = useState(null)
   const [lastAddedId, setLastAddedId] = useState(null)
   const [banner, setBanner] = useState(null)
@@ -151,6 +152,7 @@ export default function TradePackageResults({ pkg }) {
       setEligible(composed.eligible)
       setEligibleCount(composed.eligibleCount)
       setShortfall(composed.shortfall)
+      setBodyShortfallNote(composed.bodyShortfallNote || null)
       setSize(composed.size)
       if (composed.replacements?.length) {
         const last = composed.replacements[composed.replacements.length - 1]
@@ -404,14 +406,16 @@ export default function TradePackageResults({ pkg }) {
 
             {active.length === 0 ? (
               <p className="trade-empty" data-empty="true">
-                {TRADE_PACKAGE_COPY.emptyPackage}{' '}
-                <Link to="/intake">{TRADE_PACKAGE_COPY.buildYourOwn}</Link>
+                {bodyShortfallNote || TRADE_PACKAGE_COPY.emptyPackage}{' '}
+                {!bodyShortfallNote ? (
+                  <Link to="/intake">{TRADE_PACKAGE_COPY.buildYourOwn}</Link>
+                ) : null}
               </p>
             ) : null}
 
             {shortfall > 0 && active.length > 0 ? (
               <p className="trade-shortfall" data-shortfall={shortfall}>
-                {TRADE_PACKAGE_COPY.noOtherListing}{' '}
+                {bodyShortfallNote || TRADE_PACKAGE_COPY.noOtherListing}{' '}
                 Showing {active.length} real{' '}
                 {active.length === 1 ? 'unit' : 'units'} of fleet size {size}.
               </p>

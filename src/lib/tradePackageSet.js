@@ -5,6 +5,10 @@
  * fetch-verified real listing AND passes the 0.7 score bar.
  * Never invent listings to fill size chips.
  *
+ * Body preference (intake Van / Pickup / Either): hard-filter the pool.
+ * Never silently substitute the other body type. Honest shortfall when
+ * no matching body clears the real-listing + score gate.
+ *
  * REV2 remove behavior (mock 06 + package-total §9–10):
  * removing a unit collapses to an Undo row and auto-adds the next-ranked
  * live eligible unit when one exists. Size stays; total updates.
@@ -12,11 +16,26 @@
 import { PACKAGES, getPackageAllUnits } from '../data/package'
 import { TRADE_PACKAGE_COPY } from '../data/tradeNeeds'
 import { rankUnitsByScoreV2 } from './scoreV2'
-import { isSuggestibleUnit, hasRealListing } from './suggestionEligibility'
+import { bodyClassOf } from './recommendationSet'
+import { isSuggestibleUnit, hasRealListing, noBodyRealGood } from './suggestionEligibility'
 import { resolveOutboundListing } from './outboundListing'
 
-export const TRADE_PACKAGE_SET_BUILD = 'trade-package-set-20261001'
+export const TRADE_PACKAGE_SET_BUILD = 'trade-package-set-body-20261006'
 export const SIZE_MAX = 5
+
+/** Map intake body chip to a hard bodyClass filter, or null for Either / unset. */
+export function intakeBodyFilter(intake) {
+  const pref = String(intake?.body || '').trim()
+  if (pref === 'Van') return 'van'
+  if (pref === 'Pickup') return 'truck'
+  return null
+}
+
+export function unitMatchesIntakeBody(unit, intake) {
+  const need = intakeBodyFilter(intake)
+  if (!need) return true
+  return bodyClassOf(unit) === need
+}
 
 /**
  * Deduped candidate pool: every seed unit across packages that has listing
@@ -47,16 +66,30 @@ export function rankTradePool(units, scoreCtx = {}) {
     const outbound = resolveOutboundListing(row.unit)
     const live = hasRealListing(row.unit) && outbound.live !== false
     const suggestible = isSuggestibleUnit(row.unit, row.score)
+    const bodyClass = bodyClassOf(row.unit)
     return {
       ...row,
       poolIndex: i,
       live,
       suggestible,
       outbound,
+      bodyClass,
     }
   })
-  const eligible = withMeta.filter((r) => r.suggestible)
-  return { all: withMeta, eligible }
+  const bodyNeed = intakeBodyFilter(scoreCtx?.intake)
+  const bodyMatched = bodyNeed
+    ? withMeta.filter((r) => r.bodyClass === bodyNeed)
+    : withMeta
+  const eligible = bodyMatched.filter((r) => r.suggestible)
+  return {
+    all: withMeta,
+    eligible,
+    bodyNeed,
+    bodyShortfallNote:
+      bodyNeed && eligible.filter((r) => r.live).length === 0
+        ? noBodyRealGood(bodyNeed === 'van' ? 'vans' : 'trucks')
+        : null,
+  }
 }
 
 /**
@@ -309,7 +342,10 @@ export function addUnitToPackage(active, eligible, unitId, sizeMax = SIZE_MAX) {
  */
 export function composeTradePackageSet(pkgDef, scoreCtx, size) {
   const desired = Math.max(1, Math.min(SIZE_MAX, Number(size) || pkgDef.sizeDefault || 4))
-  const { all, eligible } = rankTradePool(collectCandidateUnits(), scoreCtx)
+  const { all, eligible, bodyNeed, bodyShortfallNote } = rankTradePool(
+    collectCandidateUnits(),
+    scoreCtx,
+  )
   let active = sliceActiveSet(eligible, desired)
   const deadPass = autoReplaceDeadSlots(active, eligible)
   active = deadPass.active
@@ -325,6 +361,8 @@ export function composeTradePackageSet(pkgDef, scoreCtx, size) {
     shortfall: Math.max(0, desired - active.length),
     replacements: deadPass.replacements,
     stockMode: pkgDef.stockMode || 'Used',
+    bodyNeed: bodyNeed || null,
+    bodyShortfallNote: bodyShortfallNote || null,
   }
 }
 

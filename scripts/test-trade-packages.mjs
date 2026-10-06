@@ -17,11 +17,13 @@ import {
   addUnitToPackage,
   composeTradePackageSet,
   collectCandidateUnits,
+  intakeBodyFilter,
   removeAndAutoReplace,
   rankTradePool,
   sliceActiveSet,
   undoRemove,
 } from '../src/lib/tradePackageSet.js'
+import { NO_VANS_REAL_GOOD } from '../src/lib/suggestionEligibility.js'
 import { computePackageTotal } from '../src/lib/packageTotal.js'
 import { effectivePayloadLoadLb, parseJobFromIntake } from '../src/lib/scoreV2.ts'
 
@@ -314,6 +316,32 @@ test('11. sliceActiveSet respects size and eligibility order', () => {
   assert.equal(two[1].rank, 2)
   const five = sliceActiveSet(eligible, 5)
   assert.equal(five.length, 2) // only 2 live suggestible
+})
+
+test('12. Intake body Van / Pickup hard-filters; never silent substitute', () => {
+  assert.equal(intakeBodyFilter({ body: 'Van' }), 'van')
+  assert.equal(intakeBodyFilter({ body: 'Pickup' }), 'truck')
+  assert.equal(intakeBodyFilter({ body: 'Either' }), null)
+  assert.equal(intakeBodyFilter({}), null)
+
+  const hvac = getPackage(TRADE_PACKAGE_IDS.hvac)
+  const vanSet = composeTradePackageSet(hvac, { pkg: hvac, intake: { body: 'Van' } }, 4)
+  assert.ok(vanSet.active.length >= 1, 'HVAC van intake should find a real van')
+  for (const slot of vanSet.active) {
+    assert.equal(slot.unit.bodyType, 'van', `${slot.unit.id} must be van`)
+  }
+  assert.equal(vanSet.bodyShortfallNote, null)
+
+  const pickupSet = composeTradePackageSet(hvac, { pkg: hvac, intake: { body: 'Pickup' } }, 4)
+  for (const slot of pickupSet.active) {
+    assert.equal(slot.unit.bodyType, 'truck', `${slot.unit.id} must be truck`)
+  }
+
+  const elec = getPackage(TRADE_PACKAGE_IDS.electrical)
+  const elecVan = composeTradePackageSet(elec, { pkg: elec, intake: { body: 'Van' } }, 4)
+  assert.equal(elecVan.active.length, 0, 'electrical has no suggestible van')
+  assert.equal(elecVan.bodyShortfallNote, NO_VANS_REAL_GOOD)
+  assert.ok(!elecVan.active.some((s) => s.unit.bodyType === 'truck'))
 })
 
 console.log(`\n${passed} trade-package tests passed`)
