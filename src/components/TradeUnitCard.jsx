@@ -1,6 +1,6 @@
 import OutboundListingLink, { OutboundListingLabel } from './OutboundListingLink'
 import UnitPhoto from './UnitPhoto'
-import ScoreDial from './ScoreDial'
+import ScoreDialControl from './ScoreDialControl'
 import { TRADE_PACKAGE_COPY } from '../data/tradeNeeds'
 import { formatMoney } from '../lib/fit'
 import { NOT_PUBLISHED } from '../lib/workSpec'
@@ -102,7 +102,14 @@ export default function TradeUnitCard({
           ) : null}
         </div>
         <div className="trade-unit-score">
-          <ScoreDial score={score} size="card" />
+          <ScoreDialControl
+            score={score}
+            rank={rank}
+            size="card"
+            heading={ymm}
+            unit={unit}
+            className="is-on-light"
+          />
         </div>
       </div>
     </article>
