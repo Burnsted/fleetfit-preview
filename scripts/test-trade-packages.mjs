@@ -23,7 +23,7 @@ import {
   sliceActiveSet,
   undoRemove,
 } from '../src/lib/tradePackageSet.js'
-import { NO_VANS_REAL_GOOD } from '../src/lib/suggestionEligibility.js'
+import { NO_VANS_REAL_LISTING } from '../src/lib/suggestionEligibility.js'
 import { computePackageTotal } from '../src/lib/packageTotal.js'
 import { effectivePayloadLoadLb, parseJobFromIntake } from '../src/lib/scoreV2.ts'
 
@@ -339,9 +339,58 @@ test('12. Intake body Van / Pickup hard-filters; never silent substitute', () =>
 
   const elec = getPackage(TRADE_PACKAGE_IDS.electrical)
   const elecVan = composeTradePackageSet(elec, { pkg: elec, intake: { body: 'Van' } }, 4)
-  assert.equal(elecVan.active.length, 0, 'electrical has no suggestible van')
-  assert.equal(elecVan.bodyShortfallNote, NO_VANS_REAL_GOOD)
+  // Real van listing exists (E-Transit) but is not dial-high without current —
+  // shortfall only when zero real vans exist, so no shortfall line here.
+  assert.equal(elecVan.bodyShortfallNote, null)
   assert.ok(!elecVan.active.some((s) => s.unit.bodyType === 'truck'))
+})
+
+test('13. Van + current: incomplete real vans still show; no shortfall; no invented score', () => {
+  const hvac = getPackage(TRADE_PACKAGE_IDS.hvac)
+  const intake = {
+    body: 'Van',
+    current: { year: 2019, make: 'Ford', model: 'Transit-250', miles: 62000 },
+    currentYear: '2019',
+    currentMake: 'Ford',
+    currentModel: 'Transit-250',
+    currentMiles: '62000',
+  }
+  const set = composeTradePackageSet(hvac, { pkg: hvac, intake }, 4)
+  assert.ok(set.active.length >= 1, 'real van listings must still pack when incomplete')
+  assert.equal(set.bodyShortfallNote, null, 'shortfall only when zero real van listings')
+  for (const slot of set.active) {
+    assert.equal(slot.unit.bodyType, 'van', `${slot.unit.id} must be van`)
+    if (slot.packIncomplete || slot.score?.incomplete) {
+      assert.equal(slot.score?.incomplete, true)
+      assert.ok(
+        typeof slot.score?.incompleteLabel === 'string' &&
+          slot.score.incompleteLabel.startsWith('Score incomplete:'),
+        `plain incomplete label, got ${slot.score?.incompleteLabel}`,
+      )
+      assert.equal(slot.score?.dialTotal, null, 'never invent a numeric dial total')
+      assert.equal(slot.score?.candidateTotal, null, 'never invent candidateTotal')
+    }
+  }
+  // Complete (suggestible) rows, if any, rank before incomplete pack rows.
+  const { eligible } = rankTradePool(collectCandidateUnits(), { pkg: hvac, intake })
+  const firstIncomplete = eligible.findIndex((r) => r.packIncomplete)
+  if (firstIncomplete >= 0) {
+    for (let i = 0; i < firstIncomplete; i += 1) {
+      assert.equal(eligible[i].suggestible, true)
+      assert.equal(eligible[i].packIncomplete, false)
+    }
+  }
+})
+
+test('14. Body shortfall only when zero real listings of that body exist', () => {
+  const hvac = getPackage(TRADE_PACKAGE_IDS.hvac)
+  // Empty pool → shortfall for Van.
+  const { bodyShortfallNote, eligible } = rankTradePool([], {
+    pkg: hvac,
+    intake: { body: 'Van' },
+  })
+  assert.equal(eligible.length, 0)
+  assert.equal(bodyShortfallNote, NO_VANS_REAL_LISTING)
 })
 
 console.log(`\n${passed} trade-package tests passed`)

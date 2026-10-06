@@ -127,9 +127,32 @@ export const STATUS = {
     `Not scored: ${field} not ${kind}`,
   INCOMPLETE_KEY: 'Score incomplete: key data missing',
   INCOMPLETE_CURRENT: 'Score incomplete: current vehicle not entered',
+  /** Plain incomplete label when a Not scored field can be named. */
+  incompleteMissing: (field: string) => `Score incomplete: missing ${field}`,
   NOT_ENTERED: 'Not entered',
   ADD_CURRENT_BANNER: 'Add your current vehicle to compare',
   AT_RISK: 'At risk, not counted',
   WARRANTY_UNCONFIRMED: 'Commercial warranty status not confirmed',
   FL_PRICE: 'Not scored: FL energy price not loaded',
 } as const
+
+/**
+ * Prefer "Score incomplete: missing <field>" from the first Not scored cell.
+ * Falls back to INCOMPLETE_KEY. Never invents a numeric score.
+ */
+export function incompleteLabelFromCategories(
+  categories: Array<{
+    current?: { display?: string | null } | null
+    candidate?: { display?: string | null } | null
+  }>,
+): string {
+  const list = Array.isArray(categories) ? categories : []
+  for (const row of list) {
+    for (const side of [row?.candidate, row?.current]) {
+      const d = String(side?.display || '').trim()
+      const m = d.match(/^Not scored:\s*(.+?)\s+not\s+(entered|published)\b/i)
+      if (m?.[1]) return STATUS.incompleteMissing(m[1].trim())
+    }
+  }
+  return STATUS.INCOMPLETE_KEY
+}

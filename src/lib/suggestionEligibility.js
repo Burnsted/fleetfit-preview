@@ -16,16 +16,30 @@ export const NO_VANS_REAL_GOOD =
 export const NO_TRUCKS_REAL_GOOD =
   'No trucks with a real listing and a good score right now.'
 
+/** Body-type shortfall when zero real listings of that body exist (score irrelevant). */
+export const NO_VANS_REAL_LISTING = 'No vans with a real listing right now.'
+
+export const NO_TRUCKS_REAL_LISTING = 'No trucks with a real listing right now.'
+
 export const NO_SUGGESTIONS =
   'No suggestions to show right now.'
 
-/** Plain empty line when zero of a body type qualify. */
+/** Plain empty line when zero of a body type qualify on the good-score bar. */
 export function noBodyRealGood(typeWord) {
   const word = String(typeWord || '').trim().toLowerCase()
   if (!word) return NO_SUGGESTIONS
   if (word === 'van' || word === 'vans') return NO_VANS_REAL_GOOD
   if (word === 'truck' || word === 'trucks') return NO_TRUCKS_REAL_GOOD
   return `No ${word} with a real listing and a good score right now.`
+}
+
+/** Shortfall when zero real listings of that body type exist at all. */
+export function noBodyRealListing(typeWord) {
+  const word = String(typeWord || '').trim().toLowerCase()
+  if (!word) return NO_SUGGESTIONS
+  if (word === 'van' || word === 'vans') return NO_VANS_REAL_LISTING
+  if (word === 'truck' || word === 'trucks') return NO_TRUCKS_REAL_LISTING
+  return `No ${word} with a real listing right now.`
 }
 
 export function scoreRatio(score) {

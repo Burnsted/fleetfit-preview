@@ -19,6 +19,7 @@ import {
   SCORE_V2_BUILD,
   SCORE_DATE,
   STATUS,
+  incompleteLabelFromCategories,
   lin,
   round1,
   clampScore,
@@ -1456,7 +1457,7 @@ export function scoreReplacementV2(
 
   // §1.6 G-final: incomplete when PP < 2/3 of job-applicable (66.7 with tow not used)
   const incomplete = pp < POINTS_FLOOR
-  const incompleteLabel = incomplete ? STATUS.INCOMPLETE_KEY : null
+  const incompleteLabel = incomplete ? incompleteLabelFromCategories(categories) : null
   const banner =
     missingCurrent && !incomplete ? STATUS.ADD_CURRENT_BANNER : null
 

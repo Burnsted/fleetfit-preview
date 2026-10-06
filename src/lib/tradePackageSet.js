@@ -2,12 +2,14 @@
  * Trade package ranking, size slice, remove → auto-replace, Undo, add-unit.
  *
  * Hard rule (fleet-list CLEARED): a unit appears only when it has a
- * fetch-verified real listing AND passes the 0.7 score bar.
- * Never invent listings to fill size chips.
+ * fetch-verified real listing AND passes the 0.7 score bar — except when
+ * intake hard-filters Van / Pickup: then real listings of that body still
+ * appear when Score v2 is incomplete (ranked after complete, plain incomplete
+ * label, never an invented total). Shortfall only when zero real listings of
+ * the chosen body exist.
  *
  * Body preference (intake Van / Pickup / Either): hard-filter the pool.
- * Never silently substitute the other body type. Honest shortfall when
- * no matching body clears the real-listing + score gate.
+ * Never silently substitute the other body type.
  *
  * REV2 remove behavior (mock 06 + package-total §9–10):
  * removing a unit collapses to an Undo row and auto-adds the next-ranked
@@ -17,10 +19,14 @@ import { PACKAGES, getPackageAllUnits } from '../data/package'
 import { TRADE_PACKAGE_COPY } from '../data/tradeNeeds'
 import { rankUnitsByScoreV2 } from './scoreV2'
 import { bodyClassOf } from './recommendationSet'
-import { isSuggestibleUnit, hasRealListing, noBodyRealGood } from './suggestionEligibility'
+import {
+  isSuggestibleUnit,
+  hasRealListing,
+  noBodyRealListing,
+} from './suggestionEligibility'
 import { resolveOutboundListing } from './outboundListing'
 
-export const TRADE_PACKAGE_SET_BUILD = 'trade-package-set-body-20261006'
+export const TRADE_PACKAGE_SET_BUILD = 'trade-package-set-body-incomplete-20261006'
 export const SIZE_MAX = 5
 
 /** Map intake body chip to a hard bodyClass filter, or null for Either / unset. */
@@ -35,6 +41,14 @@ export function unitMatchesIntakeBody(unit, intake) {
   const need = intakeBodyFilter(intake)
   if (!need) return true
   return bodyClassOf(unit) === need
+}
+
+/** Packable into the active set: live suggestible, or body-filtered incomplete live. */
+export function isPackableTradeRow(row) {
+  if (!row?.live) return false
+  if (row.suggestible) return true
+  if (row.packIncomplete) return true
+  return false
 }
 
 /**
@@ -74,31 +88,50 @@ export function rankTradePool(units, scoreCtx = {}) {
       suggestible,
       outbound,
       bodyClass,
+      packIncomplete: false,
     }
   })
   const bodyNeed = intakeBodyFilter(scoreCtx?.intake)
   const bodyMatched = bodyNeed
     ? withMeta.filter((r) => r.bodyClass === bodyNeed)
     : withMeta
-  const eligible = bodyMatched.filter((r) => r.suggestible)
+
+  // Complete (suggestible) first — preserves score rank — then incomplete live
+  // real listings when a body type was chosen (never invent a total).
+  const complete = bodyMatched.filter((r) => r.suggestible)
+  let eligible = complete
+  if (bodyNeed) {
+    const incompleteLive = bodyMatched
+      .filter(
+        (r) =>
+          r.live &&
+          !r.suggestible &&
+          r.score?.incomplete &&
+          !r.score?.hardReject,
+      )
+      .map((r) => ({ ...r, packIncomplete: true }))
+    eligible = [...complete, ...incompleteLive]
+  }
+
+  const liveOfBody = bodyMatched.filter((r) => r.live)
   return {
     all: withMeta,
     eligible,
     bodyNeed,
     bodyShortfallNote:
-      bodyNeed && eligible.filter((r) => r.live).length === 0
-        ? noBodyRealGood(bodyNeed === 'van' ? 'vans' : 'trucks')
+      bodyNeed && liveOfBody.length === 0
+        ? noBodyRealListing(bodyNeed === 'van' ? 'vans' : 'trucks')
         : null,
   }
 }
 
 /**
  * Build the initial active set for a desired fleet size.
- * Takes the top `size` eligible live units. Does not invent fillers.
+ * Takes the top `size` packable live units. Does not invent fillers.
  */
 export function sliceActiveSet(eligible, size) {
   const n = Math.max(0, Math.min(SIZE_MAX, Number(size) || 0))
-  const liveEligible = eligible.filter((r) => r.live && r.suggestible)
+  const liveEligible = eligible.filter((r) => isPackableTradeRow(r))
   return liveEligible.slice(0, n).map((r, i) => ({
     unit: r.unit,
     score: r.score,
@@ -107,6 +140,7 @@ export function sliceActiveSet(eligible, size) {
     bodyClass: r.bodyClass,
     newlyAdded: false,
     replacedFromId: null,
+    packIncomplete: Boolean(r.packIncomplete),
   }))
 }
 
@@ -118,7 +152,7 @@ export function autoReplaceDeadSlots(active, eligible) {
   const replacements = []
   const used = new Set(active.map((a) => a.unit.id))
   const nextLive = () =>
-    eligible.find((r) => r.live && r.suggestible && !used.has(r.unit.id))
+    eligible.find((r) => isPackableTradeRow(r) && !used.has(r.unit.id))
 
   const nextActive = []
   for (const slot of active) {
@@ -154,6 +188,7 @@ export function autoReplaceDeadSlots(active, eligible) {
       newlyAdded: true,
       replacedFromId: slot.unit.id,
       replacedFromUnit: slot.unit,
+      packIncomplete: Boolean(replacement.packIncomplete),
     })
   }
   return {
@@ -190,7 +225,7 @@ export function removeAndAutoReplace(active, eligible, unitId) {
   const used = new Set(without.map((a) => a.unit.id))
   used.add(unitId) // do not re-pick the unit just removed
   const next = eligible.find(
-    (r) => r.live && r.suggestible && !used.has(r.unit.id),
+    (r) => isPackableTradeRow(r) && !used.has(r.unit.id),
   )
 
   if (!next) {
@@ -217,6 +252,7 @@ export function removeAndAutoReplace(active, eligible, unitId) {
     bodyClass: next.bodyClass,
     newlyAdded: true,
     replacedFromId: removedSlot.unit.id,
+    packIncomplete: Boolean(next.packIncomplete),
   }
   // Insert replacement roughly where the removed unit was, then re-sort by score.
   const merged = [...without, added]
@@ -308,7 +344,7 @@ export function addUnitToPackage(active, eligible, unitId, sizeMax = SIZE_MAX) {
     return { ok: false, blocked: false, message: 'Already in package.', active }
   }
   const row = eligible.find((r) => r.unit.id === unitId)
-  if (!row || !row.suggestible) {
+  if (!row || !isPackableTradeRow(row)) {
     return {
       ok: false,
       blocked: false,
@@ -326,6 +362,7 @@ export function addUnitToPackage(active, eligible, unitId, sizeMax = SIZE_MAX) {
       bodyClass: row.bodyClass,
       newlyAdded: true,
       replacedFromId: null,
+      packIncomplete: Boolean(row.packIncomplete),
     },
   ]
   next.sort((a, b) => (b.sortKey ?? 0) - (a.sortKey ?? 0))

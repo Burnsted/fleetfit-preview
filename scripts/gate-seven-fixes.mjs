@@ -297,18 +297,25 @@ async function main() {
   await page.locator('.trade-unit-card').first().screenshot({ path: join(OUT, 'item3-after-card.png') })
   saveBoth('item3-after-card')
 
-  // item4: van intake on HVAC draft
+  // item4: van intake on HVAC draft (with current → incomplete vans still show)
   await fillIntakeVan(page, DRAFT)
   await shot(page, 'item4-after')
   const afterBody = await page.innerText('body')
   assert(
-    /E-Transit|van|No vans with a real listing/i.test(afterBody),
-    'van intake must show van or honest shortfall, not silent pickup-only without note',
+    /E-Transit/i.test(afterBody),
+    'van + current must still show real van listings (E-Transit), not empty shortfall',
   )
-  // Prefer showing van when HVAC
-  if (/E-Transit/i.test(afterBody)) {
-    assert(!/Showing .* Sierra EV/i.test(afterBody) || /E-Transit/i.test(afterBody), 'van package visible')
-  }
+  assert(
+    !/No vans with a real listing/i.test(afterBody),
+    'honest van shortfall must not appear when real van listings exist',
+  )
+  assert(
+    /Score incomplete:\s*missing/i.test(afterBody),
+    'incomplete vans must show plain Score incomplete: missing <field> label',
+  )
+  await page.locator('.trade-unit-card').first().screenshot({ path: join(OUT, 'item4-after-card.png') })
+  saveBoth('item4-after-card')
+  await shot(page, 'item4b-after-van-with-current')
 
   await page.evaluate(() => {
     const el = [...document.querySelectorAll('h2,h3,p')].find((e) => /trade-?in/i.test(e.textContent || ''))
