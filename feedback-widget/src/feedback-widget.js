@@ -434,13 +434,20 @@
 
   var activeInstance = null;
 
-  function micSvg() {
-    // Line-style mic icon (no fill blob)
+  function launcherSvg() {
+    /*
+     * Person-speaking launcher (side-profile head + voice lines).
+     * Visual reference: Material Symbols "record_voice_over"
+     * (Apache License 2.0, https://github.com/google/material-design-icons).
+     * Paths below are original line/fill art for this widget, not a copy of
+     * the Material glyph path data.
+     */
     return (
       '<svg viewBox="0 0 24 24" fill="none" aria-hidden="true">' +
-      '<path d="M12 3a3 3 0 0 0-3 3v6a3 3 0 0 0 6 0V6a3 3 0 0 0-3-3Z" stroke="currentColor" stroke-width="1.75"/>' +
-      '<path d="M8 11a4 4 0 0 0 8 0" stroke="currentColor" stroke-width="1.75" stroke-linecap="round"/>' +
-      '<path d="M12 15v4M9 19h6" stroke="currentColor" stroke-width="1.75" stroke-linecap="round"/>' +
+      '<path fill="currentColor" d="M8.6 4.2c-2.45 0-4.4 2-4.4 5 0 1.9.9 3.25 2.05 4.1v2.7c0 .7.55 1.25 1.25 1.25h2.15c.7 0 1.25-.55 1.25-1.25v-1.15c.4-.08.8-.22 1.15-.42 1-.55 2-1.7 2-3.7 0-.9-.28-1.7-.75-2.35.14-.4.22-.82.22-1.28 0-1.85-1.5-3.9-3.92-3.9-.55 0-1.1.1-1.55.3z"/>' +
+      '<path d="M15.15 8.05c.9.7 1.45 1.75 1.45 2.95s-.55 2.25-1.45 2.95" stroke="currentColor" stroke-width="1.75" stroke-linecap="round"/>' +
+      '<path d="M17.45 6.35c1.4 1.15 2.25 2.95 2.25 5s-.85 3.85-2.25 5" stroke="currentColor" stroke-width="1.75" stroke-linecap="round"/>' +
+      '<path d="M19.7 4.7c1.9 1.55 3.05 4 3.05 6.8s-1.15 5.25-3.05 6.8" stroke="currentColor" stroke-width="1.75" stroke-linecap="round"/>' +
       '</svg>'
     );
   }
@@ -866,8 +873,8 @@
       fab = doc.createElement('button');
       fab.type = 'button';
       fab.className = 'fbw-fab';
-      fab.setAttribute('aria-label', 'Send voice feedback');
-      fab.innerHTML = micSvg();
+      fab.setAttribute('aria-label', 'Send feedback');
+      fab.innerHTML = launcherSvg();
       fab.addEventListener('click', onFabClick);
 
       root.appendChild(fab);

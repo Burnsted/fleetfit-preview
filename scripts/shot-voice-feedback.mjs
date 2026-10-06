@@ -132,6 +132,23 @@ async function main() {
   await page.goto(base + '#/shop', { waitUntil: 'networkidle' })
   await waitFab(page, true)
   await shot(page, '390-button-rest')
+  // Close crop of the launcher icon (person-speaking)
+  const fabBox = await page.locator('.fbw-fab').boundingBox()
+  if (fabBox) {
+    const pad = 8
+    await page.screenshot({
+      path: path.join(outDir, '390-button-icon-crop.png'),
+      clip: {
+        x: Math.max(0, fabBox.x - pad),
+        y: Math.max(0, fabBox.y - pad),
+        width: fabBox.width + pad * 2,
+        height: fabBox.height + pad * 2,
+      },
+    })
+    console.log('wrote', path.join(outDir, '390-button-icon-crop.png'))
+  }
+  const aria = await page.locator('.fbw-fab').getAttribute('aria-label')
+  if (aria !== 'Send feedback') throw new Error('aria-label expected Send feedback, got: ' + aria)
 
   // --- consent lift up / down ---
   await page.evaluate(() => {
