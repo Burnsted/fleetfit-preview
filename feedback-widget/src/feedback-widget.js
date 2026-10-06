@@ -3,7 +3,7 @@
  * Drop-in via script tag with data-* config and/or window.FEEDBACK_CONFIG.
  * Safe for React apps and plain static HTML.
  *
- * Submit: generic JSON POST (FormSubmit AJAX style). Config keys:
+ * Submit: generic JSON POST (Formspree / FormSubmit AJAX). Config keys:
  *   endpointUrl (empty by default)
  *   fieldMap: { message, page, screen, browser, time, honeypot }
  *
@@ -141,11 +141,19 @@
     return false;
   }
 
-  /** FormSubmit AJAX success: HTTP OK and success === true or "true". */
+  /**
+   * AJAX success:
+   * - Formspree: HTTP 2xx and json.ok === true
+   * - FormSubmit: HTTP 2xx and json.success === true or "true"
+   * Failure if non-2xx, missing/invalid JSON, or a non-empty json.errors array.
+   */
   function isSubmitSuccess(responseOk, json) {
     if (!responseOk) return false;
     if (!json || typeof json !== 'object') return false;
-    return json.success === true || json.success === 'true';
+    if (Array.isArray(json.errors) && json.errors.length > 0) return false;
+    if (json.ok === true) return true;
+    if (json.success === true || json.success === 'true') return true;
+    return false;
   }
 
   /**

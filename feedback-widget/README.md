@@ -2,7 +2,7 @@
 
 Vanilla JS voice feedback control. One self-contained file, zero dependencies, scoped CSS (`fbw-` prefix). Works in React apps and plain static HTML.
 
-Submit path is a **generic JSON POST** (FormSubmit.co AJAX style). There is no Google Forms / `formResponse` / `entry.*` / `no-cors` code.
+Submit path is a **generic JSON POST** for Formspree (`https://formspree.io/f/<id>`) or FormSubmit AJAX. There is no Google Forms / `formResponse` / `entry.*` / `no-cors` code.
 
 ## Files
 
@@ -19,7 +19,7 @@ Set via `data-*` on the script tag and/or `window.FEEDBACK_CONFIG` (object wins 
 
 | Key | Default | Notes |
 | --- | --- | --- |
-| `endpointUrl` | `""` | FormSubmit (or compatible) AJAX URL. Empty = not connected |
+| `endpointUrl` | `""` | Formspree or FormSubmit AJAX URL. Empty = not connected |
 | `fieldMap.message` | `"message"` | Feedback text field name |
 | `fieldMap.page` | `"page"` | Page / route / app meta field name |
 | `fieldMap.screen` | `"screen"` | Screen `WxH` field name |
@@ -32,7 +32,7 @@ Set via `data-*` on the script tag and/or `window.FEEDBACK_CONFIG` (object wins 
 | `consentSelector` | `""` | CSS selector for a bottom consent/cookie bar |
 | `exclude` | `""` | Comma-separated path/hash patterns; widget does not mount |
 
-POST body is JSON with `Content-Type: application/json` and `Accept: application/json`. Success only when the HTTP response is OK **and** the JSON has `success: true` or `success: "true"`. On failure the widget shows `Couldn't send, please try again` and keeps the typed text.
+POST body is flat JSON (`message`, `page`, `screen`, `browser`, `time`, `_gotcha`) with `Content-Type: application/json` and `Accept: application/json`. Success when HTTP 2xx and JSON has Formspree `ok: true` or FormSubmit `success: true` / `"true"`. A non-empty `errors` array or non-2xx is failure: `Couldn't send, please try again`, typed text kept.
 
 If `endpointUrl` is empty, tapping the button immediately shows only `Feedback isn't connected yet.` with an OK control. It does **not** open the compose sheet, start the mic, or request speech permission. When `endpointUrl` is set, the normal voice/type Send/Cancel flow runs.
 
@@ -75,7 +75,7 @@ Do **not** hotlink across sites. Copy `dist/feedback-widget.min.js` into your ow
 ></script>
 ```
 
-Leave `endpointUrl` empty until Ted confirms the FormSubmit alias. Never fake success.
+Leave `endpointUrl` empty until the Formspree form URL is set. Never fake success.
 
 ### Inline-paste version
 

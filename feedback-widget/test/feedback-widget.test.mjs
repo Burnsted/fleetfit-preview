@@ -128,13 +128,67 @@ add('formatPageField joins url, context, app, build', () => {
   assert.equal(page.includes('?x=1'), false)
 })
 
-// --- success detection ---
-add('isSubmitSuccess requires OK + success true/"true"', () => {
+// --- success detection (Formspree ok + FormSubmit success) ---
+add('isSubmitSuccess: FormSubmit success true/"true"', () => {
   assert.equal(fbw.isSubmitSuccess(true, { success: true }), true)
   assert.equal(fbw.isSubmitSuccess(true, { success: 'true' }), true)
   assert.equal(fbw.isSubmitSuccess(true, { success: false }), false)
   assert.equal(fbw.isSubmitSuccess(false, { success: true }), false)
   assert.equal(fbw.isSubmitSuccess(true, null), false)
+})
+
+add('isSubmitSuccess: Formspree ok === true', () => {
+  assert.equal(fbw.isSubmitSuccess(true, { ok: true }), true)
+  assert.equal(fbw.isSubmitSuccess(true, { ok: false }), false)
+  assert.equal(fbw.isSubmitSuccess(false, { ok: true }), false)
+})
+
+add('isSubmitSuccess: Formspree errors array is failure', () => {
+  assert.equal(fbw.isSubmitSuccess(true, { ok: true, errors: [{ message: 'bad' }] }), false)
+  assert.equal(fbw.isSubmitSuccess(true, { errors: ['x'] }), false)
+  assert.equal(fbw.isSubmitSuccess(true, { ok: true, errors: [] }), true)
+})
+
+add('send: Formspree ok true records and thanks', async () => {
+  const store = memStorage()
+  const { w, getStatus, setText } = makeHarness({
+    endpointUrl: 'https://formspree.io/f/example',
+    storage: store,
+    fetch: () => Promise.resolve({ ok: true, status: 200, json: async () => ({ ok: true }) }),
+  })
+  w.openSheet()
+  setText('formspree path')
+  await new Promise((r) => setTimeout(r, fbw.MIN_OPEN_MS + 20))
+  const result = await w.send()
+  assert.equal(result.ok, true)
+  assert.match(getStatus(), /Thanks, sent/)
+  w.destroy()
+})
+
+add('send: Formspree errors array fails and keeps text', async () => {
+  const calls = []
+  const { w, getStatus, getText, setText } = makeHarness({
+    endpointUrl: 'https://formspree.io/f/example',
+    fetch: (...a) => {
+      calls.push(a)
+      return Promise.resolve({
+        ok: false,
+        status: 422,
+        json: async () => ({ errors: [{ message: 'Validation failed' }] }),
+      })
+    },
+  })
+  w.openSheet()
+  setText('keep this')
+  await new Promise((r) => setTimeout(r, fbw.MIN_OPEN_MS + 20))
+  const result = await w.send()
+  assert.equal(result.ok, false)
+  assert.equal(calls.length, 1)
+  const body = JSON.parse(calls[0][1].body)
+  assert.deepEqual(Object.keys(body).sort(), ['_gotcha', 'browser', 'message', 'page', 'screen', 'time'])
+  assert.match(getStatus(), /Couldn't send, please try again/)
+  assert.equal(getText(), 'keep this')
+  w.destroy()
 })
 
 // --- resolveConfig ---
