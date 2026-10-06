@@ -1,0 +1,38 @@
+{
+  "consoleErrors": [
+    "Failed to load resource: net::ERR_NAME_NOT_RESOLVED",
+    "Failed to load resource: the server responded with a status of 404 (Not Found)",
+    "Failed to load resource: the server responded with a status of 404 (Not Found)",
+    "Failed to load resource: the server responded with a status of 404 (Not Found)",
+    "Failed to load resource: the server responded with a status of 404 (Not Found)",
+    "Failed to load resource: the server responded with a status of 404 (Not Found)"
+  ],
+  "overflow390": false,
+  "overflow1440": false,
+  "consentLift": {
+    "fabBottom": 770,
+    "barTop": 791.703125,
+    "gap": 21.703125,
+    "clearance": "60px"
+  },
+  "keepOverlap": {
+    "error": "no keep adding",
+    "skipped": true
+  },
+  "overlap": {
+    "fab": {
+      "left": 14,
+      "right": 58,
+      "bottom": 830
+    },
+    "reopen": {
+      "left": 324,
+      "right": 376,
+      "bottom": 826
+    },
+    "overlapArea": 0
+  },
+  "speechStub": true,
+  "excludedPrivacyNoButton": true,
+  "notConnected": true
+}

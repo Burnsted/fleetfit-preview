@@ -1,0 +1,13 @@
+{
+  "buildHash": "C1ZW3Hmt",
+  "widgetSha256": "96d18bac13a5ac812e585a55c9e87e612694c0898ae73370ac884396b91bc60c",
+  "indexSha256": "094a109c01808962b90d5b3d7e6d1fda1dce59d42f5355b5bb4206849a1ba127",
+  "css": {
+    "name": "index-D2ABSK-a.css",
+    "sha256": "939759fc9b237ebea775b27425588418ab00f90e996121fa45c13f573e681a86"
+  },
+  "js": {
+    "name": "index-C1ZW3Hmt.js",
+    "sha256": "e23c8aff1e0ad23c52802341fed4b1df26b3e20339c47250368ab65eab45a85b"
+  }
+}

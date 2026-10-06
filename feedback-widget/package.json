@@ -1,0 +1,12 @@
+{
+  "name": "fleet-feedback-widget",
+  "private": true,
+  "version": "1.0.0",
+  "description": "Vanilla voice feedback widget (fbw)",
+  "main": "src/feedback-widget.js",
+  "type": "commonjs",
+  "scripts": {
+    "build": "node scripts/minify.mjs",
+    "test": "node test/feedback-widget.test.mjs"
+  }
+}
