@@ -1,0 +1,8 @@
+source,metric,value,applies,publish,label,url,accessed
+"Geotab EV battery health (22,700 EVs, 21 models)",avg annual capacity loss,2.3 %/yr,all light-duty EVs in study,2026-04-28,FACT,https://www.geotab.com/blog/ev-battery-health/,2026-09-27
+Geotab,"avg annual loss, multi-purpose vehicles incl. light vans",2.7 %/yr,vans (class-level),2026-04-28,FACT,https://www.geotab.com/blog/ev-battery-health/,2026-09-27
+Geotab,hot-climate penalty (>35% of days >25C),+0.4 %/yr,relevant to Florida (INFERENCE),2026-04-28,FACT,https://www.geotab.com/blog/ev-battery-health/,2026-09-27
+Geotab,low DCFC (<12% sessions) vs high-frequency high-power DCFC,1.5 vs 3.0 %/yr (88% vs 76% SOH projected at 8 yr),all,2026-04-28,FACT,https://www.geotab.com/blog/ev-battery-health/,2026-09-27
+Recurrent (prior research),range retention,"~97% @ 3 yr; ~95% @ 5 yr (range, not SOH)",passenger-heavy dataset,see prior SOURCES.md,FACT (reused),https://www.recurrentauto.com/research/after-a-billion-miles-we-know-this-about-your-ev,2026-09-26 (prior)
+PG&E Fleet Electrification Guidebook 2025 (prior research),planning degradation band,5-10% over 5 yr,fleet planning guidance,2025,FACT (reused),https://www.pge.com/assets/pge/docs/clean-energy/electric-vehicles/pge-fleet-electrification-guidebook.pdf,2026-09-26 (prior)
+model-specific,per-model SOH curves for the 11 preview vehicles,UNKNOWN,,,UNKNOWN,,2026-09-27
