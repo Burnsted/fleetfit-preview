@@ -13,9 +13,11 @@ import {
   costOfOwnershipForSide,
   defaultScoreAssumptions,
   formatFormulaSourceText,
+  formulaSourceLines,
   hasBrokenSheetPunctuation,
   hasExcessMoneyDecimals,
   hasNestedOrChainedParens,
+  hasVisibleNoteArithmetic,
   inferTradeInBodyType,
   pairTradeInsToUnits,
   scoreTradeInRow,
@@ -446,7 +448,79 @@ test('visible notes stay short, no paren chains, money at most 2 decimals', () =
   for (const s of moneySamples) {
     assert.ok(!hasExcessMoneyDecimals(s), s)
     assert.ok(!hasNestedOrChainedParens(s), s)
+    assert.ok(!hasVisibleNoteArithmetic(s), s)
     assert.ok(s.length <= VISIBLE_NOTE_MAX, s)
+  }
+})
+
+test('visible notes ban engine arithmetic (× ÷ = and bare 0.7); formula keeps math', () => {
+  const arithmeticSamples = [
+    '13.6 mpg × 25 gal = 340 mi × 0.7 = 238 mi usable',
+    '108 mi × 0.7 = 75.6 mi usable vs 62 miles a day',
+    '13.6 mpg · $4.37 Example per gal = 32.1¢ per mi',
+    '71.4 kWh per 100 mi × 11.37¢ per kWh = 8.1¢ per mi',
+    '494 mi tank × 0.7 = 345.8 mi usable vs 62 miles a day',
+    '283 mi × 0.7 = 198.1 mi usable vs 62 miles a day',
+    '$4.37 Example per gal ÷ 19 mpg = 23.0¢ per mi',
+    '50.3 kWh per 100 mi × 11.37¢ per kWh = 5.7¢ per mi',
+  ]
+  for (const raw of arithmeticSamples) {
+    assert.ok(
+      hasVisibleNoteArithmetic(raw),
+      `detector missed arithmetic: ${raw}`,
+    )
+    const scrubbed = scrubSheetReason(raw)
+    assert.ok(
+      !hasVisibleNoteArithmetic(scrubbed),
+      `arithmetic left in visible note: ${JSON.stringify(scrubbed)} from ${raw}`,
+    )
+    assert.ok(
+      scrubbed.length <= VISIBLE_NOTE_MAX,
+      `scrubbed note too long: ${JSON.stringify(scrubbed)}`,
+    )
+    assert.match(scrubbed, /^About /)
+    const formula = formatFormulaSourceText(raw)
+    assert.ok(
+      hasVisibleNoteArithmetic(formula) || /[×÷=]/.test(formula),
+      `formula must keep math from ${raw}: ${formula}`,
+    )
+  }
+
+  // Both sheets, both pairs, and default presentation state
+  for (let i = 0; i < rows.length; i += 1) {
+    const score = scoreTradeInRow(rows[i], pairedUnits[i], {
+      pkg,
+      job: pkg.jobDefaults,
+      assumptions,
+      intake: { job: pkg.jobDefaults },
+    })
+    const presentation = buildFactorPresentation(score)
+    const notes = []
+    for (const row of presentation.rows || []) {
+      if (row.kind === 'group') {
+        for (const part of row.parts || []) {
+          if (part.current?.reason) notes.push(part.current.reason)
+          if (part.candidate?.reason) notes.push(part.candidate.reason)
+        }
+      } else {
+        if (row.current?.reason) notes.push(row.current.reason)
+        if (row.candidate?.reason) notes.push(row.candidate.reason)
+      }
+    }
+    assert.ok(notes.length > 0, `expected visible notes for pair ${i}`)
+    for (const note of notes) {
+      assert.ok(
+        !hasVisibleNoteArithmetic(note),
+        `pair ${i} visible note has arithmetic: ${JSON.stringify(note)}`,
+      )
+    }
+    // Formula view still carries the engine calc for range/energy
+    const formula = formulaSourceLines(score)
+    const mathLines = formula.filter((l) => /[×÷=]|\b0\.7\b/.test(l.text))
+    assert.ok(
+      mathLines.length > 0,
+      `pair ${i} formula view must keep calculation lines`,
+    )
   }
 })
 

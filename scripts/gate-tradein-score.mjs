@@ -308,6 +308,10 @@ async function main() {
             !/[;,:]$/.test(note.trim()),
           `broken punctuation in visible note ${label}: ${JSON.stringify(note)}`,
         )
+        assert.ok(
+          !/[×÷=]/.test(note) && !/\b0\.7\b/.test(note),
+          `engine arithmetic in visible note ${label}: ${JSON.stringify(note)}`,
+        )
       }
     }
 

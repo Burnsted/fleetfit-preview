@@ -17,17 +17,19 @@ import {
   scrubSheetReason as scrubSheetReasonImpl,
   hasBrokenSheetPunctuation,
   hasNestedOrChainedParens,
+  hasVisibleNoteArithmetic,
   hasExcessMoneyDecimals,
   VISIBLE_NOTE_MAX,
   formatFormulaSourceText,
   formulaSourceLines,
 } from './tradeInScoreNotes'
 
-export const TRADE_IN_SCORE_BUILD = 'trade-in-score-20261007-f'
+export const TRADE_IN_SCORE_BUILD = 'trade-in-score-20261007-g'
 export {
   scrubSheetReasonImpl as scrubSheetReason,
   hasBrokenSheetPunctuation,
   hasNestedOrChainedParens,
+  hasVisibleNoteArithmetic,
   hasExcessMoneyDecimals,
   VISIBLE_NOTE_MAX,
   formatFormulaSourceText,

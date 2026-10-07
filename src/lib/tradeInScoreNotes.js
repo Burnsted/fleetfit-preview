@@ -36,10 +36,116 @@ export function hasNestedOrChainedParens(text) {
   return /[()]/.test(s)
 }
 
+/**
+ * True when a visible note still shows engine arithmetic.
+ * Calculations (×, ÷, =, bare 0.7 usable factor) belong in the formula view only.
+ */
+export function hasVisibleNoteArithmetic(text) {
+  if (text == null) return false
+  const s = String(text)
+  if (/[×÷=]/.test(s)) return true
+  // Bare usable-range multiplier left from engine math (e.g. "× 0.7").
+  if (/\b0\.7\b/.test(s)) return true
+  return false
+}
+
 /** Visible money must be at most 2 decimal places. */
 export function hasExcessMoneyDecimals(text) {
   if (text == null) return false
   return /\$\d[\d,]*\.\d{3,}/.test(String(text))
+}
+
+function formatAboutMiles(n) {
+  const num = Number(n)
+  if (!Number.isFinite(num)) return String(n)
+  if (Number.isInteger(num)) return String(num)
+  const t = Math.round(num * 10) / 10
+  return Number.isInteger(t) ? String(t) : t.toFixed(1)
+}
+
+function formatAboutCents(n) {
+  const num = Number(n)
+  if (!Number.isFinite(num)) return String(n)
+  return String(Math.round(num))
+}
+
+/**
+ * Rewrite engine arithmetic into one short plain-English result line.
+ * Full math stays in the formula view via formatFormulaSourceText.
+ */
+function plainEnglishFromArithmetic(s) {
+  let out = s
+
+  // Tank chain: "13.6 mpg × 25 gal = 340 mi × 0.7 = 238 mi usable"
+  out = out.replace(
+    /\d+(?:\.\d+)?\s*mpg\s*[×xX]\s*\d+(?:\.\d+)?\s*gal\s*=\s*\d+(?:\.\d+)?\s*mi\s*[×xX]\s*0\.7\s*=\s*(\d+(?:\.\d+)?)\s*mi usable(?:\s+vs\s+(\d+(?:\.\d+)?)\s*miles a day)?/gi,
+    (_, usable, daily) => {
+      const u = formatAboutMiles(usable)
+      if (daily != null) {
+        const d = formatAboutMiles(daily)
+        return Number(usable) >= Number(daily) * 2
+          ? `About ${u} mi usable, plenty for ${d} mi a day`
+          : `About ${u} mi usable, covers ${d} mi a day`
+      }
+      return `About ${u} mi usable, plenty for a work day`
+    },
+  )
+
+  // "494 mi tank × 0.7 = 345.8 mi usable vs 62 miles a day"
+  // "108 mi × 0.7 = 75.6 mi usable vs 62 miles a day"
+  out = out.replace(
+    /(?:\d+(?:\.\d+)?\s*mi(?:\s+\w+)?\s*[×xX]\s*0\.7\s*=\s*)(\d+(?:\.\d+)?)\s*mi usable(?:\s+vs\s+(\d+(?:\.\d+)?)\s*miles a day)?/gi,
+    (_, usable, daily) => {
+      const u = formatAboutMiles(usable)
+      if (daily != null) {
+        const d = formatAboutMiles(daily)
+        const ratio = Number(usable) / Number(daily)
+        if (ratio >= 2) return `About ${u} mi usable, plenty for ${d} mi a day`
+        if (ratio >= 1) return `About ${u} mi usable, covers ${d} mi a day`
+        return `About ${u} mi usable, short of ${d} mi a day`
+      }
+      return `About ${u} mi usable`
+    },
+  )
+
+  // EV energy: "71.4 kWh per 100 mi × 11.37¢ per kWh = 8.1¢ per mi"
+  out = out.replace(
+    /\d+(?:\.\d+)?\s*kWh per 100 mi\s*[×xX]\s*[\d.]+¢ per kWh\s*=\s*(\d+(?:\.\d+)?)¢ per mi/gi,
+    (_, cpm) => `About ${formatAboutCents(cpm)}¢ per mile to charge`,
+  )
+
+  // ICE energy with ÷: "$4.37 Example per gal ÷ 19 mpg = 23.0¢ per mi"
+  out = out.replace(
+    /\$[\d,]+(?:\.\d+)?\s*(?:Example\s+)?per gal\s*÷\s*\d+(?:\.\d+)?\s*mpg\s*=\s*(\d+(?:\.\d+)?)¢ per mi/gi,
+    (_, cpm) => `About ${formatAboutCents(cpm)}¢ per mile to fuel`,
+  )
+
+  // ICE energy with · and =: "13.6 mpg · $4.37 Example per gal = 32.1¢ per mi"
+  out = out.replace(
+    /\d+(?:\.\d+)?\s*mpg\s*(?:·\s*)?\$[\d,]+(?:\.\d+)?\s*(?:Example\s+)?per gal\s*=\s*(\d+(?:\.\d+)?)¢ per mi/gi,
+    (_, cpm) => `About ${formatAboutCents(cpm)}¢ per mile to fuel`,
+  )
+
+  // Generic trailing "= N¢ per mi" after other scrubbing
+  out = out.replace(
+    /^[^=]*=\s*(\d+(?:\.\d+)?)¢ per mi\s*$/i,
+    (_, cpm) => `About ${formatAboutCents(cpm)}¢ per mile`,
+  )
+
+  // Generic "N mi usable vs D miles a day" left without operators
+  out = out.replace(
+    /^(\d+(?:\.\d+)?)\s*mi usable vs (\d+(?:\.\d+)?)\s*miles a day$/i,
+    (_, usable, daily) => {
+      const u = formatAboutMiles(usable)
+      const d = formatAboutMiles(daily)
+      const ratio = Number(usable) / Number(daily)
+      if (ratio >= 2) return `About ${u} mi usable, plenty for ${d} mi a day`
+      if (ratio >= 1) return `About ${u} mi usable, covers ${d} mi a day`
+      return `About ${u} mi usable, short of ${d} mi a day`
+    },
+  )
+
+  return out
 }
 
 function cleanupPunctuation(s) {
@@ -160,6 +266,10 @@ export function scrubSheetReason(reason) {
   s = s.replace(/\s*\u00b7\s*\u00b7+/g, ' \u00b7 ')
   s = cleanupPunctuation(s)
 
+  // Engine math → one short plain-English result (formula view keeps the calc)
+  s = plainEnglishFromArithmetic(s)
+  s = cleanupPunctuation(s)
+
   // Prefer the first plain fact clause; hard-cap length
   if (s.length > VISIBLE_NOTE_MAX) {
     const clauses = s.split(/\s*\u00b7\s*/).filter(Boolean)
@@ -178,8 +288,10 @@ export function scrubSheetReason(reason) {
         .replace(/\s*[;,:]+$/, ''),
     )
   }
-  // Final guarantee: no parens in visible notes
+  // Final guarantee: no parens or engine arithmetic in visible notes
   s = s.replace(/[()]/g, '')
+  s = s.replace(/[×÷=]/g, ' ')
+  s = s.replace(/\b0\.7\b/g, '')
   s = cleanupPunctuation(s)
   if (s.length > VISIBLE_NOTE_MAX) {
     s = `${s.slice(0, VISIBLE_NOTE_MAX - 1).trim()}…`
