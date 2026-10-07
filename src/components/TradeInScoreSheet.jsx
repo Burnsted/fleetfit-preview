@@ -69,15 +69,42 @@ export default function TradeInScoreSheet({
 
   useEffect(() => {
     if (!open) return undefined
+    let barRo = null
+    let observedEl = null
+    function bindBarObserver(el) {
+      if (!el || typeof ResizeObserver === 'undefined') return
+      if (observedEl === el && barRo) return
+      barRo?.disconnect()
+      observedEl = el
+      barRo = new ResizeObserver(() => updatePad())
+      barRo.observe(el)
+    }
     function updatePad() {
-      const { clearance } = measureConsentClearance(document)
-      // Clear consent when shown; keep a floor when dismissed for safe area.
-      const pad = Math.max(96, clearance + 24)
+      const { clearance, barHeight, el } = measureConsentClearance(document)
+      // Live bar height: Total + Close must clear the consent bar when shown.
+      const liveH =
+        el && typeof el.offsetHeight === 'number' && el.offsetHeight > 0
+          ? el.offsetHeight
+          : barHeight || 0
+      const pad =
+        liveH > 0
+          ? Math.max(128, liveH + 64)
+          : Math.max(96, clearance + 48)
       setBottomPad(pad)
       document.documentElement.style.setProperty(
         '--trade-in-score-sheet-pad',
         `${pad}px`,
       )
+      document.documentElement.style.setProperty(
+        '--consent-clearance',
+        liveH > 0 ? `${liveH + 8}px` : '0px',
+      )
+      if (el) bindBarObserver(el)
+      else {
+        barRo?.disconnect()
+        barRo = null
+        observedEl = null
+      }
     }
     updatePad()
     const obs = new MutationObserver(updatePad)
@@ -90,6 +117,7 @@ export default function TradeInScoreSheet({
     window.addEventListener('resize', updatePad)
     return () => {
       obs.disconnect()
+      barRo?.disconnect()
       window.removeEventListener('resize', updatePad)
     }
   }, [open])
@@ -358,7 +386,7 @@ export default function TradeInScoreSheet({
                 data-formula-sources="1"
               >
                 <p className="trade-in-score-formula-sources-title">
-                  Sources used in factor notes
+                  Factor detail and sources
                 </p>
                 <ul className="trade-in-score-formula-sources-list">
                   {sourceLines.map((line) => (

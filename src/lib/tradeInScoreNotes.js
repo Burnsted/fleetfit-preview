@@ -1,62 +1,15 @@
 /**
- * Visible sheet notes vs formula-view sources for trade-in score.
- * Visible: plain-word facts only. Formula: keep sources; never slash-as-or.
+ * Visible sheet notes vs formula-view detail for trade-in score.
+ * Visible: one short plain line. Formula: full engine text; never slash-as-or.
  */
 
-const SOURCE_INNER =
-  /cars\.com|Car and Driver|Edmunds|Fuelly|EPA|OEM|brochure|listing|sourced|estimate|OSRM|ratio|NHTSA|Pulse|lowest across|third-party|INFERENCE|FACT|AAA|EIA|KBB|NOT MSRP/i
+export const VISIBLE_NOTE_MAX = 60
 
 const SOURCE_PREFIX_FACT =
   /^(?:Fuelly(?:\s+crowd-sourced)?(?:\s+mpg)?|EV Pulse|cars\.com|Car and Driver(?:\s*(?:\/|and)\s*Edmunds)?|Edmunds|OEM estimate(?:,?\s*not EPA)?|brochure)[^:]*:\s*(.+)$/i
 
 const SOURCE_ONLY_SEGMENT =
-  /^(?:cars\.com|Car and Driver|Edmunds|EV Pulse|Fuelly|OEM estimate|not EPA|brochure|listing|sourced|estimate|NHTSA|lower used for candidate|CONFLICT)(?:\b.*)?$/i
-
-/** Drop parentheticals that name a source; innermost-first so nesting stays balanced. */
-function dropSourceParens(text) {
-  let s = String(text)
-  let changed = true
-  while (changed) {
-    changed = false
-    s = s.replace(/\(([^()]*)\)/g, (full, inner) => {
-      if (SOURCE_INNER.test(inner)) {
-        changed = true
-        return ''
-      }
-      return full
-    })
-  }
-  // Drop orphan ) or ( left by nested source removal; keep balanced fact parens
-  let depth = 0
-  let out = ''
-  for (const ch of s) {
-    if (ch === '(') {
-      depth += 1
-      out += ch
-    } else if (ch === ')') {
-      if (depth === 0) continue
-      depth -= 1
-      out += ch
-    } else {
-      out += ch
-    }
-  }
-  if (depth > 0) {
-    let remove = depth
-    out = [...out]
-      .reverse()
-      .map((ch) => {
-        if (ch === '(' && remove > 0) {
-          remove -= 1
-          return ''
-        }
-        return ch
-      })
-      .reverse()
-      .join('')
-  }
-  return out
-}
+  /^(?:cars\.com|Car and Driver|Edmunds|EV Pulse|Fuelly|OEM estimate|not EPA|brochure|listing|sourced|estimate|NHTSA|lower used for candidate|CONFLICT|Argonne)(?:\b.*)?$/i
 
 /**
  * True when visible note text has broken punctuation left by source scrubbing.
@@ -72,6 +25,21 @@ export function hasBrokenSheetPunctuation(text) {
   if (/^[;,:]/.test(t)) return true
   if (/[;,:]$/.test(t)) return true
   return false
+}
+
+/** Nested parentheses or any parenthesis chain left in a visible note. */
+export function hasNestedOrChainedParens(text) {
+  if (text == null) return false
+  const s = String(text)
+  if (!s.includes('(') && !s.includes(')')) return false
+  // Any parentheses in visible notes are banned (chains / engine asides).
+  return /[()]/.test(s)
+}
+
+/** Visible money must be at most 2 decimal places. */
+export function hasExcessMoneyDecimals(text) {
+  if (text == null) return false
+  return /\$\d[\d,]*\.\d{3,}/.test(String(text))
 }
 
 function cleanupPunctuation(s) {
@@ -92,14 +60,24 @@ function cleanupPunctuation(s) {
   return out.trim()
 }
 
+/** Format a numeric money amount as $X.XX with thousands separators. */
+export function formatMoneyCents(n) {
+  const num = Number(n)
+  if (!Number.isFinite(num)) return ''
+  return `$${num.toLocaleString('en-US', {
+    minimumFractionDigits: 2,
+    maximumFractionDigits: 2,
+  })}`
+}
+
 /**
  * Soften engine jargon for visible sheet notes.
- * Sources move to the formula view only.
+ * One short plain line; sources and asides move to the formula view.
  */
 export function scrubSheetReason(reason) {
   if (reason == null) return ''
   let s = String(reason)
-  s = s.replace(/\u2013|\u2014/g, '-')
+  s = s.replace(/\u2013|\u2014|\u2212/g, '-')
   s = s.replace(/\s*\(OSRM\)/gi, '')
   s = s.replace(/\s*\(ratio\s+[\d.]+\)/gi, '')
   s = s.replace(/\bratio\s+[\d.]+/gi, '')
@@ -108,8 +86,13 @@ export function scrubSheetReason(reason) {
   s = s.replace(/\u2265/g, 'at least ')
   s = s.replace(/\broad\s+mi\b/gi, 'road miles')
 
-  // Drop parentheticals that are source or meta tags (balanced)
-  s = dropSourceParens(s)
+  // Drop every parenthetical (engine asides, sources, meta)
+  let prev
+  do {
+    prev = s
+    s = s.replace(/\([^()]*\)/g, '')
+  } while (s !== prev)
+  s = s.replace(/[()]/g, '')
 
   // Drop · segments that are source-only; keep fact after "Source: fact"
   s = s
@@ -136,6 +119,7 @@ export function scrubSheetReason(reason) {
       p = p.replace(/\bKBB\b/g, '')
       p = p.replace(/\bAAA\b/g, '')
       p = p.replace(/\bEIA\b/g, '')
+      p = p.replace(/\bArgonne\b/gi, '')
       p = p.replace(/\bFord\s+\d{4}\s+Transit\s+brochure\b/gi, '')
       p = p.replace(/\bbrochure\b/gi, '')
       p = p.replace(/\blisting\b/gi, '')
@@ -145,42 +129,83 @@ export function scrubSheetReason(reason) {
       p = p.replace(/\bcab not entered\b/gi, '')
       p = p.replace(/\slower used for candidate\b/gi, '')
       p = p.replace(/\bNOT MSRP\b/gi, '')
+      p = p.replace(/\blast-3-yr private-party\b/gi, '')
+      p = p.replace(/\bvalue lost next 3 yr basis\b/gi, '')
+      p = p.replace(/\ball engines and body styles\b/gi, '')
+      p = p.replace(/\bopen status not checked\b/gi, '')
+      p = p.replace(/\bno VIN lookup\b/gi, '')
+      p = p.replace(/\bone step below confirmed\b/gi, '')
+      p = p.replace(/\bno failure patterns counted\b/gi, '')
+      p = p.replace(/\bscheduled-only\b/gi, '')
+      p = p.replace(/\bdepreciation page\b/gi, '')
+      p = p.replace(/\bengine not entered\b/gi, '')
+      p = p.replace(/\bhighest published mpg for\b/gi, 'mpg for')
+      p = p.replace(/\bBattery capacity floor\b/gi, 'floor')
+      p = p.replace(/\bFL regular\b/gi, '')
+      p = p.replace(/\bFL commercial\b/gi, '')
       return p.trim()
     })
     .filter(Boolean)
     .join(' \u00b7 ')
 
+  // Round every $ to cents and mark Example beside it
+  s = s.replace(/\$(\d[\d,]*(?:\.\d+)?)/g, (_, raw) => {
+    const num = Number(String(raw).replace(/,/g, ''))
+    if (!Number.isFinite(num)) return `$${raw}`
+    return `${formatMoneyCents(num)} Example`
+  })
+
+  s = cleanupPunctuation(s)
+  s = s.replace(/\s*;\s*/g, ' · ')
+  s = s.replace(/\s*\u00b7\s*\u00b7+/g, ' \u00b7 ')
   s = cleanupPunctuation(s)
 
-  // Second pass if scrub left broken punctuation
+  // Prefer the first plain fact clause; hard-cap length
+  if (s.length > VISIBLE_NOTE_MAX) {
+    const clauses = s.split(/\s*\u00b7\s*/).filter(Boolean)
+    s = clauses[0] || s
+    if (s.length > VISIBLE_NOTE_MAX) {
+      s = `${s.slice(0, VISIBLE_NOTE_MAX - 1).trim()}…`
+    }
+  }
+
   if (hasBrokenSheetPunctuation(s)) {
     s = cleanupPunctuation(
       s
-        .replace(/\(:/g, '(')
-        .replace(/\( /g, '(')
-        .replace(/ \)/g, ')')
-        .replace(/\(\)/g, '')
+        .replace(/\(:/g, '')
+        .replace(/[()]/g, '')
         .replace(/^[;,:]+\s*/, '')
         .replace(/\s*[;,:]+$/, ''),
     )
+  }
+  // Final guarantee: no parens in visible notes
+  s = s.replace(/[()]/g, '')
+  s = cleanupPunctuation(s)
+  if (s.length > VISIBLE_NOTE_MAX) {
+    s = `${s.slice(0, VISIBLE_NOTE_MAX - 1).trim()}…`
   }
   return s
 }
 
 /**
- * Formula-view source text: keep names; never use slash-as-or between them.
+ * Formula-view text: keep names and detail; never use slash-as-or between sources.
  */
 export function formatFormulaSourceText(reason) {
   if (reason == null) return ''
   let s = String(reason)
   s = s.replace(/\u2013|\u2014/g, '-')
   s = s.replace(/\bCar and Driver\s*\/\s*Edmunds\b/gi, 'Car and Driver and Edmunds')
-  // Space-slash-space is source alternation, not units like mi/kWh
   s = s.replace(/\s+\/\s+/g, ' and ')
+  // Round money; mark Example beside each $ so proximity gates pass in formula view
+  s = s.replace(/\$(\d[\d,]*(?:\.\d+)?)/g, (_, raw) => {
+    const num = Number(String(raw).replace(/,/g, ''))
+    if (!Number.isFinite(num)) return `$${raw}`
+    return `${formatMoneyCents(num)} Example`
+  })
   return s.trim()
 }
 
-/** Collect formula-view source lines from a score (raw engine reasons). */
+/** Collect formula-view detail lines from a score (raw engine reasons). */
 export function formulaSourceLines(score) {
   const lines = []
   for (const row of score?.categories || []) {
@@ -190,14 +215,6 @@ export function formulaSourceLines(score) {
       if (!raw || !String(raw).trim()) continue
       const formatted = formatFormulaSourceText(raw)
       if (!formatted) continue
-      // Only list rows that actually carry a source name or citation tag
-      if (
-        !/(cars\.com|Car and Driver|Edmunds|EV Pulse|Fuelly|OEM|EPA|brochure|listing|NHTSA|AAA|EIA|KBB|OSRM|sourced|estimate)/i.test(
-          formatted,
-        )
-      ) {
-        continue
-      }
       lines.push({
         key: `${row.key}-${side}`,
         label: row.label,

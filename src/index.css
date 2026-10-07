@@ -5606,3 +5606,13 @@ img { max-width: 100%; display: block; }
     width: 100%;
   }
 }
+
+/* Soft: fade FAB while typing trade-in fields so Model inputs stay clear at 390 */
+body:has(.trade-in-entry input:focus) .fbw-fab,
+body:has(.trade-in-entry input:focus) [data-feedback-fab],
+body:has(.trade-in-entry input:focus) .feedback-fab,
+body:has(.trade-in-entry input:focus) .fleet-plan-reopen {
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity 0.15s ease;
+}

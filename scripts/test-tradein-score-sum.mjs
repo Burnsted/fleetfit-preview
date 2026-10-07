@@ -14,6 +14,8 @@ import {
   defaultScoreAssumptions,
   formatFormulaSourceText,
   hasBrokenSheetPunctuation,
+  hasExcessMoneyDecimals,
+  hasNestedOrChainedParens,
   inferTradeInBodyType,
   pairTradeInsToUnits,
   scoreTradeInRow,
@@ -23,6 +25,7 @@ import {
   sumPresentedCountedPoints,
   tradeInScoreBadgeCopy,
   unitBodyType,
+  VISIBLE_NOTE_MAX,
 } from '../src/lib/tradeInScore.js'
 
 let passed = 0
@@ -268,8 +271,11 @@ test('visible sheet notes scrub OSRM, ratio, arrows, and ≤', () => {
   assert.ok(!/[≤≥]/.test(scrubbed))
   assert.ok(!/cars\.com/i.test(scrubbed))
   assert.ok(!/brochure/i.test(scrubbed))
+  assert.ok(!/[()]/.test(scrubbed))
   assert.match(scrubbed, /road miles/)
-  assert.match(scrubbed, /up to 150k/)
+  assert.ok(scrubbed.length <= VISIBLE_NOTE_MAX)
+  const longevity = scrubSheetReason('powertrain 5 yr · 60k expired; ≤150k mi, no modifier')
+  assert.match(longevity, /up to 150k|150k/)
 })
 
 const SOURCE_IN_VISIBLE =
@@ -380,6 +386,68 @@ test('E-Transit cab scores 2 seats vs crew 2 (not cars.com 1)', () => {
     score.candidateTotal,
     score.pointsPossible,
   )
+})
+
+test('visible notes stay short, no paren chains, money at most 2 decimals', () => {
+  for (let i = 0; i < rows.length; i += 1) {
+    const score = scoreTradeInRow(rows[i], pairedUnits[i], {
+      pkg,
+      job: pkg.jobDefaults,
+      assumptions,
+      intake: { job: pkg.jobDefaults },
+    })
+    const presentation = buildFactorPresentation(score)
+    const notes = []
+    for (const row of presentation.rows || []) {
+      if (row.kind === 'group') {
+        for (const part of row.parts || []) {
+          if (part.current?.reason) notes.push(part.current.reason)
+          if (part.candidate?.reason) notes.push(part.candidate.reason)
+        }
+      } else {
+        if (row.current?.reason) notes.push(row.current.reason)
+        if (row.candidate?.reason) notes.push(row.candidate.reason)
+      }
+    }
+    assert.ok(
+      presentation.rows.some(
+        (r) => r.key === 'maintenance' || r.label === 'Maintenance cost, rises with age and miles',
+      ),
+      'Maintenance cost row must be visible',
+    )
+    for (const note of notes) {
+      assert.ok(
+        note.length <= VISIBLE_NOTE_MAX,
+        `note longer than ${VISIBLE_NOTE_MAX}: ${JSON.stringify(note)}`,
+      )
+      assert.ok(
+        !hasNestedOrChainedParens(note),
+        `parens in visible note: ${JSON.stringify(note)}`,
+      )
+      assert.ok(
+        !hasExcessMoneyDecimals(note),
+        `money >2 decimals: ${JSON.stringify(note)}`,
+      )
+      assert.ok(
+        !hasBrokenSheetPunctuation(note),
+        `broken punctuation: ${JSON.stringify(note)}`,
+      )
+      if (/\$/.test(note)) {
+        assert.match(note, /Example/, `Example missing beside $ in ${note}`)
+      }
+    }
+  }
+  const moneySamples = [
+    scrubSheetReason('$4.3679 per gal FL regular = 32.1¢ per mi'),
+    scrubSheetReason(
+      '3-yr retained: KBB 50% (last-3-yr private-party −50% ($35,079 → $17,500))',
+    ),
+  ]
+  for (const s of moneySamples) {
+    assert.ok(!hasExcessMoneyDecimals(s), s)
+    assert.ok(!hasNestedOrChainedParens(s), s)
+    assert.ok(s.length <= VISIBLE_NOTE_MAX, s)
+  }
 })
 
 test('sheet replacement total and PP equal that unit card for every default trade row', () => {

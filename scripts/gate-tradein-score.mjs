@@ -73,13 +73,8 @@ async function exampleNearDollars(page, rootSelector = null) {
       if (!t.trim()) continue
       const el = node.parentElement
       if (!el) continue
-      if (
-        el.closest(
-          '.trade-in-score-reason, .score-v2-reason, .trade-in-score-formula-sources',
-        )
-      ) {
-        continue
-      }
+      // Reasons now carry "Example" beside $; still skip bare score-v2 engine notes
+      if (el.closest('.score-v2-reason')) continue
       const st = getComputedStyle(el)
       if (st.display === 'none' || st.visibility === 'hidden' || st.opacity === '0') {
         continue
@@ -470,6 +465,11 @@ async function main() {
       await page.locator('.trade-in-score-panel').screenshot({ path: bottomPath })
       saveShot(bottomPath, 'sheet-bottom-390')
     }
+    if (width === 1440) {
+      const bottom1440 = join(OUT, `_tmp-sheet-bottom-1440.png`)
+      await page.locator('.trade-in-score-panel').screenshot({ path: bottom1440 })
+      saveShot(bottom1440, 'sheet-bottom-1440')
+    }
 
     // Consent dismissed: pad still clears (no bar)
     await installConsentFixture(page, { visible: false })
@@ -501,11 +501,29 @@ async function main() {
     const formulaText = await page.locator('.trade-in-score-formula').innerText()
     assert.match(formulaText, /Depreciation per year/)
     assert.match(formulaText, /Example/)
-    assert.match(formulaText, /Sources used in factor notes/)
+    assert.match(formulaText, /Factor detail and sources|Sources used/)
     assert.ok(
       !/\bCar and Driver\s*\/\s*Edmunds\b/i.test(formulaText),
       `formula must not slash Car and Driver / Edmunds at ${width}`,
     )
+    // Visible notes: short, no paren chains, money ≤2 decimals
+    const noteChecks = await page.evaluate(() =>
+      [...document.querySelectorAll('.trade-in-score-reason')].map((el) => {
+        const t = el.textContent || ''
+        return {
+          t,
+          len: t.length,
+          nested: /\([^)]*\(/.test(t) || /[()]/.test(t),
+          moneyLong: /\$\d[\d,]*\.\d{3,}/.test(t),
+        }
+      }),
+    )
+    for (const n of noteChecks) {
+      assert.ok(n.len <= 60, `note too long (${n.len}): ${n.t}`)
+      assert.ok(!n.nested, `parens in note: ${n.t}`)
+      assert.ok(!n.moneyLong, `money >2 decimals in note: ${n.t}`)
+    }
+    assert.match(sheetText, /Maintenance cost, rises with age and miles/)
     if (/Car and Driver/i.test(formulaText) && /Edmunds/i.test(formulaText)) {
       assert.match(formulaText, /Car and Driver and Edmunds/i)
     }
@@ -586,6 +604,42 @@ async function main() {
       }
     })
     assert.ok(fabBack.ok, `FAB must restore on close at ${width}`)
+
+    // Soft: second Model input at 390 — FAB fades while focused
+    if (width === 390) {
+      await installConsentFixture(page, { visible: true, height: 72 })
+      const model = page
+        .locator('.trade-in-entry-row')
+        .nth(1)
+        .locator('label')
+        .filter({ hasText: /^Model$/i })
+        .locator('input')
+      await model.scrollIntoViewIfNeeded()
+      await model.focus()
+      await page.waitForTimeout(200)
+      const fabFocus = await page.evaluate(() => {
+        const fab = document.querySelector(
+          '.fbw-fab, [data-feedback-fab], .feedback-fab, .fleet-plan-reopen',
+        )
+        if (!fab) return { ok: true, note: 'no fab' }
+        const st = getComputedStyle(fab)
+        return {
+          ok: Number(st.opacity) < 0.2 || st.pointerEvents === 'none',
+          opacity: st.opacity,
+          pointerEvents: st.pointerEvents,
+        }
+      })
+      console.log('FAB_ON_MODEL_FOCUS', fabFocus)
+      assert.ok(
+        fabFocus.ok,
+        `FAB should fade while Model focused: ${JSON.stringify(fabFocus)}`,
+      )
+      const model2Path = join(OUT, `_tmp-rows-model2-390.png`)
+      await page.locator('.trade-in-entry').screenshot({ path: model2Path })
+      saveShot(model2Path, 'rows-model2-390')
+      await model.blur()
+      await page.waitForTimeout(150)
+    }
 
     results.widths[width] = {
       badgeCount,

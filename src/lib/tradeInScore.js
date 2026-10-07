@@ -16,14 +16,20 @@ import { scoreReplacementV2 } from './scoreV2'
 import {
   scrubSheetReason as scrubSheetReasonImpl,
   hasBrokenSheetPunctuation,
+  hasNestedOrChainedParens,
+  hasExcessMoneyDecimals,
+  VISIBLE_NOTE_MAX,
   formatFormulaSourceText,
   formulaSourceLines,
 } from './tradeInScoreNotes'
 
-export const TRADE_IN_SCORE_BUILD = 'trade-in-score-20261007-e'
+export const TRADE_IN_SCORE_BUILD = 'trade-in-score-20261007-f'
 export {
   scrubSheetReasonImpl as scrubSheetReason,
   hasBrokenSheetPunctuation,
+  hasNestedOrChainedParens,
+  hasExcessMoneyDecimals,
+  VISIBLE_NOTE_MAX,
   formatFormulaSourceText,
   formulaSourceLines,
 }
@@ -436,8 +442,62 @@ function usdFromCpm(cpm, annualMiles) {
 }
 
 /** Example fallback maint ¢/mi when a side is not scored (AAA half-ton class). */
-function exampleMaintCpm() {
+function exampleMaintCpm(kind = 'half-ton') {
+  if (kind === 'van') {
+    return ARGONNE_VAN_MAINT_CPM?.cpm ?? MAINT_CLASS_AAA?.['half-ton']?.cpm ?? 12
+  }
+  if (kind === 'ev-pickup') {
+    return MAINT_CLASS_AAA?.['ev-pickup']?.cpm ?? MAINT_CLASS_AAA?.['half-ton']?.cpm ?? 12
+  }
   return MAINT_CLASS_AAA?.['half-ton']?.cpm ?? ARGONNE_VAN_MAINT_CPM?.cpm ?? 12
+}
+
+/** Example ¢/mi note for an unscored maintenance row (does not add points). */
+export function exampleMaintNote(kind = 'half-ton') {
+  const cpm = exampleMaintCpm(kind)
+  const n = Number(cpm)
+  const shown = Number.isFinite(n) ? n.toFixed(1) : String(cpm)
+  return `${shown}¢ per mi Example`
+}
+
+function maintExampleKindForSide(score, side) {
+  const name =
+    side === 'candidate'
+      ? String(score?.candidateName || '')
+      : String(score?.currentName || '')
+  if (/transit|promaster|sprinter|bright\s*drop|e-?transit|\bedv\b|\brcv\b|cargo\s*van/i.test(name)) {
+    return 'van'
+  }
+  if (/EV|Lightning|Sierra|Silverado EV|R1T|Cybertruck/i.test(name)) {
+    return 'ev-pickup'
+  }
+  return 'half-ton'
+}
+
+function maintenanceExampleRow(score) {
+  const label = FACTOR_LABELS.maintenance
+  const curNote = exampleMaintNote(maintExampleKindForSide(score, 'current'))
+  const candNote = exampleMaintNote(maintExampleKindForSide(score, 'candidate'))
+  return {
+    key: 'maintenance',
+    label,
+    kind: 'row',
+    unscoredExample: true,
+    current: {
+      display: 'Not scored',
+      reason: curNote,
+      counted: false,
+      points: null,
+      status: 'Not scored: Example cents per mile',
+    },
+    candidate: {
+      display: 'Not scored',
+      reason: candNote,
+      counted: false,
+      points: null,
+      status: 'Not scored: Example cents per mile',
+    },
+  }
 }
 
 /**
@@ -595,11 +655,18 @@ export function buildFactorPresentation(score) {
     'reliability',
     'service',
   ]
+  let maintenanceVisible = false
   for (const key of orderedSingles) {
     const row = byKey[key]
     if (!row) continue
     const curNs = cellNotScored(row.current)
     const candNs = cellNotScored(row.candidate)
+    if (key === 'maintenance' && curNs && candNs) {
+      // Ted: always show Maintenance by name; Example ¢/mi when unscored.
+      scoredSingles.push(maintenanceExampleRow(score))
+      maintenanceVisible = true
+      continue
+    }
     if (curNs && candNs) {
       notScored.push({
         key: row.key,
@@ -615,6 +682,7 @@ export function buildFactorPresentation(score) {
         current: scrubCellForSheet(row.current),
         candidate: scrubCellForSheet(row.candidate),
       })
+      if (key === 'maintenance') maintenanceVisible = true
     }
   }
 
@@ -641,6 +709,13 @@ export function buildFactorPresentation(score) {
         candidate: scrubCellForSheet(row.candidate),
       })
     }
+  }
+
+  if (!maintenanceVisible) {
+    const energyIdx = scoredSingles.findIndex((r) => r.key === 'energy')
+    const maintRow = maintenanceExampleRow(score)
+    if (energyIdx >= 0) scoredSingles.splice(energyIdx + 1, 0, maintRow)
+    else scoredSingles.unshift(maintRow)
   }
 
   const rows = []
