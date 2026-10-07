@@ -510,7 +510,7 @@ async function main() {
       !/\bCar and Driver\s*\/\s*Edmunds\b/i.test(formulaText),
       `formula must not slash Car and Driver / Edmunds at ${width}`,
     )
-    // Visible notes: short, no paren chains, money ≤2 decimals
+    // Visible notes: short, no paren chains, no engine math, money ≤2 decimals
     const noteChecks = await page.evaluate(() =>
       [...document.querySelectorAll('.trade-in-score-reason')].map((el) => {
         const t = el.textContent || ''
@@ -519,13 +519,24 @@ async function main() {
           len: t.length,
           nested: /\([^)]*\(/.test(t) || /[()]/.test(t),
           moneyLong: /\$\d[\d,]*\.\d{3,}/.test(t),
+          arithmetic: /[×÷=]/.test(t) || /\b0\.7\b/.test(t),
         }
       }),
+    )
+    console.log(
+      'VISIBLE_NOTES',
+      width,
+      JSON.stringify(
+        noteChecks.map((n) => n.t),
+        null,
+        2,
+      ),
     )
     for (const n of noteChecks) {
       assert.ok(n.len <= 60, `note too long (${n.len}): ${n.t}`)
       assert.ok(!n.nested, `parens in note: ${n.t}`)
       assert.ok(!n.moneyLong, `money >2 decimals in note: ${n.t}`)
+      assert.ok(!n.arithmetic, `engine arithmetic in note: ${n.t}`)
     }
     assert.match(sheetText, /Maintenance cost, rises with age and miles/)
     if (/Car and Driver/i.test(formulaText) && /Edmunds/i.test(formulaText)) {
