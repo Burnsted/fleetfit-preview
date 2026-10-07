@@ -11,7 +11,8 @@ const EXPECTED = [
   { match: /BrightDrop/i, total: 59.6, pp: 80, diff: 19.6 },
   { match: /ProMaster/i, total: 63.0, pp: 80, diff: 23.0 },
   { match: /Silverado EV/i, total: 66.9, pp: 90, diff: 21.4 },
-  { match: /E-Transit/i, total: 54.6, pp: 90, diff: 9.1 },
+  // Cab: cargo van 2 seats (C&D and Edmunds), was 1 from cars.com conflict
+  { match: /E-Transit/i, total: 60.6, pp: 90, diff: 15.1 },
   { match: /Lightning/i, total: 61.8, pp: 90, diff: 16.3 },
   { match: /R1T/i, total: 46.1, pp: 90, diff: 0.6 },
 ]

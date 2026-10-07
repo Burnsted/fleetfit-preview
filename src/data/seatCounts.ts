@@ -136,17 +136,19 @@ export function lookupSeats(opts: {
   const cabFiltered = cab ? hits.filter((r) => cabMatch(r.cab_or_body, cab)) : hits
   const pool = cabFiltered.length ? cabFiltered : hits
 
-  // E-Transit conflict: candidate uses lower (1 from cars.com conflict) per global rule
+  // E-Transit cargo van: 2 front seats (Car and Driver and Edmunds).
+  // cars.com lists 1; ignore that aggregator unless this unit's listing
+  // already supplied listingSeats=1 above (driver-only).
   const isETransit = /e-?transit/i.test(model)
-  if (isETransit && side === 'candidate') {
-    // Row has seats_min=2 with CONFLICT note about cars.com 1
+  if (isETransit) {
     const row = pool[0]
     return {
-      seats: 1,
-      reasonLabel:
-        '1 seat (cars.com) · Car and Driver / Edmunds 2; lower used for candidate',
-      url: row?.source_url || null,
-      label: row?.label || '',
+      seats: 2,
+      reasonLabel: '2 seats (Car and Driver and Edmunds)',
+      url:
+        row?.source_url ||
+        'https://www.caranddriver.com/ford/e-transit/specs/2023/ford_e-transit_ford-e-transit_2023',
+      label: row?.label || 'FACT',
       inference: false,
     }
   }

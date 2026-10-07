@@ -5272,6 +5272,39 @@ img { max-width: 100%; display: block; }
   font-size: 0.84rem;
   color: var(--text-dim, #666);
 }
+.trade-in-score-formula-sources {
+  margin: 14px 0 0;
+  padding-top: 12px;
+  border-top: 1px solid var(--line, #d8dee6);
+}
+.trade-in-score-formula-sources-title {
+  margin: 0 0 8px;
+  font-size: 0.78rem;
+  font-weight: 700;
+  color: #0b1220;
+}
+.trade-in-score-formula-sources-list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: grid;
+  gap: 8px;
+}
+.trade-in-score-formula-sources-list li {
+  display: grid;
+  gap: 2px;
+  font-size: 0.72rem;
+  line-height: 1.35;
+  color: var(--text-dim, #666);
+}
+.trade-in-score-formula-sources-meta {
+  font-weight: 650;
+  color: #0b1220;
+}
+.trade-in-score-formula-sources-text {
+  font-weight: 500;
+  word-break: break-word;
+}
 .trade-in-score-assumption-list {
   list-style: none;
   margin: 0;

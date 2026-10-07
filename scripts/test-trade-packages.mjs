@@ -80,18 +80,21 @@ test('3. Ranking returns only suggestible units in eligible (real + ≥0.7)', ()
       `${row.unit.id} must pass 0.7 bar`,
     )
   }
-  // Tiny real-listing pool after Culver City index-redirect drop:
-  // only unit-e5 stays suggestible on electrical trade seeds.
-  assert.equal(eligible.length, 1, `electrical eligible expected 1, got ${eligible.length}`)
-  assert.equal(eligible[0].unit.id, 'unit-e5')
+  // Real-listing pool after Culver City index-redirect drop:
+  // unit-e5 (Sierra) plus unit-e1 (E-Transit) once cab seats score at 2.
+  assert.equal(eligible.length, 2, `electrical eligible expected 2, got ${eligible.length}`)
+  assert.deepEqual(
+    eligible.map((e) => e.unit.id).sort(),
+    ['unit-e1', 'unit-e5'],
+  )
   console.log('   eligibleCount=', eligible.length, eligible.map((e) => e.unit.id).join(','))
 })
 
 test('3b. Per-trade eligible counts after index-redirect drop', () => {
   const expected = {
-    [TRADE_PACKAGE_IDS.electrical]: ['unit-e5'],
+    [TRADE_PACKAGE_IDS.electrical]: ['unit-e5', 'unit-e1'],
     [TRADE_PACKAGE_IDS.hvac]: ['unit-e5', 'unit-e1'],
-    [TRADE_PACKAGE_IDS.plumbing]: ['unit-e5'],
+    [TRADE_PACKAGE_IDS.plumbing]: ['unit-e1', 'unit-e5'],
     [TRADE_PACKAGE_IDS.landscaping]: ['unit-e5'],
     [TRADE_PACKAGE_IDS.gc]: [],
   }

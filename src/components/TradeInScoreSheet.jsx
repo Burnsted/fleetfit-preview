@@ -7,6 +7,7 @@ import {
   buildFactorPresentation,
   costOfOwnershipBoth,
   formatUsd,
+  formulaSourceLines,
   tradeInScoreBadgeCopy,
 } from '../lib/tradeInScore'
 
@@ -100,6 +101,10 @@ export default function TradeInScoreSheet({
   const ownership = useMemo(
     () => (score ? costOfOwnershipBoth(score, assumptions, job) : null),
     [score, assumptions, job],
+  )
+  const sourceLines = useMemo(
+    () => (score ? formulaSourceLines(score) : []),
+    [score],
   )
 
   if (!open || !score || typeof document === 'undefined') return null
@@ -347,6 +352,28 @@ export default function TradeInScoreSheet({
                 </li>
               ))}
             </ul>
+            {sourceLines.length ? (
+              <div
+                className="trade-in-score-formula-sources"
+                data-formula-sources="1"
+              >
+                <p className="trade-in-score-formula-sources-title">
+                  Sources used in factor notes
+                </p>
+                <ul className="trade-in-score-formula-sources-list">
+                  {sourceLines.map((line) => (
+                    <li key={line.key}>
+                      <span className="trade-in-score-formula-sources-meta">
+                        {line.label} · {line.side}
+                      </span>
+                      <span className="trade-in-score-formula-sources-text">
+                        {line.text}
+                      </span>
+                    </li>
+                  ))}
+                </ul>
+              </div>
+            ) : null}
           </section>
         ) : null}
 

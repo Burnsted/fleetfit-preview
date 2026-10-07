@@ -12,6 +12,8 @@ import {
   costOfOwnershipBoth,
   costOfOwnershipForSide,
   defaultScoreAssumptions,
+  formatFormulaSourceText,
+  hasBrokenSheetPunctuation,
   inferTradeInBodyType,
   pairTradeInsToUnits,
   scoreTradeInRow,
@@ -267,6 +269,115 @@ test('visible sheet notes scrub OSRM, ratio, arrows, and ≤', () => {
   assert.ok(!/brochure/i.test(scrubbed))
   assert.match(scrubbed, /road miles/)
   assert.match(scrubbed, /up to 150k/)
+})
+
+const SOURCE_IN_VISIBLE =
+  /cars\.com|Car and Driver|Edmunds|EV Pulse|Fuelly|OEM estimate|not EPA|brochure|NHTSA|listing/i
+
+test('source names leave visible notes; formula uses and not slash', () => {
+  const samples = [
+    '2 seats (Car and Driver / Edmunds) vs crew 2',
+    '2 seats (Car and Driver and Edmunds) vs crew 2',
+    '2 seats (Ford 2018 Transit brochure) vs crew 2',
+    '5 seats (cars.com; Crew Cab) vs crew 2',
+    'Fuelly crowd-sourced mpg (not EPA-rated: GVWR over 8,500): 13.6 mpg · $4.37 per gal',
+    '71.4 kWh per 100 mi (1.4 mi/kWh; EV Pulse highway) · OEM estimate, not EPA',
+    '1 seat (cars.com) · Car and Driver / Edmunds 2; lower used for candidate',
+  ]
+  for (const raw of samples) {
+    const scrubbed = scrubSheetReason(raw)
+    assert.ok(
+      !SOURCE_IN_VISIBLE.test(scrubbed),
+      `source left in visible note: ${JSON.stringify(scrubbed)} from ${raw}`,
+    )
+    assert.ok(
+      !hasBrokenSheetPunctuation(scrubbed),
+      `broken punctuation in ${JSON.stringify(scrubbed)}`,
+    )
+    const form = formatFormulaSourceText(raw)
+    assert.ok(!/\bCar and Driver\s*\/\s*Edmunds\b/i.test(form), form)
+    if (/Car and Driver/i.test(form) && /Edmunds/i.test(form)) {
+      assert.match(form, /Car and Driver and Edmunds/i)
+    }
+  }
+})
+
+test('visible notes have no broken punctuation from scrubbing', () => {
+  const brokenSamples = [
+    '5 seats (: Crew Cab) vs crew 2',
+    '2 seats (: lowest across cabs)',
+    'note ( leftover',
+    'note leftover )',
+    '()',
+    ': leading',
+    'trailing,',
+  ]
+  for (const s of brokenSamples) {
+    assert.ok(
+      hasBrokenSheetPunctuation(s),
+      `detector missed broken punctuation: ${s}`,
+    )
+  }
+  for (let i = 0; i < rows.length; i += 1) {
+    const score = scoreTradeInRow(rows[i], pairedUnits[i], {
+      pkg,
+      job: pkg.jobDefaults,
+      assumptions,
+    })
+    const presentation = buildFactorPresentation(score)
+    const notes = []
+    for (const row of presentation.rows || []) {
+      if (row.kind === 'group') {
+        for (const part of row.parts || []) {
+          if (part.current?.reason) notes.push(part.current.reason)
+          if (part.candidate?.reason) notes.push(part.candidate.reason)
+        }
+      } else {
+        if (row.current?.reason) notes.push(row.current.reason)
+        if (row.candidate?.reason) notes.push(row.candidate.reason)
+      }
+    }
+    for (const note of notes) {
+      assert.ok(
+        !hasBrokenSheetPunctuation(note),
+        `broken punctuation in rendered note: ${JSON.stringify(note)}`,
+      )
+      assert.ok(
+        !SOURCE_IN_VISIBLE.test(note),
+        `source tag in rendered note: ${JSON.stringify(note)}`,
+      )
+      assert.ok(
+        !/\s\/\s|\bCar and Driver\s*\/\s*Edmunds\b/.test(note),
+        `slash in visible note: ${JSON.stringify(note)}`,
+      )
+      assert.ok(!/[→⟶]|->|[≤≥]/.test(note), `arrow or ≤/≥ in note: ${note}`)
+    }
+  }
+})
+
+test('E-Transit cab scores 2 seats vs crew 2 (not cars.com 1)', () => {
+  const score = scoreTradeInRow(rows[0], pairedUnits[0], {
+    pkg,
+    job: pkg.jobDefaults,
+    assumptions,
+  })
+  assert.match(pairedUnits[0].model, /E-Transit/i)
+  const cab = score.categories.find((c) => c.key === 'cab')
+  assert.ok(cab)
+  assert.match(cab.candidate.reason, /2 seats/)
+  assert.ok(!/1 seat\b/.test(cab.candidate.reason))
+  assert.equal(cab.candidate.points, 10)
+  assert.equal(
+    sumCountedCategoryPoints(score, 'candidate'),
+    score.candidateTotal,
+  )
+  assert.equal(sumCountedCategoryPoints(score, 'current'), score.currentTotal)
+  console.log(
+    'E-TRANSIT_PAIR',
+    score.currentTotal,
+    score.candidateTotal,
+    score.pointsPossible,
+  )
 })
 
 console.log(`All ${passed} trade-in score sum tests passed.`)

@@ -275,19 +275,39 @@ async function main() {
     }
 
     async function assertSheetNotesClean(label) {
-      const notes = await page.evaluate(() =>
-        [...document.querySelectorAll('.trade-in-score-reason')]
-          .map((el) => el.textContent || '')
-          .join('\n'),
+      const noteList = await page.evaluate(() =>
+        [...document.querySelectorAll('.trade-in-score-reason')].map(
+          (el) => el.textContent || '',
+        ),
       )
+      const notes = noteList.join('\n')
       assert.ok(!EM_DASH.test(notes), `em dash in notes ${label}`)
       assert.ok(!EN_DASH.test(notes), `en dash in notes ${label}`)
       assert.ok(!ARROW.test(notes), `arrow in notes ${label}`)
       assert.ok(!LE_GE.test(notes), `≤/≥ in notes ${label}`)
       assert.ok(!/\(OSRM\)/i.test(notes), `OSRM in notes ${label}`)
       assert.ok(!/\bratio\s+[\d.]+/i.test(notes), `ratio in notes ${label}`)
-      assert.ok(!/cars\.com/i.test(notes), `cars.com in notes ${label}`)
-      assert.ok(!/brochure/i.test(notes), `brochure in notes ${label}`)
+      assert.ok(
+        !/cars\.com|Car and Driver|Edmunds|EV Pulse|Fuelly|OEM estimate|not EPA|brochure|NHTSA/i.test(
+          notes,
+        ),
+        `source tag in visible notes ${label}: ${notes.slice(0, 240)}`,
+      )
+      assert.ok(
+        !/\s\/\s|\bCar and Driver\s*\/\s*Edmunds\b/.test(notes),
+        `slash in visible notes ${label}`,
+      )
+      for (const note of noteList) {
+        assert.ok(
+          !/\(:/.test(note) &&
+            !/\( /.test(note) &&
+            !/ \)/.test(note) &&
+            !/\(\)/.test(note) &&
+            !/^[;,:]/.test(note.trim()) &&
+            !/[;,:]$/.test(note.trim()),
+          `broken punctuation in visible note ${label}: ${JSON.stringify(note)}`,
+        )
+      }
     }
 
     await openSheetAt(0)
@@ -387,6 +407,17 @@ async function main() {
     const formulaText = await page.locator('.trade-in-score-formula').innerText()
     assert.match(formulaText, /Depreciation per year/)
     assert.match(formulaText, /Example/)
+    assert.match(formulaText, /Sources used in factor notes/)
+    assert.ok(
+      !/\bCar and Driver\s*\/\s*Edmunds\b/i.test(formulaText),
+      `formula must not slash Car and Driver / Edmunds at ${width}`,
+    )
+    if (/Car and Driver/i.test(formulaText) && /Edmunds/i.test(formulaText)) {
+      assert.match(formulaText, /Car and Driver and Edmunds/i)
+    }
+    // E-Transit pair: 2 seats in formula sources, not cars.com 1
+    assert.match(formulaText, /2 seats/)
+    assert.ok(!/1 seat \(cars\.com\)/i.test(formulaText))
 
     if (width === 390) {
       const formulaPath = join(OUT, `_tmp-formula-390.png`)

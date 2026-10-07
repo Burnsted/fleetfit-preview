@@ -13,8 +13,20 @@ import {
 } from '../data/baselineVehicles'
 import { RANGE_BUFFER, round1 } from '../data/scoreV2Rubric'
 import { scoreReplacementV2 } from './scoreV2'
+import {
+  scrubSheetReason as scrubSheetReasonImpl,
+  hasBrokenSheetPunctuation,
+  formatFormulaSourceText,
+  formulaSourceLines,
+} from './tradeInScoreNotes'
 
-export const TRADE_IN_SCORE_BUILD = 'trade-in-score-20261007-c'
+export const TRADE_IN_SCORE_BUILD = 'trade-in-score-20261007-d'
+export {
+  scrubSheetReasonImpl as scrubSheetReason,
+  hasBrokenSheetPunctuation,
+  formatFormulaSourceText,
+  formulaSourceLines,
+}
 
 /** Duty-fit category keys grouped under one heading. */
 export const DUTY_FIT_KEYS = Object.freeze(['range', 'cab', 'tow'])
@@ -57,39 +69,11 @@ export function pairTradeInsToUnits(rows, units) {
   })
 }
 
-/**
- * Soften engine jargon for visible sheet notes.
- * Math and sources stay in the formula / assumption panel only.
- */
-export function scrubSheetReason(reason) {
-  if (reason == null) return ''
-  let s = String(reason)
-  s = s.replace(/\u2013|\u2014/g, '-')
-  s = s.replace(/\s*\(OSRM\)/gi, '')
-  s = s.replace(/\s*\(ratio\s+[\d.]+\)/gi, '')
-  s = s.replace(/\bratio\s+[\d.]+/gi, '')
-  s = s.replace(/\s*(?:\u2192|\u27F6|\u27A1|\u2794|->)\s*/g, ' ')
-  s = s.replace(/\u2264/g, 'up to ')
-  s = s.replace(/\u2265/g, 'at least ')
-  // Drop named source tags from row notes (formula view keeps engine detail)
-  s = s.replace(/\bcars\.com\b/gi, '')
-  s = s.replace(/\bFord\s+\d{4}\s+Transit\s+brochure\b/gi, '')
-  s = s.replace(/\broad\s+mi\b/gi, 'road miles')
-  s = s.replace(/\(\s*[;,]?\s*\)/g, '')
-  s = s.replace(/\s*;\s*;+/g, ';')
-  s = s.replace(/\s*\u00b7\s*\u00b7+/g, ' \u00b7 ')
-  s = s.replace(/\s{2,}/g, ' ')
-  s = s.replace(/\s+([.,;])/g, '$1')
-  s = s.replace(/^\s*[\u00b7;,\-]+\s*/, '')
-  s = s.replace(/\s*[\u00b7;,\-]+\s*$/, '')
-  return s.trim()
-}
-
 function scrubCellForSheet(cell) {
   if (!cell) return cell
   return {
     ...cell,
-    reason: scrubSheetReason(cell.reason),
+    reason: scrubSheetReasonImpl(cell.reason),
     // Keep display numbers; scrub jargon only from reason notes
   }
 }
