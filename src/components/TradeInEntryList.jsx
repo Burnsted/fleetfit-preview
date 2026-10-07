@@ -61,7 +61,9 @@ export default function TradeInEntryList({ rows, onChange, errors = {} }) {
                 className="trade-in-entry-row"
                 data-trade-in-row={index + 1}
               >
-                <p className="trade-in-entry-row-label">Vehicle {index + 1}</p>
+                <p className="trade-in-entry-row-label">
+                  {String(row.label || '').trim() || `Vehicle ${index + 1}`}
+                </p>
                 <div className="trade-in-entry-fields">
                   <label>
                     Year

@@ -19,6 +19,8 @@ import {
   confirmedTradeInDollar,
   createTradeInRows,
   createTradeInRowsFromIntake,
+  createExampleTradeInRows,
+  EXAMPLE_TRADE_IN_SEEDS,
   kbbLookupLinkProps,
   missingSourceDateNote,
   parseTradeInDollar,
@@ -340,6 +342,22 @@ test('12. Prefill trade-in row 1 from intake current vehicle (editable seed)', (
   // Still editable shape
   rows[0].make = 'Chevy'
   assert.equal(rows[0].make, 'Chevy')
+})
+
+test('13. Default (no intake) seeds two Example trade-in rows with stats', () => {
+  const rows = createTradeInRowsFromIntake(2, null)
+  assert.equal(rows.length, 2)
+  const viaHelper = createExampleTradeInRows(2)
+  assert.equal(viaHelper.length, 2)
+  for (let i = 0; i < 2; i += 1) {
+    assert.equal(rows[i].label, 'Example')
+    assert.equal(rows[i].year, EXAMPLE_TRADE_IN_SEEDS[i].year)
+    assert.equal(rows[i].make, EXAMPLE_TRADE_IN_SEEDS[i].make)
+    assert.equal(rows[i].model, EXAMPLE_TRADE_IN_SEEDS[i].model)
+    assert.equal(rows[i].mileage, EXAMPLE_TRADE_IN_SEEDS[i].mileage)
+    assert.equal(rows[i].value, EXAMPLE_TRADE_IN_SEEDS[i].value)
+    assert.equal(rows[i].source, 'Example')
+  }
 })
 
 console.log(`\nAll ${passed} trade-in entry tests passed.`)

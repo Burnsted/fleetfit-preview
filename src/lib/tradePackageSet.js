@@ -151,6 +151,39 @@ export function sliceActiveSet(eligible, size) {
 }
 
 /**
+ * When suggestible pool is short of the size chip, fill remaining slots with
+ * other live complete listings (real VDPs only; never invent). Mid-score units
+ * keep their real dial totals. Used so default size 2 can show 2 real units.
+ * Honors intake body hard-filter (never silent substitute the other body).
+ */
+export function fillActiveShortfall(active, allRanked, desired, bodyNeed = null) {
+  const target = Math.max(0, Math.min(SIZE_MAX, Number(desired) || 0))
+  const next = Array.isArray(active) ? [...active] : []
+  if (next.length >= target) return renumber(next)
+  const used = new Set(next.map((slot) => slot.unit?.id).filter(Boolean))
+  const pool = Array.isArray(allRanked) ? allRanked : []
+  for (const row of pool) {
+    if (next.length >= target) break
+    if (!row?.live || !row.unit?.id || used.has(row.unit.id)) continue
+    if (row.score?.hardReject || row.score?.incomplete) continue
+    if (bodyNeed && row.bodyClass !== bodyNeed) continue
+    used.add(row.unit.id)
+    next.push({
+      unit: row.unit,
+      score: row.score,
+      sortKey: row.sortKey,
+      rank: 0,
+      bodyClass: row.bodyClass,
+      newlyAdded: false,
+      replacedFromId: null,
+      packIncomplete: false,
+      midScoreFill: !row.suggestible,
+    })
+  }
+  return renumber(next)
+}
+
+/**
  * After selecting active ids, ensure dead slots are auto-replaced.
  * @returns {{ active, replacements: Array<{ deadId, replacementId, deadUnit, deadYmm }> }}
  */
@@ -392,13 +425,16 @@ export function composeTradePackageSet(pkgDef, scoreCtx, size) {
   } else if (Number.isFinite(raw) && raw > 0) {
     desired = Math.min(SIZE_MAX, Math.floor(raw))
   } else {
-    desired = Math.max(1, Math.min(SIZE_MAX, Number(pkgDef.sizeDefault) || 4))
+    desired = Math.max(1, Math.min(SIZE_MAX, Number(pkgDef.sizeDefault) || 2))
   }
   const { all, eligible, bodyNeed, bodyShortfallNote } = rankTradePool(
     collectCandidateUnits(),
     scoreCtx,
   )
   let active = sliceActiveSet(eligible, desired)
+  // Default size-2 starting state: fill with other live complete listings when
+  // the good-score pool alone is short (still real VDPs; no invented units).
+  active = fillActiveShortfall(active, all, desired, bodyNeed)
   const deadPass = autoReplaceDeadSlots(active, eligible)
   active = deadPass.active
 

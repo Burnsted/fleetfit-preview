@@ -30,7 +30,34 @@ export const EMPTY_TRADE_IN_ROW = Object.freeze({
   value: '',
   source: '',
   date: '',
+  label: '',
 })
+
+/** Labeled Example demo rows for the default starting state (no intake vehicle). */
+export const EXAMPLE_TRADE_IN_SEEDS = Object.freeze([
+  Object.freeze({
+    year: '2018',
+    make: 'Ford',
+    model: 'Transit-250',
+    mileage: '48000',
+    condition: 'Good',
+    value: '12500',
+    source: 'Example',
+    date: '2026-10-01',
+    label: 'Example',
+  }),
+  Object.freeze({
+    year: '2019',
+    make: 'Chevrolet',
+    model: 'Silverado 1500',
+    mileage: '67000',
+    condition: 'Good',
+    value: '14500',
+    source: 'Example',
+    date: '2026-10-01',
+    label: 'Example',
+  }),
+])
 
 export function createEmptyTradeInRow() {
   return { ...EMPTY_TRADE_IN_ROW }
@@ -39,6 +66,28 @@ export function createEmptyTradeInRow() {
 export function createTradeInRows(count) {
   const n = Math.max(0, Math.min(5, Number(count) || 0))
   return Array.from({ length: n }, () => createEmptyTradeInRow())
+}
+
+/** Default demo trade-in rows: each labeled Example with year/make/model/miles/value. */
+export function createExampleTradeInRows(count) {
+  const n = Math.max(0, Math.min(5, Number(count) || 0))
+  return Array.from({ length: n }, (_, i) => {
+    const seed =
+      EXAMPLE_TRADE_IN_SEEDS[i] ||
+      EXAMPLE_TRADE_IN_SEEDS[EXAMPLE_TRADE_IN_SEEDS.length - 1]
+    return {
+      ...createEmptyTradeInRow(),
+      year: seed.year,
+      make: seed.make,
+      model: seed.model,
+      mileage: seed.mileage,
+      condition: seed.condition,
+      value: seed.value,
+      source: seed.source,
+      date: seed.date,
+      label: 'Example',
+    }
+  })
 }
 
 /**
@@ -68,11 +117,16 @@ export function tradeInSeedFromIntake(intake) {
   }
 }
 
-/** Create trade-in rows, prefilling row 1 from intake when present. Editable after. */
+/**
+ * Create trade-in rows for a package open.
+ * No intake vehicle → labeled Example demo rows (default starting state).
+ * Intake vehicle identity prefills row 1 only; remaining rows stay blank.
+ */
 export function createTradeInRowsFromIntake(count, intake) {
-  const rows = createTradeInRows(count)
   const seed = tradeInSeedFromIntake(intake)
-  if (!seed || rows.length === 0) return rows
+  if (!seed) return createExampleTradeInRows(count)
+  const rows = createTradeInRows(count)
+  if (rows.length === 0) return rows
   rows[0] = {
     ...rows[0],
     year: seed.year,
@@ -98,6 +152,7 @@ export function resizeTradeInRows(rows, count) {
         value: String(prev[i].value ?? ''),
         source: String(prev[i].source ?? ''),
         date: String(prev[i].date ?? ''),
+        label: String(prev[i].label ?? ''),
       }
     }
   }

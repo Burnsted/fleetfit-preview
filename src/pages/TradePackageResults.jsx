@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useMemo, useState } from 'react'
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { Link, useLocation } from 'react-router-dom'
 import CrumbDivider from '../components/CrumbDivider'
 import NewCatalog from '../components/NewCatalog'
@@ -99,7 +99,7 @@ export default function TradePackageResults({ pkg }) {
 
   const storedJob = useMemo(() => readStoredJob(pkg.id), [pkg.id])
   const [job, setJob] = useState(() => mergeJob(pkg, intake, storedJob))
-  const initialSize = fleetSizeFromIntake(intake, pkg.sizeDefault || 4)
+  const initialSize = fleetSizeFromIntake(intake, pkg.sizeDefault || 2)
   const [size, setSize] = useState(initialSize)
   const [active, setActive] = useState([])
   const [eligible, setEligible] = useState([])
@@ -113,6 +113,7 @@ export default function TradePackageResults({ pkg }) {
   const [pickerOpen, setPickerOpen] = useState(false)
   const [addBlockedMsg, setAddBlockedMsg] = useState(null)
   const [replaceUndo, setReplaceUndo] = useState(null)
+  const defaultFleetSeeded = useRef(false)
   const [tradeInRows, setTradeInRows] = useState(() => {
     const fromIntake = intake?.tradeInEntries
     if (Array.isArray(fromIntake) && fromIntake.length) {
@@ -121,7 +122,7 @@ export default function TradePackageResults({ pkg }) {
     const seeded = createTradeInRowsFromIntake(initialSize, intake)
     const stored = readStoredTradeInRows(pkg.id)
     if (stored?.length) {
-      // Prefer intake seed when stored rows are blank shells (prior empty visit).
+      // Prefer intake/Example seed when stored rows are blank shells (prior empty visit).
       const storedHasVehicle = stored.some(
         (r) =>
           String(r?.year || '').trim() ||
@@ -205,6 +206,25 @@ export default function TradePackageResults({ pkg }) {
   useEffect(() => {
     writeStoredTradeInRows(pkg.id, tradeInRows)
   }, [pkg.id, tradeInRows])
+
+  // Default starting state: select the shown package units into the fleet so
+  // "N of N in fleet" matches fleet size / trade-in rows. Once per package visit.
+  useEffect(() => {
+    if (defaultFleetSeeded.current || active.length === 0) return
+    const pickIds = active.map((slot) => fleetUnitKey(pkg.id, slot.unit.id))
+    const seedFlag = `fleetfit-default-fleet-seed:${pkg.id}`
+    try {
+      if (sessionStorage.getItem(seedFlag) === '1') {
+        defaultFleetSeeded.current = true
+        return
+      }
+      sessionStorage.setItem(seedFlag, '1')
+    } catch {
+      /* ignore quota */
+    }
+    fleet.seedPicks(pickIds)
+    defaultFleetSeeded.current = true
+  }, [active, pkg.id, fleet])
 
   // Title count must match the vehicles rendered below (active), not the
   // planned fleet-size chip — pool shortfall can leave size > active.length.

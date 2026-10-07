@@ -110,14 +110,30 @@ test('3b. Per-trade eligible counts after index-redirect drop', () => {
 test('4. Size slice does not invent fillers when pool is short', () => {
   const pkg = getPackage(TRADE_PACKAGE_IDS.electrical)
   const set = composeTradePackageSet(pkg, { pkg, intake: null }, 4)
-  assert.ok(set.active.length <= set.eligibleCount)
+  // Active may include live mid-score fill beyond the 0.7 eligible pool.
   assert.ok(set.active.length <= 4)
   assert.equal(set.shortfall, Math.max(0, 4 - set.active.length))
   assert.equal(set.stockMode, 'Used')
-  // Honest shortfall when fewer than size chip
-  if (set.eligibleCount < 4) {
-    assert.ok(set.shortfall > 0)
-  }
+  // Only two live complete listings exist — size 4 still shortfalls.
+  assert.equal(set.active.length, 2)
+  assert.ok(set.shortfall > 0)
+  assert.deepEqual(
+    set.active.map((a) => a.unit.id).sort(),
+    ['unit-e1', 'unit-e5'],
+  )
+})
+
+test('4a. Default size 2 packs two live units (suggestible + mid-score fill)', () => {
+  const pkg = getPackage(TRADE_PACKAGE_IDS.electrical)
+  assert.equal(pkg.sizeDefault, 2)
+  const set = composeTradePackageSet(pkg, { pkg, intake: null }, pkg.sizeDefault)
+  assert.equal(set.active.length, 2)
+  assert.equal(set.shortfall, 0)
+  assert.equal(set.size, 2)
+  assert.deepEqual(
+    set.active.map((a) => a.unit.id),
+    ['unit-e5', 'unit-e1'],
+  )
 })
 
 test('4b. Title count syncs with rendered active set (0 / 1 / 4, singular + plural)', () => {

@@ -125,6 +125,15 @@ export function FleetPickProvider({ children }) {
     setPlanOpen(false)
   }, [])
 
+  /** Merge pick ids without opening the fleet plan (default starting state). */
+  const seedPicks = useCallback((pickIds) => {
+    const list = Array.isArray(pickIds)
+      ? pickIds.filter((id) => typeof id === 'string' && id)
+      : []
+    if (!list.length) return
+    setIds((prev) => mergePickIds(prev, list))
+  }, [])
+
   const add = useCallback((id) => {
     if (!id) return
     addVehicleToPlan({ pickId: id })
@@ -162,6 +171,7 @@ export function FleetPickProvider({ children }) {
     toggle,
     remove,
     add,
+    seedPicks,
     planItems,
     planOpen,
     planCount: planItems.length,
@@ -181,6 +191,7 @@ export function FleetPickProvider({ children }) {
     toggle,
     remove,
     add,
+    seedPicks,
     openPlan,
     closePlan,
     addVehicleToPlan,
