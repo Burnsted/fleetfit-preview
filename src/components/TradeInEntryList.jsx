@@ -118,7 +118,7 @@ export default function TradeInEntryList({ rows, onChange, errors = {} }) {
                     </select>
                   </label>
                   <label className="trade-in-entry-value-field">
-                    Trade-in value
+                    Trade-in value · Example
                     <span className="trade-in-entry-estimate">{ESTIMATE_NOT_QUOTE}</span>
                     <input
                       type="text"

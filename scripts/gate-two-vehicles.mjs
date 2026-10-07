@@ -106,32 +106,41 @@ async function overflowOk(page, width) {
 }
 
 async function bottomClearance(page) {
+  await page.evaluate(() => {
+    window.scrollTo(0, document.documentElement.scrollHeight)
+  })
+  await page.waitForTimeout(400)
   return page.evaluate(() => {
-    const feedback = document.querySelector(
-      '[data-feedback-fab], .feedback-fab, button[aria-label*="feedback" i], #fleetfit-feedback-root button',
-    )
+    const fab = document.querySelector('.fbw-fab, [data-feedback-fab], .feedback-fab')
     const consent = document.querySelector('[data-consent-bar]')
-    const main = document.querySelector('main, .main, .app-shell')
-    const last = [...document.querySelectorAll('footer, .locked-foot-note, .package-cta-bar')]
-      .filter((el) => el.offsetParent !== null)
-      .pop()
-    window.scrollTo(0, document.body.scrollHeight)
+    const footer =
+      document.querySelector('footer.site-footer, .site-footer, footer') ||
+      [...document.querySelectorAll('.locked-foot-note')].pop()
     const vh = window.innerHeight
-    const lastBottom = last ? last.getBoundingClientRect().bottom : null
-    const fab = feedback?.getBoundingClientRect()
-    const bar = consent?.getBoundingClientRect()
-    const header = document.querySelector('.site-header, header')
-    const headerOk = header ? header.getBoundingClientRect().width <= vh * 2 : true
+    const footerRect = footer?.getBoundingClientRect()
+    const fabRect = fab?.getBoundingClientRect()
+    const consentRect = consent?.getBoundingClientRect()
+    const header = document.querySelector('.site-header, header.site-header')
+    const headerRect = header?.getBoundingClientRect()
+    // At max scroll, footer bottom should sit above fixed chrome (8px gap).
+    const fixedTop = Math.min(
+      fabRect ? fabRect.top : Infinity,
+      consentRect ? consentRect.top : Infinity,
+    )
+    const gap =
+      footerRect && Number.isFinite(fixedTop)
+        ? Math.round(fixedTop - footerRect.bottom)
+        : null
     return {
-      lastBottom,
+      footerBottom: footerRect ? Math.round(footerRect.bottom) : null,
       vh,
-      fabTop: fab ? fab.top : null,
-      consentTop: bar ? bar.top : null,
-      headerWidth: header ? Math.round(header.getBoundingClientRect().width) : null,
-      hiddenUnderFixed:
-        lastBottom != null &&
-        ((fab && lastBottom > fab.top + 2) || (bar && lastBottom > bar.top + 2)),
-      headerOk,
+      fabTop: fabRect ? Math.round(fabRect.top) : null,
+      consentTop: consentRect ? Math.round(consentRect.top) : null,
+      headerWidth: headerRect ? Math.round(headerRect.width) : null,
+      gap,
+      hiddenUnderFixed: gap != null ? gap < 8 : false,
+      headerOk: headerRect ? headerRect.width <= vh + 1 : true,
+      navFits: headerRect ? headerRect.right <= vh + 1 || headerRect.width <= document.documentElement.clientWidth + 1 : true,
     }
   })
 }

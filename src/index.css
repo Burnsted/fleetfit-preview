@@ -2437,6 +2437,12 @@ img { max-width: 100%; display: block; }
   font-weight: 600;
   color: var(--mark-ink, #0b1220);
 }
+.package-total-example-tag {
+  font-size: 0.72rem;
+  font-weight: 600;
+  color: var(--text-dim);
+  line-height: 1.2;
+}
 .package-total-count {
   font-size: 0.75rem;
   font-weight: 500;

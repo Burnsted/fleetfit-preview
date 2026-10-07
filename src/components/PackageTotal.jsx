@@ -21,7 +21,7 @@ export default function PackageTotal({ units, tradeInRows }) {
       data-credit-count={summary.creditCount}
     >
       <h2 id="package-total-title" className="package-total-title">
-        Package total
+        Package total · Example
       </h2>
 
       <div className="package-total-rows">
@@ -33,6 +33,7 @@ export default function PackageTotal({ units, tradeInRows }) {
             >
               {summary.totalDisplay}
             </span>
+            <span className="package-total-example-tag">Example</span>
             {summary.total != null ? (
               <span className="package-total-count">{summary.askCountLabel}</span>
             ) : null}
@@ -47,6 +48,7 @@ export default function PackageTotal({ units, tradeInRows }) {
             >
               {summary.tradeInDisplay}
             </span>
+            <span className="package-total-example-tag">Example</span>
             {summary.slotCount > 0 &&
             (summary.tradeInCredit != null || !summary.creditComplete) ? (
               <span className="package-total-count">{summary.creditCountLabel}</span>
@@ -62,6 +64,7 @@ export default function PackageTotal({ units, tradeInRows }) {
             >
               {summary.netDisplay}
             </span>
+            <span className="package-total-example-tag">Example</span>
             {summary.netHelper ? (
               <span className="package-total-count">{summary.netHelper}</span>
             ) : null}
