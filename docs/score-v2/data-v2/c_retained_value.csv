@@ -1,0 +1,10 @@
+make,model,source,retained_3yr_pct,retained_5yr_pct,retained_7yr_pct,retained_10yr_pct,basis_note,label,source_url,accessed
+Ford,F-150,iSeeCars,81.1,61.4,50.6,37.6,"model-level, all trims",FACT,https://www.iseecars.com/car/ford-f-150/resale-value,2026-09-27
+Ram,1500,iSeeCars,74.1,61.8,50.1,35.6,model-level,FACT,https://www.iseecars.com/car/ram-ram-pickup-1500/resale-value,2026-09-27
+Chevrolet,Silverado 1500,iSeeCars,69.6,58.3,51.2,37.2,model-level,FACT,https://www.iseecars.com/car/chevrolet-silverado-1500/resale-value,2026-09-27
+Toyota,Tacoma,iSeeCars,96.5,80.5,71.2,61.0,model-level,FACT,https://www.iseecars.com/car/toyota-tacoma/resale-value,2026-09-27
+Chevrolet,Colorado,iSeeCars,86.0,63.1,55.4,47.1,model-level,FACT,https://www.iseecars.com/car/chevrolet-colorado/resale-value,2026-09-27
+Ram,ProMaster cargo van,CarEdge,64.8,57.2,,,"yr1 80.5, yr2 69.3, yr4 59.9; assumes 13,500 mi/yr, $50,423 new; iSeeCars has no page",FACT (secondary valuation site),https://caredge.com/ram/promaster-cargo-van/depreciation,2026-09-27
+Ford,Transit,CarResaleValue,78.5,69.4,,,"depreciation 11.2% 1yr / 21.5% 3yr / 30.6% 5yr; based on 403 listings observed 2021 (pandemic-era, likely optimistic); iSeeCars/CarEdge no data",FACT (weak source) - treat as INF,https://carresalevalue.com/ford/transit/,2026-09-27
+segment,Full-size pickups,iSeeCars,76.3,63.0,,,segment depreciation 23.7% / 37.0%,FACT,https://www.iseecars.com/car/ford-f-150/resale-value,2026-09-27
+segment,Midsize pickups,iSeeCars,85.4,69.8,,,segment depreciation 14.6% / 30.2%,FACT,https://www.iseecars.com/car/toyota-tacoma/resale-value,2026-09-27

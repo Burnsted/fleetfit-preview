@@ -1,0 +1,8 @@
+source,basis,horizon_yr,retained_pct,depreciation_pct,label,source_url,source_published,accessed
+iSeeCars,model-level R1T resale model,3,66.0,34.0,FACT,https://www.iseecars.com/car/rivian-r1t/resale-value,,2026-09-27
+iSeeCars,model-level R1T resale model (modeled; R1T launched MY2022),5,44.9,55.1,FACT (modeled),https://www.iseecars.com/car/rivian-r1t/resale-value,,2026-09-27
+iSeeCars,model-level (modeled),7,36.8,63.2,FACT (modeled),https://www.iseecars.com/car/rivian-r1t/resale-value,,2026-09-27
+iSeeCars,model-level (modeled),10,34.8,65.2,FACT (modeled),https://www.iseecars.com/car/rivian-r1t/resale-value,,2026-09-27
+iSeeCars,All pickups segment,3,80.9,19.1,FACT,https://www.iseecars.com/car/rivian-r1t/resale-value,,2026-09-27
+iSeeCars,All pickups segment,5,66.7,33.3,FACT,https://www.iseecars.com/car/rivian-r1t/resale-value,,2026-09-27
+Black Book via Autoweek,"2024 R1T Adventure Dual-Motor, $80,700 MSRP -> $37,400 projected at 36-mo lease end (Mar 1 2025 projection)",3,46.3,53.7,FACT,https://www.autoweek.com/news/a64299750/full-size-ev-pickup-trucks-performance-residuals/,2025-03-27,2026-09-27

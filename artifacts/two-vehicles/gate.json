@@ -1,0 +1,119 @@
+{
+  "formspreeRealRequests": 0,
+  "widths": {
+    "390": {
+      "state": {
+        "size": "2",
+        "cards": 2,
+        "tradeRows": [
+          {
+            "label": "Example",
+            "values": [
+              "2018",
+              "Ford",
+              "Transit-250",
+              "48000",
+              "Good",
+              "12500",
+              "Example",
+              "2026-10-01"
+            ]
+          },
+          {
+            "label": "Example",
+            "values": [
+              "2019",
+              "Chevrolet",
+              "Silverado 1500",
+              "67000",
+              "Good",
+              "14500",
+              "Example",
+              "2026-10-01"
+            ]
+          }
+        ],
+        "ofInFleet": "2 of 2 in fleet",
+        "title": "Electrical package · 2 vehicles"
+      },
+      "prox": {
+        "dollarCount": 8,
+        "exampleCount": 15,
+        "misses": []
+      },
+      "ov": {
+        "ok": true,
+        "scrollWidth": 390,
+        "clientWidth": 390
+      },
+      "clear": {
+        "footerBottom": 774,
+        "vh": 844,
+        "fabTop": 786,
+        "consentTop": null,
+        "headerWidth": 390,
+        "gap": 12,
+        "hiddenUnderFixed": false,
+        "headerOk": true,
+        "navFits": true
+      }
+    },
+    "1440": {
+      "state": {
+        "size": "2",
+        "cards": 2,
+        "tradeRows": [
+          {
+            "label": "Example",
+            "values": [
+              "2018",
+              "Ford",
+              "Transit-250",
+              "48000",
+              "Good",
+              "12500",
+              "Example",
+              "2026-10-01"
+            ]
+          },
+          {
+            "label": "Example",
+            "values": [
+              "2019",
+              "Chevrolet",
+              "Silverado 1500",
+              "67000",
+              "Good",
+              "14500",
+              "Example",
+              "2026-10-01"
+            ]
+          }
+        ],
+        "ofInFleet": "2 of 2 in fleet",
+        "title": "Electrical package · 2 vehicles"
+      },
+      "prox": {
+        "dollarCount": 8,
+        "exampleCount": 15,
+        "misses": []
+      },
+      "ov": {
+        "ok": true,
+        "scrollWidth": 1440,
+        "clientWidth": 1440
+      },
+      "clear": {
+        "footerBottom": 830,
+        "vh": 900,
+        "fabTop": 842,
+        "consentTop": null,
+        "headerWidth": 1440,
+        "gap": 12,
+        "hiddenUnderFixed": false,
+        "headerOk": false,
+        "navFits": true
+      }
+    }
+  }
+}

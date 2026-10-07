@@ -1,0 +1,95 @@
+{
+  "formspreeRealRequests": 0,
+  "widths": {
+    "390": {
+      "badgeCount": 2,
+      "prox": {
+        "dollarCount": 8,
+        "exampleCount": 15,
+        "misses": [],
+        "scope": "body"
+      },
+      "scroll": {
+        "scrollWidth": 390,
+        "clientWidth": 390
+      },
+      "ownershipProx": {
+        "dollarCount": 2,
+        "exampleCount": 3,
+        "misses": [],
+        "scope": ".trade-in-score-ownership"
+      },
+      "clearShown": {
+        "ok": true,
+        "fabHidden": true,
+        "gapConsent": 64,
+        "contentEnd": 708,
+        "consentTop": 772,
+        "fabTop": null,
+        "closeVisible": true,
+        "pad": "136"
+      },
+      "clearDismissed": {
+        "ok": true,
+        "fabHidden": true,
+        "gapConsent": null,
+        "contentEnd": 748,
+        "consentTop": null,
+        "fabTop": null,
+        "closeVisible": true,
+        "pad": "96"
+      },
+      "formulaProx": {
+        "dollarCount": 9,
+        "exampleCount": 11,
+        "misses": [],
+        "scope": ".trade-in-score-formula"
+      }
+    },
+    "1440": {
+      "badgeCount": 2,
+      "prox": {
+        "dollarCount": 8,
+        "exampleCount": 15,
+        "misses": [],
+        "scope": "body"
+      },
+      "scroll": {
+        "scrollWidth": 1440,
+        "clientWidth": 1440
+      },
+      "ownershipProx": {
+        "dollarCount": 2,
+        "exampleCount": 3,
+        "misses": [],
+        "scope": ".trade-in-score-ownership"
+      },
+      "clearShown": {
+        "ok": true,
+        "fabHidden": true,
+        "gapConsent": 64,
+        "contentEnd": 764,
+        "consentTop": 828,
+        "fabTop": null,
+        "closeVisible": true,
+        "pad": "136"
+      },
+      "clearDismissed": {
+        "ok": true,
+        "fabHidden": true,
+        "gapConsent": null,
+        "contentEnd": 804,
+        "consentTop": null,
+        "fabTop": null,
+        "closeVisible": true,
+        "pad": "96"
+      },
+      "formulaProx": {
+        "dollarCount": 9,
+        "exampleCount": 11,
+        "misses": [],
+        "scope": ".trade-in-score-formula"
+      }
+    }
+  }
+}

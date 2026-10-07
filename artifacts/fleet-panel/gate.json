@@ -1,0 +1,33 @@
+{
+  "base": "https://burnsted.github.io/fleetfit-preview/draft-photo-add/",
+  "overflow390": {
+    "scrollWidth": 390,
+    "clientWidth": 390,
+    "overflow": false
+  },
+  "overflow1440": {
+    "scrollWidth": 1440,
+    "clientWidth": 1440,
+    "overflow": false
+  },
+  "consoleErrors": [],
+  "bannedClean": true,
+  "screenshots": {
+    "fleetPanel": [
+      "artifacts/fleet-panel/before-dead-button.png",
+      "artifacts/fleet-panel/after-1-add-panel.png",
+      "artifacts/fleet-panel/after-2-adds-panel.png",
+      "artifacts/fleet-panel/after-remove-one.png",
+      "artifacts/fleet-panel/reopen-control.png"
+    ],
+    "photoAdd": [
+      "artifacts/photo-add/before-listing-card.png",
+      "artifacts/photo-add/after-plus-on-photo.png",
+      "artifacts/photo-add/after-check-with-total.png",
+      "artifacts/photo-add/after-plus-new-cybertruck.png",
+      "artifacts/photo-add/after-check-new-cybertruck.png",
+      "artifacts/photo-add/after-used-gmc-sierra.png",
+      "artifacts/photo-add/after-new-gmc-sierra.png"
+    ]
+  }
+}
