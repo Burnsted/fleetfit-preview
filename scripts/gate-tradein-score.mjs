@@ -73,7 +73,13 @@ async function exampleNearDollars(page, rootSelector = null) {
       if (!t.trim()) continue
       const el = node.parentElement
       if (!el) continue
-      if (el.closest('.trade-in-score-reason, .score-v2-reason')) continue
+      if (
+        el.closest(
+          '.trade-in-score-reason, .score-v2-reason, .trade-in-score-formula-sources',
+        )
+      ) {
+        continue
+      }
       const st = getComputedStyle(el)
       if (st.display === 'none' || st.visibility === 'hidden' || st.opacity === '0') {
         continue
