@@ -22,12 +22,12 @@
       "clearShown": {
         "ok": true,
         "fabHidden": true,
-        "gapConsent": 32,
-        "contentEnd": 740,
+        "gapConsent": 64,
+        "contentEnd": 708,
         "consentTop": 772,
         "fabTop": null,
         "closeVisible": true,
-        "pad": "104"
+        "pad": "136"
       },
       "clearDismissed": {
         "ok": true,
@@ -40,8 +40,8 @@
         "pad": "96"
       },
       "formulaProx": {
-        "dollarCount": 6,
-        "exampleCount": 8,
+        "dollarCount": 9,
+        "exampleCount": 11,
         "misses": [],
         "scope": ".trade-in-score-formula"
       }
@@ -67,12 +67,12 @@
       "clearShown": {
         "ok": true,
         "fabHidden": true,
-        "gapConsent": 32,
-        "contentEnd": 796,
+        "gapConsent": 64,
+        "contentEnd": 764,
         "consentTop": 828,
         "fabTop": null,
         "closeVisible": true,
-        "pad": "104"
+        "pad": "136"
       },
       "clearDismissed": {
         "ok": true,
@@ -85,8 +85,8 @@
         "pad": "96"
       },
       "formulaProx": {
-        "dollarCount": 6,
-        "exampleCount": 8,
+        "dollarCount": 9,
+        "exampleCount": 11,
         "misses": [],
         "scope": ".trade-in-score-formula"
       }
