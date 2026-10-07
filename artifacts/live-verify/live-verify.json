@@ -1,0 +1,133 @@
+{
+  "live": "https://burnsted.github.io/fleetfit-preview/?cb=1791291205233-g6zvzy",
+  "loadedJs": "index-CsXyLgTw.js",
+  "needle": "index-CsXyLgTw.js",
+  "results": {
+    "item1": {
+      "pass": true,
+      "detail": {
+        "found": true,
+        "bg": "rgb(255, 255, 255)",
+        "value": {
+          "text": "54.8",
+          "color": "rgb(11, 18, 32)",
+          "ratio": 18.723104130860587
+        },
+        "max": {
+          "text": "out of 70",
+          "color": "rgb(51, 51, 51)",
+          "ratio": 12.63465434445799
+        },
+        "diff": {
+          "text": "+24.8 vs current",
+          "color": "rgb(26, 26, 26)",
+          "ratio": 17.40432753274219
+        },
+        "current": {
+          "text": "Current 30.0",
+          "color": "rgb(51, 51, 51)",
+          "ratio": 12.63465434445799
+        },
+        "tappable": true,
+        "tag": "BUTTON"
+      }
+    },
+    "item2": {
+      "pass": true,
+      "detail": {
+        "snippet": "OPEN SCORE\n\n2026 GMC Sierra EV\n\nClose\n\nREPLACEMENT SCORE\n\n54.8 out of 70\n\n+24.8 vs current\n\nCurrent 30.0\n\n#1\n\nCurrent: Example current vehicle · 2018 Ford Transit-250 3.7L V6\n\nCand"
+      }
+    },
+    "item3": {
+      "pass": true,
+      "detail": {
+        "ok": true,
+        "greenRatio": 0
+      }
+    },
+    "item4": {
+      "pass": true,
+      "detail": {
+        "hasVan": true,
+        "noShortfallLie": true
+      }
+    },
+    "vansRule": {
+      "pass": true
+    },
+    "item5": {
+      "pass": true,
+      "detail": {
+        "tradeVals": [
+          "2019",
+          "Ford",
+          "Transit-250",
+          "62000",
+          "",
+          "",
+          ""
+        ]
+      }
+    },
+    "construction": {
+      "pass": true
+    },
+    "item6": {
+      "pass": true,
+      "detail": {
+        "homeHeader": 1,
+        "homeLocked": 0,
+        "pkgHeader": 1,
+        "pkgLocked": 0,
+        "footerOk": true
+      }
+    },
+    "item7": {
+      "pass": true,
+      "detail": {
+        "sizeActive": "2"
+      }
+    },
+    "plusOnPhoto": {
+      "pass": true
+    },
+    "panel1Add": {
+      "pass": true,
+      "detail": {
+        "items": 1
+      }
+    },
+    "checkState": {
+      "pass": true
+    },
+    "reopenVisible": {
+      "pass": true
+    },
+    "panel2Adds": {
+      "pass": true,
+      "detail": {
+        "itemCount": 2
+      }
+    },
+    "reopen": {
+      "pass": true
+    }
+  },
+  "consoleErrors": [],
+  "verdict": {
+    "item1": "PASS",
+    "item2": "PASS",
+    "item3": "PASS",
+    "item4": "PASS",
+    "item5": "PASS",
+    "item6": "PASS",
+    "item7": "PASS",
+    "construction": "PASS",
+    "vansRule": "PASS",
+    "plusOnPhoto": "PASS",
+    "checkState": "PASS",
+    "panel1Add": "PASS",
+    "panel2Adds": "PASS",
+    "reopen": "PASS"
+  }
+}
