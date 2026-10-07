@@ -4,7 +4,7 @@
  */
 import { chromium } from 'playwright'
 import assert from 'node:assert/strict'
-import { mkdirSync, writeFileSync, copyFileSync } from 'node:fs'
+import { mkdirSync, writeFileSync, copyFileSync, readFileSync } from 'node:fs'
 import { join } from 'node:path'
 
 const BASE =
@@ -347,6 +347,52 @@ async function main() {
     assert.ok(!BANNED.test(sheetText))
     await assertSheetNotesClean(`sheet1-${width}`)
 
+    // Card score must equal sheet replacement (same number and scale)
+    const cardVsSheet = await page.evaluate(() => {
+      const cards = [...document.querySelectorAll('.trade-unit-card')]
+      const parseDial = (text) => {
+        const m = String(text || '').match(
+          /(\d+(?:\.\d+)?)\s*out of\s*(\d+)/i,
+        )
+        return m
+          ? { total: Number(m[1]), pp: Number(m[2]) }
+          : null
+      }
+      const byModel = {}
+      for (const card of cards) {
+        const t = card.innerText || ''
+        const dial = parseDial(t)
+        if (/E-Transit/i.test(t)) byModel.eTransit = { dial, text: t.slice(0, 200) }
+        if (/Sierra EV/i.test(t)) byModel.sierra = { dial, text: t.slice(0, 200) }
+      }
+      const head = document.querySelector('.trade-in-score-panel')?.innerText || ''
+      const sheetM = head.match(
+        /vs Replacement\s+(\d+(?:\.\d+)?)\s*·|Replacement\s+(\d+(?:\.\d+)?)/i,
+      )
+      const sheetPp = head.match(/out of\s+(\d+)/i)
+      const sheetCand = sheetM
+        ? Number(sheetM[1] || sheetM[2])
+        : null
+      return {
+        byModel,
+        sheetCand,
+        sheetPp: sheetPp ? Number(sheetPp[1]) : null,
+        headSlice: head.slice(0, 220),
+      }
+    })
+    console.log('CARD_VS_SHEET', width, JSON.stringify(cardVsSheet, null, 2))
+    assert.ok(cardVsSheet.byModel.eTransit?.dial, 'E-Transit card dial present')
+    assert.equal(
+      cardVsSheet.sheetCand,
+      cardVsSheet.byModel.eTransit.dial.total,
+      `E-Transit sheet replacement ${cardVsSheet.sheetCand} != card ${cardVsSheet.byModel.eTransit.dial.total}`,
+    )
+    assert.equal(
+      cardVsSheet.sheetPp,
+      cardVsSheet.byModel.eTransit.dial.pp,
+      `E-Transit sheet PP ${cardVsSheet.sheetPp} != card ${cardVsSheet.byModel.eTransit.dial.pp}`,
+    )
+
     const ownershipProx = await exampleNearDollars(
       page,
       '.trade-in-score-ownership',
@@ -361,6 +407,48 @@ async function main() {
     const sheetPath = join(OUT, `_tmp-sheet-${width}.png`)
     await page.locator('.trade-in-score-panel').screenshot({ path: sheetPath })
     saveShot(sheetPath, `sheet-${width}`)
+
+    // E-Transit card + open sheet composite (390)
+    if (width === 390) {
+      const cardShot = join(OUT, `_tmp-etransit-card-390.png`)
+      const sheetShot = join(OUT, `_tmp-sheet-${width}.png`)
+      await page.evaluate(() => {
+        const card = [...document.querySelectorAll('.trade-unit-card')].find(
+          (el) => /E-Transit/i.test(el.innerText || ''),
+        )
+        card?.scrollIntoView({ block: 'center' })
+      })
+      await page.waitForTimeout(200)
+      await page.evaluate(() => {
+        const sheet = document.querySelector('.trade-in-score-sheet')
+        if (sheet) sheet.style.visibility = 'hidden'
+      })
+      const cardEl = page
+        .locator('.trade-unit-card')
+        .filter({ hasText: /E-Transit/i })
+      await cardEl.first().screenshot({ path: cardShot })
+      await page.evaluate(() => {
+        const sheet = document.querySelector('.trade-in-score-sheet')
+        if (sheet) sheet.style.visibility = ''
+      })
+      await page.waitForTimeout(150)
+      const pairPath = join(OUT, `_tmp-card-vs-sheet-390.png`)
+      const cardB64 = readFileSync(cardShot).toString('base64')
+      const sheetB64 = readFileSync(sheetShot).toString('base64')
+      const comp = await browser.newPage({
+        viewport: { width: 390, height: 1200 },
+      })
+      await comp.setContent(`<!doctype html><html><body style="margin:0;background:#fff">
+        <div style="font:700 12px sans-serif;padding:8px 10px;color:#0b1220">E-Transit card</div>
+        <img src="data:image/png;base64,${cardB64}" style="display:block;width:390px" />
+        <div style="font:700 12px sans-serif;padding:8px 10px;color:#0b1220">Trade sheet (same replacement score)</div>
+        <img src="data:image/png;base64,${sheetB64}" style="display:block;width:390px" />
+      </body></html>`)
+      await comp.waitForTimeout(200)
+      await comp.screenshot({ path: pairPath, fullPage: true })
+      await comp.close()
+      saveShot(pairPath, 'card-vs-sheet-390')
+    }
 
     // Scroll to bottom of open sheet; confirm clear of consent (FAB hidden)
     await page.evaluate(() => {
@@ -442,6 +530,36 @@ async function main() {
       assert.match(sheet2Text, /Sierra|Silverado/)
       assert.ok(!EM_DASH.test(sheet2Text) && !EN_DASH.test(sheet2Text))
       await assertSheetNotesClean('sheet2-390')
+      const sierraCard = await page.evaluate(() => {
+        const card = [...document.querySelectorAll('.trade-unit-card')].find(
+          (el) => /Sierra EV/i.test(el.innerText || ''),
+        )
+        const m = String(card?.innerText || '').match(
+          /(\d+(?:\.\d+)?)\s*out of\s*(\d+)/i,
+        )
+        const head = document.querySelector('.trade-in-score-panel')?.innerText || ''
+        const sm = head.match(
+          /vs Replacement\s+(\d+(?:\.\d+)?)|Replacement\s+(\d+(?:\.\d+)?)/i,
+        )
+        const spp = head.match(/out of\s+(\d+)/i)
+        return {
+          cardTotal: m ? Number(m[1]) : null,
+          cardPp: m ? Number(m[2]) : null,
+          sheetCand: sm ? Number(sm[1] || sm[2]) : null,
+          sheetPp: spp ? Number(spp[1]) : null,
+        }
+      })
+      console.log('SIERRA_CARD_VS_SHEET', sierraCard)
+      assert.equal(
+        sierraCard.sheetCand,
+        sierraCard.cardTotal,
+        `Sierra sheet replacement ${sierraCard.sheetCand} != card ${sierraCard.cardTotal}`,
+      )
+      assert.equal(
+        sierraCard.sheetPp,
+        sierraCard.cardPp,
+        `Sierra sheet PP ${sierraCard.sheetPp} != card ${sierraCard.cardPp}`,
+      )
       const sheet2Path = join(OUT, `_tmp-sheet2-390.png`)
       await page.locator('.trade-in-score-panel').screenshot({ path: sheet2Path })
       saveShot(sheet2Path, 'sheet2-390')

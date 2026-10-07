@@ -17,6 +17,7 @@ import {
   inferTradeInBodyType,
   pairTradeInsToUnits,
   scoreTradeInRow,
+  scoreUnitCard,
   scrubSheetReason,
   sumCountedCategoryPoints,
   sumPresentedCountedPoints,
@@ -360,6 +361,7 @@ test('E-Transit cab scores 2 seats vs crew 2 (not cars.com 1)', () => {
     pkg,
     job: pkg.jobDefaults,
     assumptions,
+    intake: { job: pkg.jobDefaults },
   })
   assert.match(pairedUnits[0].model, /E-Transit/i)
   const cab = score.categories.find((c) => c.key === 'cab')
@@ -378,6 +380,78 @@ test('E-Transit cab scores 2 seats vs crew 2 (not cars.com 1)', () => {
     score.candidateTotal,
     score.pointsPossible,
   )
+})
+
+test('sheet replacement total and PP equal that unit card for every default trade row', () => {
+  const scoreCtx = { intake: { job: pkg.jobDefaults }, pkg }
+  for (let i = 0; i < rows.length; i += 1) {
+    const unit = pairedUnits[i]
+    const card = scoreUnitCard(unit, {
+      intake: scoreCtx.intake,
+      pkg,
+      assumptions,
+    })
+    const sheet = scoreTradeInRow(rows[i], unit, {
+      intake: scoreCtx.intake,
+      pkg,
+      job: pkg.jobDefaults,
+      assumptions,
+    })
+    assert.ok(card && sheet, `card and sheet for row ${i + 1}`)
+    assert.equal(
+      sheet.candidateTotal,
+      card.candidateTotal,
+      `row ${i + 1} ${unit.model}: sheet cand ${sheet.candidateTotal} != card ${card.candidateTotal}`,
+    )
+    assert.equal(
+      sheet.pointsPossible,
+      card.pointsPossible,
+      `row ${i + 1} ${unit.model}: sheet PP ${sheet.pointsPossible} != card ${card.pointsPossible}`,
+    )
+    assert.equal(
+      sumCountedCategoryPoints(sheet, 'candidate'),
+      sheet.candidateTotal,
+      `row ${i + 1} candidate sum equals total`,
+    )
+    assert.equal(
+      sumCountedCategoryPoints(sheet, 'current'),
+      sheet.currentTotal,
+      `row ${i + 1} current sum equals total`,
+    )
+    const badge = tradeInScoreBadgeCopy(sheet)
+    assert.equal(
+      badge.candidateTotal,
+      card.candidateTotal,
+      `badge replacement must match card for ${unit.model}`,
+    )
+    assert.equal(badge.pointsPossible, card.pointsPossible)
+    assert.match(
+      badge.tradeIn,
+      new RegExp(
+        `${Number(sheet.currentTotal).toFixed(1)} out of ${card.pointsPossible}`,
+      ),
+    )
+    assert.match(
+      badge.replacement,
+      new RegExp(`Replacement ${Number(card.candidateTotal).toFixed(1)}`),
+    )
+    console.log(
+      'CARD_EQ_SHEET',
+      rows[i].model,
+      'vs',
+      unit.model,
+      'card',
+      card.candidateTotal,
+      '/',
+      card.pointsPossible,
+      'sheet',
+      sheet.currentTotal,
+      '/',
+      sheet.candidateTotal,
+      '/',
+      sheet.pointsPossible,
+    )
+  }
 })
 
 console.log(`All ${passed} trade-in score sum tests passed.`)

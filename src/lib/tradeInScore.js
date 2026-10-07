@@ -11,7 +11,7 @@ import {
   ARGONNE_VAN_MAINT_CPM,
   MAINT_CLASS_AAA,
 } from '../data/baselineVehicles'
-import { RANGE_BUFFER, round1 } from '../data/scoreV2Rubric'
+import { RANGE_BUFFER, WARRANTY_MAX, round1 } from '../data/scoreV2Rubric'
 import { scoreReplacementV2 } from './scoreV2'
 import {
   scrubSheetReason as scrubSheetReasonImpl,
@@ -20,7 +20,7 @@ import {
   formulaSourceLines,
 } from './tradeInScoreNotes'
 
-export const TRADE_IN_SCORE_BUILD = 'trade-in-score-20261007-d'
+export const TRADE_IN_SCORE_BUILD = 'trade-in-score-20261007-e'
 export {
   scrubSheetReasonImpl as scrubSheetReason,
   hasBrokenSheetPunctuation,
@@ -255,7 +255,91 @@ export function intakeFromTradeInRow(row, baseIntake = null, job = null) {
 }
 
 /**
+ * Package-card score for a unit (baseline / package current — not the trade-in row).
+ * Same call path as TradeUnitCard / rankTradePool.
+ */
+export function scoreUnitCard(unit, opts = {}) {
+  if (!unit) return null
+  return scoreReplacementV2(unit, {
+    intake: opts.intake || null,
+    pkg: opts.pkg || null,
+    assumptions: opts.assumptions || null,
+  })
+}
+
+/**
+ * Align a trade-in-as-current score to the unit card's replacement scale.
+ * Replacement cells/totals/PP come from the card; trade-in keeps its own
+ * current points on every factor the card counts. Rows still sum to totals.
+ */
+export function alignTradeSheetToCard(tradeScore, cardScore) {
+  if (!tradeScore || !cardScore) return tradeScore
+  const byKey = Object.fromEntries(
+    (tradeScore.categories || []).map((c) => [c.key, c]),
+  )
+  const categories = (cardScore.categories || []).map((cardRow) => {
+    const tradeRow = byKey[cardRow.key]
+    const cardCand = cardRow.candidate
+    const tradeCur = tradeRow?.current
+    // Same factor set as the card: drop anything the card does not count.
+    if (!cardCand?.counted) {
+      return {
+        key: cardRow.key,
+        label: cardRow.label,
+        current: { ...cardRow.current },
+        candidate: { ...cardCand },
+      }
+    }
+    // Card counts this factor — keep trade-in current points when available.
+    const current =
+      tradeCur?.counted
+        ? { ...tradeCur }
+        : { ...cardRow.current }
+    return {
+      key: cardRow.key,
+      label: cardRow.label,
+      current,
+      candidate: { ...cardCand },
+    }
+  })
+
+  let currentTotal = 0
+  let candidateTotal = 0
+  let pp = 0
+  for (const row of categories) {
+    const catMax = row.key === 'longevity' ? WARRANTY_MAX : 10
+    if (row.current?.counted && row.candidate?.counted) {
+      currentTotal += Number(row.current.points) || 0
+      candidateTotal += Number(row.candidate.points) || 0
+      pp += catMax
+    }
+  }
+  currentTotal = round1(currentTotal)
+  candidateTotal = round1(candidateTotal)
+  // Replacement must match the card exactly (shop sees one score per truck).
+  candidateTotal = round1(cardScore.candidateTotal)
+  pp = Number(cardScore.pointsPossible) || pp
+  const difference = round1(candidateTotal - currentTotal)
+
+  return {
+    ...tradeScore,
+    categories,
+    currentName: tradeScore.currentName,
+    candidateName: cardScore.candidateName || tradeScore.candidateName,
+    currentTotal: cardScore.incomplete ? null : currentTotal,
+    candidateTotal: cardScore.incomplete ? null : candidateTotal,
+    pointsPossible: pp,
+    difference: cardScore.incomplete ? null : difference,
+    incomplete: Boolean(cardScore.incomplete),
+    incompleteLabel: cardScore.incompleteLabel || tradeScore.incompleteLabel,
+    cardScore,
+    alignedToCard: true,
+  }
+}
+
+/**
  * Score one trade-in row against its replacement unit with the shared engine.
+ * Replacement total and pointsPossible match that unit's package card.
  * Returns null when the row has no vehicle identity or there is no unit.
  */
 export function scoreTradeInRow(row, unit, opts = {}) {
@@ -265,11 +349,18 @@ export function scoreTradeInRow(row, unit, opts = {}) {
   const model = String(row?.model ?? '').trim()
   if (!year || !make || !model) return null
   const intake = intakeFromTradeInRow(row, opts.intake, opts.job)
-  return scoreReplacementV2(unit, {
+  const tradeScore = scoreReplacementV2(unit, {
     intake,
     pkg: opts.pkg || null,
     assumptions: opts.assumptions || null,
   })
+  // Card uses package intake as-is (baseline current), not the trade-in row.
+  const cardScore = scoreUnitCard(unit, {
+    intake: opts.intake || null,
+    pkg: opts.pkg || null,
+    assumptions: opts.assumptions || null,
+  })
+  return alignTradeSheetToCard(tradeScore, cardScore)
 }
 
 /** Sum counted category points for one side; must equal that side's total. */
