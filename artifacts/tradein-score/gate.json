@@ -7,32 +7,43 @@
         "dollarCount": 8,
         "exampleCount": 15,
         "misses": [],
-        "scope": "body",
-        "rootClass": ""
+        "scope": "body"
       },
       "scroll": {
         "scrollWidth": 390,
         "clientWidth": 390
       },
-      "clear": {
+      "ownershipProx": {
+        "dollarCount": 2,
+        "exampleCount": 3,
+        "misses": [],
+        "scope": ".trade-in-score-ownership"
+      },
+      "clearShown": {
         "ok": true,
-        "gap": 42,
-        "padBottom": 180,
-        "contentEndAtMaxScroll": 664,
-        "fabTop": 706,
+        "fabHidden": true,
+        "gapConsent": 31,
+        "contentEnd": 741,
         "consentTop": 772,
+        "fabTop": null,
         "closeVisible": true,
-        "panelInView": true,
-        "scrollHeight": 1617,
-        "clientHeight": 743,
-        "blockers": []
+        "pad": "104"
+      },
+      "clearDismissed": {
+        "ok": true,
+        "fabHidden": true,
+        "gapConsent": null,
+        "contentEnd": 749,
+        "consentTop": null,
+        "fabTop": null,
+        "closeVisible": true,
+        "pad": "96"
       },
       "formulaProx": {
-        "dollarCount": 4,
-        "exampleCount": 6,
+        "dollarCount": 6,
+        "exampleCount": 8,
         "misses": [],
-        "scope": ".trade-in-score-formula",
-        "rootClass": "trade-in-score-formula"
+        "scope": ".trade-in-score-formula"
       }
     },
     "1440": {
@@ -41,32 +52,43 @@
         "dollarCount": 8,
         "exampleCount": 15,
         "misses": [],
-        "scope": "body",
-        "rootClass": ""
+        "scope": "body"
       },
       "scroll": {
         "scrollWidth": 1440,
         "clientWidth": 1440
       },
-      "clear": {
+      "ownershipProx": {
+        "dollarCount": 2,
+        "exampleCount": 3,
+        "misses": [],
+        "scope": ".trade-in-score-ownership"
+      },
+      "clearShown": {
         "ok": true,
-        "gap": 42,
-        "padBottom": 180,
-        "contentEndAtMaxScroll": 720,
-        "fabTop": 762,
+        "fabHidden": true,
+        "gapConsent": 32,
+        "contentEnd": 796,
         "consentTop": 828,
+        "fabTop": null,
         "closeVisible": true,
-        "panelInView": true,
-        "scrollHeight": 1303,
-        "clientHeight": 792,
-        "blockers": []
+        "pad": "104"
+      },
+      "clearDismissed": {
+        "ok": true,
+        "fabHidden": true,
+        "gapConsent": null,
+        "contentEnd": 804,
+        "consentTop": null,
+        "fabTop": null,
+        "closeVisible": true,
+        "pad": "96"
       },
       "formulaProx": {
-        "dollarCount": 4,
-        "exampleCount": 6,
+        "dollarCount": 6,
+        "exampleCount": 8,
         "misses": [],
-        "scope": ".trade-in-score-formula",
-        "rootClass": "trade-in-score-formula"
+        "scope": ".trade-in-score-formula"
       }
     }
   }
