@@ -6,7 +6,9 @@
       "prox": {
         "dollarCount": 8,
         "exampleCount": 15,
-        "misses": []
+        "misses": [],
+        "scope": "body",
+        "rootClass": ""
       },
       "scroll": {
         "scrollWidth": 390,
@@ -14,10 +16,10 @@
       },
       "clear": {
         "ok": true,
-        "gap": 38,
+        "gap": 42,
         "padBottom": 180,
         "contentEndAtMaxScroll": 664,
-        "fabTop": 702,
+        "fabTop": 706,
         "consentTop": 772,
         "closeVisible": true,
         "panelInView": true,
@@ -28,7 +30,9 @@
       "formulaProx": {
         "dollarCount": 4,
         "exampleCount": 6,
-        "misses": []
+        "misses": [],
+        "scope": ".trade-in-score-formula",
+        "rootClass": "trade-in-score-formula"
       }
     },
     "1440": {
@@ -36,7 +40,9 @@
       "prox": {
         "dollarCount": 8,
         "exampleCount": 15,
-        "misses": []
+        "misses": [],
+        "scope": "body",
+        "rootClass": ""
       },
       "scroll": {
         "scrollWidth": 1440,
@@ -44,10 +50,10 @@
       },
       "clear": {
         "ok": true,
-        "gap": 38,
+        "gap": 42,
         "padBottom": 180,
         "contentEndAtMaxScroll": 720,
-        "fabTop": 758,
+        "fabTop": 762,
         "consentTop": 828,
         "closeVisible": true,
         "panelInView": true,
@@ -58,7 +64,9 @@
       "formulaProx": {
         "dollarCount": 4,
         "exampleCount": 6,
-        "misses": []
+        "misses": [],
+        "scope": ".trade-in-score-formula",
+        "rootClass": "trade-in-score-formula"
       }
     }
   }
