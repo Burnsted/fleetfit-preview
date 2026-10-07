@@ -136,7 +136,7 @@ export default function TradeInScoreSheet({
                 <li key={f.key} className="trade-in-score-assumption">
                   <label>
                     <span className="trade-in-score-assumption-label">
-                      {f.label} · Example default
+                      {f.label}
                     </span>
                     <span className="trade-in-score-assumption-note">
                       {f.sourceNote}
@@ -145,7 +145,18 @@ export default function TradeInScoreSheet({
                       {f.formula}
                     </span>
                     <span className="trade-in-score-assumption-input-row">
-                      {f.isDollar ? <span className="trade-in-score-dollar">$</span> : null}
+                      {f.isDollar ? (
+                        <span className="trade-in-score-dollar-wrap">
+                          <span className="trade-in-score-dollar">$</span>
+                          <span className="trade-in-score-assumption-example">
+                            Example
+                          </span>
+                        </span>
+                      ) : (
+                        <span className="trade-in-score-assumption-example">
+                          Example default
+                        </span>
+                      )}
                       <input
                         type="number"
                         inputMode="decimal"

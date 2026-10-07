@@ -1,0 +1,65 @@
+{
+  "formspreeRealRequests": 0,
+  "widths": {
+    "390": {
+      "badgeCount": 2,
+      "prox": {
+        "dollarCount": 8,
+        "exampleCount": 15,
+        "misses": []
+      },
+      "scroll": {
+        "scrollWidth": 390,
+        "clientWidth": 390
+      },
+      "clear": {
+        "ok": true,
+        "gap": 38,
+        "padBottom": 180,
+        "contentEndAtMaxScroll": 664,
+        "fabTop": 702,
+        "consentTop": 772,
+        "closeVisible": true,
+        "panelInView": true,
+        "scrollHeight": 1617,
+        "clientHeight": 743,
+        "blockers": []
+      },
+      "formulaProx": {
+        "dollarCount": 4,
+        "exampleCount": 6,
+        "misses": []
+      }
+    },
+    "1440": {
+      "badgeCount": 2,
+      "prox": {
+        "dollarCount": 8,
+        "exampleCount": 15,
+        "misses": []
+      },
+      "scroll": {
+        "scrollWidth": 1440,
+        "clientWidth": 1440
+      },
+      "clear": {
+        "ok": true,
+        "gap": 38,
+        "padBottom": 180,
+        "contentEndAtMaxScroll": 720,
+        "fabTop": 758,
+        "consentTop": 828,
+        "closeVisible": true,
+        "panelInView": true,
+        "scrollHeight": 1303,
+        "clientHeight": 792,
+        "blockers": []
+      },
+      "formulaProx": {
+        "dollarCount": 4,
+        "exampleCount": 6,
+        "misses": []
+      }
+    }
+  }
+}
