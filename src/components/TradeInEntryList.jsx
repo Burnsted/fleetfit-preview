@@ -11,13 +11,25 @@ import {
   parseTradeInDollar,
   rowNeedsSourceDate,
 } from '../lib/tradeInEntry'
+import TradeInScoreBadge from './TradeInScoreBadge'
 
 /**
  * One typed trade-in row per current vehicle (fleet size 1 to 5).
  * No KBB figures are fetched or shown.
+ * Each row shows a score vs its index-matched replacement (same engine as Current).
  */
-export default function TradeInEntryList({ rows, onChange, errors = {} }) {
+export default function TradeInEntryList({
+  rows,
+  onChange,
+  errors = {},
+  units = [],
+  scoreCtx = null,
+  job = null,
+  assumptionsByRow = null,
+  onAssumptionsChange = null,
+}) {
   const list = Array.isArray(rows) ? rows : []
+  const unitList = Array.isArray(units) ? units : []
   const sourceNote = missingSourceDateNote(list)
   const linkProps = kbbLookupLinkProps()
 
@@ -26,6 +38,10 @@ export default function TradeInEntryList({ rows, onChange, errors = {} }) {
       i === index ? { ...row, [field]: value } : row,
     )
     onChange?.(next)
+  }
+
+  function setRowAssumptions(index, nextAssumptions) {
+    onAssumptionsChange?.(index, nextAssumptions)
   }
 
   return (
@@ -61,9 +77,28 @@ export default function TradeInEntryList({ rows, onChange, errors = {} }) {
                 className="trade-in-entry-row"
                 data-trade-in-row={index + 1}
               >
-                <p className="trade-in-entry-row-label">
-                  {String(row.label || '').trim() || `Vehicle ${index + 1}`}
-                </p>
+                <div className="trade-in-entry-row-head">
+                  <p className="trade-in-entry-row-label">
+                    {String(row.label || '').trim() || `Vehicle ${index + 1}`}
+                  </p>
+                  <TradeInScoreBadge
+                    row={row}
+                    unit={unitList[index] || null}
+                    scoreCtx={scoreCtx}
+                    job={job}
+                    assumptions={
+                      assumptionsByRow && assumptionsByRow[index]
+                        ? assumptionsByRow[index]
+                        : null
+                    }
+                    onAssumptionsChange={(next) =>
+                      setRowAssumptions(index, next)
+                    }
+                    heading={
+                      String(row.label || '').trim() || `Vehicle ${index + 1}`
+                    }
+                  />
+                </div>
                 <div className="trade-in-entry-fields">
                   <label>
                     Year

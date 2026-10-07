@@ -252,11 +252,25 @@ function yearsBetween(start: Date, end: Date): number {
   return (end.getTime() - start.getTime()) / (365.25 * 24 * 3600 * 1000)
 }
 
+export type ScoreAssumptions = {
+  /** Usable-range buffer (engine default RANGE_BUFFER). */
+  rangeBuffer?: number
+  /** FL regular gasoline $/gal override. */
+  gasUsdPerGal?: number
+  /** FL diesel $/gal override. */
+  dieselUsdPerGal?: number
+  /** FL commercial electricity ¢/kWh override. */
+  electricityCentsPerKwh?: number
+  /** Daily miles override (also applied onto job inputs). */
+  dailyMiles?: number
+}
+
 function scoreRange(
   publishedRange: number | null,
   dailyMiles: number | null,
   url: string | null,
   basisNote: string,
+  rangeBuffer: number = RANGE_BUFFER,
 ) {
   if (dailyMiles == null) return cell(null, { status: STATUS.notScored('daily miles', 'entered'), reason: STATUS.notScored('daily miles', 'entered'), counted: false })
   if (publishedRange == null) {
@@ -267,14 +281,15 @@ function scoreRange(
       counted: false,
     })
   }
-  const usable = publishedRange * RANGE_BUFFER
+  const usable = publishedRange * rangeBuffer
   const ratio = usable / dailyMiles
   const pts = clampScore(lin(ratio, RANGE_ANCHORS))
   // G-final Transit polish reason when Fuelly tank range
   if (
     publishedRange === 340 &&
     /13\.6/.test(basisNote) &&
-    /Fuelly|mpg/i.test(basisNote)
+    /Fuelly|mpg/i.test(basisNote) &&
+    rangeBuffer === RANGE_BUFFER
   ) {
     return cell(pts, {
       reason: `13.6 mpg × 25 gal = 340 mi × 0.7 = 238 mi usable (mpg is an estimate)`,
@@ -282,7 +297,7 @@ function scoreRange(
     })
   }
   return cell(pts, {
-    reason: `${publishedRange} mi ${basisNote} × ${RANGE_BUFFER} = ${round1(usable)} mi usable vs ${dailyMiles} miles a day (ratio ${ratio.toFixed(2)})`,
+    reason: `${publishedRange} mi ${basisNote} × ${rangeBuffer} = ${round1(usable)} mi usable vs ${dailyMiles} miles a day (ratio ${ratio.toFixed(2)})`,
     url,
   })
 }
@@ -685,8 +700,13 @@ function scoreEnergyEv(
   kwhPer100: number | null,
   url: string | null,
   energyBasis: string | null = null,
+  electricityCentsPerKwh: number | null = null,
 ) {
-  if (!FL_COMMERCIAL_ELECTRICITY || FL_COMMERCIAL_ELECTRICITY.value == null) {
+  const priceCents =
+    electricityCentsPerKwh != null && Number.isFinite(electricityCentsPerKwh)
+      ? electricityCentsPerKwh
+      : FL_COMMERCIAL_ELECTRICITY?.value ?? null
+  if (priceCents == null) {
     return cell(null, { status: STATUS.FL_PRICE, reason: '', counted: false })
   }
   if (kwhPer100 == null) {
@@ -697,15 +717,15 @@ function scoreEnergyEv(
       counted: false,
     })
   }
-  const cpm = (kwhPer100 / 100) * FL_COMMERCIAL_ELECTRICITY.value
+  const cpm = (kwhPer100 / 100) * priceCents
   const pts = clampScore(lin(cpm, ENERGY_CPM_ANCHORS))
   const basis =
     energyBasis && !/^EPA$/i.test(energyBasis)
       ? energyBasis
       : 'EPA'
   return cell(pts, {
-    reason: `${kwhPer100} kWh per 100 mi (${basis}) × ${FL_COMMERCIAL_ELECTRICITY.value}¢ per kWh FL commercial (EIA, Jul 2026) = ${cpm.toFixed(1)}¢ per mi`,
-    url: url || FL_COMMERCIAL_ELECTRICITY.url,
+    reason: `${kwhPer100} kWh per 100 mi (${basis}) × ${priceCents}¢ per kWh FL commercial (EIA, Jul 2026) = ${cpm.toFixed(1)}¢ per mi`,
+    url: url || FL_COMMERCIAL_ELECTRICITY?.url || null,
   })
 }
 
@@ -715,6 +735,7 @@ function scoreEnergyGas(
   url: string | null,
   fuelly?: { mpg: number; url: string | null; label: string | null } | null,
   isVanOver8500?: boolean,
+  priceOverrides?: { gasUsdPerGal?: number; dieselUsdPerGal?: number } | null,
 ) {
   let useMpg = mpg
   let reasonMpg = ''
@@ -740,19 +761,24 @@ function scoreEnergyGas(
     })
   }
   const diesel = /diesel/i.test(fuel)
-  const price = diesel ? FL_DIESEL_AAA : FL_GAS_REGULAR_AAA
-  if (!price || price.value == null) {
+  const override = diesel
+    ? priceOverrides?.dieselUsdPerGal
+    : priceOverrides?.gasUsdPerGal
+  const catalog = diesel ? FL_DIESEL_AAA : FL_GAS_REGULAR_AAA
+  const priceValue =
+    override != null && Number.isFinite(override) ? override : catalog?.value ?? null
+  if (priceValue == null) {
     return cell(null, { status: STATUS.FL_PRICE, reason: STATUS.FL_PRICE, counted: false })
   }
-  const cpm = (100 * price.value) / useMpg
+  const cpm = (100 * priceValue) / useMpg
   const pts = clampScore(lin(cpm, ENERGY_CPM_ANCHORS))
   const mid = /midgrade/i.test(fuel)
     ? ' · rated on midgrade; priced at regular'
     : ''
   const reason = reasonMpg
-    ? `${reasonMpg}: ${useMpg} mpg · $${price.value} per gal FL ${diesel ? 'diesel' : 'regular'} (AAA, Sep 27, 2026) = ${cpm.toFixed(1)}¢ per mi`
-    : `$${price.value} per gal FL ${diesel ? 'diesel' : 'regular'} (AAA, Sep 27, 2026) ÷ ${useMpg} mpg (EPA) = ${cpm.toFixed(1)}¢ per mi${mid}`
-  return cell(pts, { reason, url: price.url || mpgUrl })
+    ? `${reasonMpg}: ${useMpg} mpg · $${priceValue} per gal FL ${diesel ? 'diesel' : 'regular'} (AAA, Sep 27, 2026) = ${cpm.toFixed(1)}¢ per mi`
+    : `$${priceValue} per gal FL ${diesel ? 'diesel' : 'regular'} (AAA, Sep 27, 2026) ÷ ${useMpg} mpg (EPA) = ${cpm.toFixed(1)}¢ per mi${mid}`
+  return cell(pts, { reason, url: catalog?.url || mpgUrl })
 }
 
 function scoreMaint(
@@ -981,11 +1007,30 @@ export function scoreReplacementV2(
       jobDefaults?: Record<string, unknown> | null
     } | null
     scoringDate?: string
+    /** Editable Example defaults threaded into range and energy formulas. */
+    assumptions?: ScoreAssumptions | null
   } = {},
 ): ScoreV2Result {
   const intake = opts.intake || null
   const pkg = opts.pkg || null
+  const assumptions = opts.assumptions || null
+  const rangeBuffer =
+    assumptions?.rangeBuffer != null && Number.isFinite(assumptions.rangeBuffer)
+      ? Number(assumptions.rangeBuffer)
+      : RANGE_BUFFER
   const job = parseJobFromIntake(intake, pkg)
+  if (assumptions?.dailyMiles != null && Number.isFinite(assumptions.dailyMiles)) {
+    job.dailyMiles = Number(assumptions.dailyMiles)
+  }
+  const energyPriceOverrides = {
+    gasUsdPerGal: assumptions?.gasUsdPerGal,
+    dieselUsdPerGal: assumptions?.dieselUsdPerGal,
+  }
+  const electricityOverride =
+    assumptions?.electricityCentsPerKwh != null &&
+    Number.isFinite(assumptions.electricityCentsPerKwh)
+      ? Number(assumptions.electricityCentsPerKwh)
+      : null
   const currentIn = parseCurrentFromIntake(intake, pkg)
   const missingCurrent = !currentIn
   const merged = mergeOemSpecs(unit) as Record<string, unknown>
@@ -1072,7 +1117,7 @@ export function scoreReplacementV2(
   let c1curFinal = missingCurrent
     ? notEntered()
     : baseline
-      ? scoreRange(curRangeMi, job.dailyMiles, baseline.epaSourceUrl, 'EPA tank')
+      ? scoreRange(curRangeMi, job.dailyMiles, baseline.epaSourceUrl, 'EPA tank', rangeBuffer)
       : cell(null, {
           status: STATUS.notScored('current vehicle'),
           reason: STATUS.notScored('current vehicle'),
@@ -1089,6 +1134,7 @@ export function scoreReplacementV2(
       job.dailyMiles,
       baseline.fuellyUrl,
       fuellyLabel,
+      rangeBuffer,
     )
   } else if (!missingCurrent && baseline && isVanCur && !baseline.fuellyMpg) {
     c1curFinal = cell(null, {
@@ -1106,6 +1152,7 @@ export function scoreReplacementV2(
     job.dailyMiles,
     cand.epaSourceUrl ?? null,
     rangeBasis,
+    rangeBuffer,
   )
   const p1 = missingCurrent
     ? { current: notEntered(), candidate: c1cand }
@@ -1384,6 +1431,7 @@ export function scoreReplacementV2(
     cand.epaKwhPer100mi ?? null,
     cand.energyUrl ?? cand.epaSourceUrl ?? null,
     cand.energyBasis ?? null,
+    electricityOverride,
   )
   const p9 = missingCurrent
     ? { current: notEntered(), candidate: c9cand }
@@ -1401,6 +1449,7 @@ export function scoreReplacementV2(
                   }
                 : null,
               isVanCur,
+              energyPriceOverrides,
             )
           : cell(null, {
               status: STATUS.notScored('mpg'),

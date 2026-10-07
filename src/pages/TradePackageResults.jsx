@@ -29,6 +29,7 @@ import {
   resizeTradeInRows,
   writeStoredTradeInRows,
 } from '../lib/tradeInEntry'
+import { defaultScoreAssumptions } from '../lib/tradeInScore'
 import {
   addUnitToPackage,
   composeTradePackageSet,
@@ -141,6 +142,12 @@ export default function TradePackageResults({ pkg }) {
     }
     return seeded
   })
+  const [tradeInAssumptions, setTradeInAssumptions] = useState(() => {
+    const base = defaultScoreAssumptions(
+      mergeJob(pkg, intake, readStoredJob(pkg.id)),
+    )
+    return Array.from({ length: initialSize }, () => ({ ...base }))
+  })
 
   const scoreCtx = useMemo(
     () => ({
@@ -201,11 +208,27 @@ export default function TradePackageResults({ pkg }) {
 
   useEffect(() => {
     setTradeInRows((prev) => resizeTradeInRows(prev, size))
+    setTradeInAssumptions((prev) => {
+      const base = defaultScoreAssumptions(job)
+      return Array.from({ length: size }, (_, i) =>
+        prev[i] ? { ...prev[i] } : { ...base },
+      )
+    })
+    // Resize only; keep edited assumptions for existing rows.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [size])
 
   useEffect(() => {
     writeStoredTradeInRows(pkg.id, tradeInRows)
   }, [pkg.id, tradeInRows])
+
+  const onTradeInAssumptionsChange = useCallback((index, nextAssumptions) => {
+    setTradeInAssumptions((prev) => {
+      const copy = [...prev]
+      copy[index] = { ...nextAssumptions }
+      return copy
+    })
+  }, [])
 
   // Default starting state: select the shown package units into the fleet so
   // "N of N in fleet" matches fleet size / trade-in rows. Once per package visit.
@@ -627,7 +650,15 @@ export default function TradePackageResults({ pkg }) {
       </div>
       ) : null}
 
-      <TradeInEntryList rows={tradeInRows} onChange={setTradeInRows} />
+      <TradeInEntryList
+        rows={tradeInRows}
+        onChange={setTradeInRows}
+        units={activeUnits}
+        scoreCtx={scoreCtx}
+        job={job}
+        assumptionsByRow={tradeInAssumptions}
+        onAssumptionsChange={onTradeInAssumptionsChange}
+      />
 
       {/* Package total always from Used units — never mix New MSRP into Used total */}
       <PackageTotal units={activeUnits} tradeInRows={tradeInRows} />
