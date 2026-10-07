@@ -403,6 +403,93 @@ async function main() {
       `ownership Example not near $ at ${width}: ${JSON.stringify(ownershipProx.misses)}`,
     )
 
+    // Ted: ownership formula is a TRADE-IN | REPLACEMENT table; Total = header
+    const ownToggle = page.locator('button', {
+      hasText: /Show ownership formula|Hide ownership formula/,
+    })
+    if (await ownToggle.count()) {
+      const lab = await ownToggle.first().innerText()
+      if (/Show ownership/i.test(lab)) {
+        await ownToggle.first().click()
+        await page.waitForTimeout(300)
+      }
+    }
+    await page.waitForSelector('[data-ownership-table="1"]', { timeout: 3000 })
+    const ownTable = await page.evaluate(() => {
+      const table = document.querySelector('[data-ownership-table="1"]')
+      const head = document.querySelector('.trade-in-score-ownership')?.innerText || ''
+      const parseUsd = (s) => {
+        const m = String(s || '').replace(/,/g, '').match(/\$(\d+(?:\.\d+)?)/)
+        return m ? Number(m[1]) : null
+      }
+      const headerTrade = parseUsd(
+        document.querySelector('.trade-in-score-ownership-side')?.innerText,
+      )
+      const headerRepl = parseUsd(
+        [...document.querySelectorAll('.trade-in-score-ownership-side')][1]
+          ?.innerText,
+      )
+      const totalTrade = parseUsd(
+        table?.querySelector('[data-ownership-total="trade-in"]')?.innerText,
+      )
+      const totalRepl = parseUsd(
+        table?.querySelector('[data-ownership-total="replacement"]')?.innerText,
+      )
+      const heads = [...(table?.querySelectorAll('thead th') || [])].map(
+        (th) => th.textContent.trim(),
+      )
+      const rows = [...(table?.querySelectorAll('tbody tr') || [])].map((tr) =>
+        tr.getAttribute('data-ownership-row'),
+      )
+      // Factor table: each data row must be one <tr> with trade-in + replacement <td>s
+      const factorRows = [
+        ...document.querySelectorAll(
+          '.trade-in-score-table tbody tr[data-factor]',
+        ),
+      ].map((tr) => ({
+        key: tr.getAttribute('data-factor'),
+        cells: tr.querySelectorAll('td').length,
+        stacked:
+          getComputedStyle(tr).display === 'block' ||
+          getComputedStyle(tr).flexDirection === 'column',
+      }))
+      return {
+        heads,
+        rows,
+        headerTrade,
+        headerRepl,
+        totalTrade,
+        totalRepl,
+        headSlice: head.slice(0, 200),
+        factorRows,
+        hasStackedList: Boolean(
+          document.querySelector('.trade-in-score-ownership-breakdown li'),
+        ),
+      }
+    })
+    console.log('OWNERSHIP_TABLE', width, JSON.stringify(ownTable, null, 2))
+    assert.ok(ownTable.heads.some((h) => /Trade-in/i.test(h)))
+    assert.ok(ownTable.heads.some((h) => /Replacement/i.test(h)))
+    assert.deepEqual(ownTable.rows, ['energy', 'maintenance', 'depreciation'])
+    assert.equal(
+      ownTable.totalTrade,
+      ownTable.headerTrade,
+      `ownership Total trade-in ${ownTable.totalTrade} != header ${ownTable.headerTrade}`,
+    )
+    assert.equal(
+      ownTable.totalRepl,
+      ownTable.headerRepl,
+      `ownership Total replacement ${ownTable.totalRepl} != header ${ownTable.headerRepl}`,
+    )
+    assert.ok(!ownTable.hasStackedList, 'ownership must not use stacked bullet list')
+    for (const fr of ownTable.factorRows) {
+      assert.ok(
+        fr.cells >= 2,
+        `factor ${fr.key} must have trade-in and replacement cells side by side`,
+      )
+      assert.ok(!fr.stacked, `factor ${fr.key} must not stack vertically`)
+    }
+
     const sheetPath = join(OUT, `_tmp-sheet-${width}.png`)
     await page.locator('.trade-in-score-panel').screenshot({ path: sheetPath })
     saveShot(sheetPath, `sheet-${width}`)

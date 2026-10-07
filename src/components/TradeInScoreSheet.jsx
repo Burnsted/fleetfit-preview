@@ -260,60 +260,128 @@ export default function TradeInScoreSheet({
                 <p className="trade-in-score-assumption-formula">
                   {ownership.tradeIn.formula}
                 </p>
-                <ul className="trade-in-score-ownership-breakdown">
-                  <li>
-                    Trade-in fuel or energy{' '}
-                    <span>
-                      {formatUsd(ownership.tradeIn.energyUsdPerYear)} Example
-                    </span>
-                    {!ownership.tradeIn.energyFromEngine
-                      ? ' (Example default; energy not scored)'
-                      : ''}
-                  </li>
-                  <li>
-                    Trade-in maintenance{' '}
-                    <span>
-                      {formatUsd(ownership.tradeIn.maintUsdPerYear)} Example
-                    </span>
-                    {!ownership.tradeIn.maintFromEngine
-                      ? ' (Example default; maintenance not scored)'
-                      : ''}
-                  </li>
-                  <li>
-                    Trade-in depreciation{' '}
-                    <span>
-                      {formatUsd(ownership.tradeIn.depreciationUsdPerYear)}{' '}
-                      Example
-                    </span>
-                  </li>
-                  <li>
-                    Replacement fuel or energy{' '}
-                    <span>
-                      {formatUsd(ownership.replacement.energyUsdPerYear)}{' '}
-                      Example
-                    </span>
-                    {!ownership.replacement.energyFromEngine
-                      ? ' (Example default; energy not scored)'
-                      : ''}
-                  </li>
-                  <li>
-                    Replacement maintenance{' '}
-                    <span>
-                      {formatUsd(ownership.replacement.maintUsdPerYear)}{' '}
-                      Example
-                    </span>
-                    {!ownership.replacement.maintFromEngine
-                      ? ' (Example default; maintenance not scored)'
-                      : ''}
-                  </li>
-                  <li>
-                    Replacement depreciation{' '}
-                    <span>
-                      {formatUsd(ownership.replacement.depreciationUsdPerYear)}{' '}
-                      Example
-                    </span>
-                  </li>
-                </ul>
+                <table
+                  className="trade-in-score-ownership-table"
+                  data-ownership-table="1"
+                  aria-label="Cost of ownership breakdown"
+                >
+                  <thead>
+                    <tr>
+                      <th scope="col">Item</th>
+                      <th scope="col">Trade-in</th>
+                      <th scope="col">Replacement</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    <tr data-ownership-row="energy">
+                      <th scope="row">Fuel or energy</th>
+                      <td>
+                        <span className="trade-in-score-ownership-cell">
+                          {formatUsd(ownership.tradeIn.energyUsdPerYear)}{' '}
+                          <span className="trade-in-score-assumption-example">
+                            Example
+                          </span>
+                        </span>
+                        <span className="trade-in-score-ownership-sub">
+                          Fuel
+                          {!ownership.tradeIn.energyFromEngine
+                            ? ' · Example default'
+                            : ''}
+                        </span>
+                      </td>
+                      <td>
+                        <span className="trade-in-score-ownership-cell">
+                          {formatUsd(ownership.replacement.energyUsdPerYear)}{' '}
+                          <span className="trade-in-score-assumption-example">
+                            Example
+                          </span>
+                        </span>
+                        <span className="trade-in-score-ownership-sub">
+                          Energy
+                          {!ownership.replacement.energyFromEngine
+                            ? ' · Example default'
+                            : ''}
+                        </span>
+                      </td>
+                    </tr>
+                    <tr data-ownership-row="maintenance">
+                      <th scope="row">Maintenance</th>
+                      <td>
+                        <span className="trade-in-score-ownership-cell">
+                          {formatUsd(ownership.tradeIn.maintUsdPerYear)}{' '}
+                          <span className="trade-in-score-assumption-example">
+                            Example
+                          </span>
+                        </span>
+                        {!ownership.tradeIn.maintFromEngine ? (
+                          <span className="trade-in-score-ownership-sub">
+                            Example default
+                          </span>
+                        ) : null}
+                      </td>
+                      <td>
+                        <span className="trade-in-score-ownership-cell">
+                          {formatUsd(ownership.replacement.maintUsdPerYear)}{' '}
+                          <span className="trade-in-score-assumption-example">
+                            Example
+                          </span>
+                        </span>
+                        {!ownership.replacement.maintFromEngine ? (
+                          <span className="trade-in-score-ownership-sub">
+                            Example default
+                          </span>
+                        ) : null}
+                      </td>
+                    </tr>
+                    <tr data-ownership-row="depreciation">
+                      <th scope="row">Depreciation</th>
+                      <td>
+                        <span className="trade-in-score-ownership-cell">
+                          {formatUsd(
+                            ownership.tradeIn.depreciationUsdPerYear,
+                          )}{' '}
+                          <span className="trade-in-score-assumption-example">
+                            Example
+                          </span>
+                        </span>
+                      </td>
+                      <td>
+                        <span className="trade-in-score-ownership-cell">
+                          {formatUsd(
+                            ownership.replacement.depreciationUsdPerYear,
+                          )}{' '}
+                          <span className="trade-in-score-assumption-example">
+                            Example
+                          </span>
+                        </span>
+                      </td>
+                    </tr>
+                  </tbody>
+                  <tfoot>
+                    <tr
+                      className="trade-in-score-ownership-total"
+                      data-ownership-row="total"
+                    >
+                      <th scope="row">Total per year</th>
+                      <td data-ownership-total="trade-in">
+                        <span className="trade-in-score-ownership-cell">
+                          {formatUsd(ownership.tradeIn.totalUsdPerYear)}{' '}
+                          <span className="trade-in-score-assumption-example">
+                            Example
+                          </span>
+                        </span>
+                      </td>
+                      <td data-ownership-total="replacement">
+                        <span className="trade-in-score-ownership-cell">
+                          {formatUsd(ownership.replacement.totalUsdPerYear)}{' '}
+                          <span className="trade-in-score-assumption-example">
+                            Example
+                          </span>
+                        </span>
+                      </td>
+                    </tr>
+                  </tfoot>
+                </table>
               </div>
             ) : null}
           </section>
@@ -388,18 +456,35 @@ export default function TradeInScoreSheet({
                 <p className="trade-in-score-formula-sources-title">
                   Factor detail and sources
                 </p>
-                <ul className="trade-in-score-formula-sources-list">
-                  {sourceLines.map((line) => (
-                    <li key={line.key}>
-                      <span className="trade-in-score-formula-sources-meta">
-                        {line.label} · {line.side}
-                      </span>
-                      <span className="trade-in-score-formula-sources-text">
-                        {line.text}
-                      </span>
-                    </li>
-                  ))}
-                </ul>
+                <table
+                  className="trade-in-score-formula-sources-table"
+                  aria-label="Factor detail by side"
+                >
+                  <thead>
+                    <tr>
+                      <th scope="col">Factor</th>
+                      <th scope="col">Trade-in</th>
+                      <th scope="col">Replacement</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {groupFormulaSources(sourceLines).map((row) => (
+                      <tr key={row.key} data-formula-factor={row.key}>
+                        <th scope="row">{row.label}</th>
+                        <td>
+                          <p className="trade-in-score-formula-sources-text">
+                            {row.tradeIn || '—'}
+                          </p>
+                        </td>
+                        <td>
+                          <p className="trade-in-score-formula-sources-text">
+                            {row.replacement || '—'}
+                          </p>
+                        </td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
               </div>
             ) : null}
           </section>
@@ -495,6 +580,27 @@ export default function TradeInScoreSheet({
     </div>,
     document.body,
   )
+}
+
+function groupFormulaSources(lines) {
+  const order = []
+  const byLabel = new Map()
+  for (const line of lines || []) {
+    const key = line.label || line.key
+    if (!byLabel.has(key)) {
+      byLabel.set(key, {
+        key: String(line.key || key).replace(/-(current|candidate)$/, ''),
+        label: line.label,
+        tradeIn: '',
+        replacement: '',
+      })
+      order.push(key)
+    }
+    const row = byLabel.get(key)
+    if (line.side === 'Trade-in') row.tradeIn = line.text
+    else if (line.side === 'Replacement') row.replacement = line.text
+  }
+  return order.map((k) => byLabel.get(k))
 }
 
 function FragmentGroup({ row }) {

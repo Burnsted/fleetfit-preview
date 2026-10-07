@@ -5211,17 +5211,62 @@ img { max-width: 100%; display: block; }
   padding-top: 8px;
   border-top: 1px solid var(--line, #d8dee6);
 }
-.trade-in-score-ownership-breakdown {
-  margin: 8px 0 0;
-  padding: 0 0 0 1.1rem;
+.trade-in-score-ownership-table {
+  width: 100%;
+  border-collapse: collapse;
+  margin-top: 8px;
   font-size: 0.78rem;
-  color: var(--text-dim, #666);
-  display: grid;
-  gap: 4px;
+  table-layout: fixed;
 }
-.trade-in-score-ownership-breakdown span {
+.trade-in-score-ownership-table th,
+.trade-in-score-ownership-table td {
+  border-top: 1px solid var(--line, #d8dee6);
+  padding: 6px 4px;
+  vertical-align: top;
+  text-align: left;
+  word-break: break-word;
+}
+.trade-in-score-ownership-table thead th {
+  border-top: 0;
+  font-size: 0.68rem;
+  font-weight: 700;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  color: var(--text-dim, #666);
+}
+.trade-in-score-ownership-table tbody th {
+  font-weight: 650;
+  width: 28%;
+  color: #0b1220;
+}
+.trade-in-score-ownership-table thead th:nth-child(2),
+.trade-in-score-ownership-table thead th:nth-child(3),
+.trade-in-score-ownership-table td {
+  width: 36%;
+}
+.trade-in-score-ownership-cell {
+  display: block;
   font-weight: 700;
   color: #0b1220;
+}
+.trade-in-score-ownership-sub {
+  display: block;
+  margin-top: 2px;
+  font-size: 0.68rem;
+  font-weight: 500;
+  color: var(--text-dim, #666);
+}
+.trade-in-score-ownership-total th,
+.trade-in-score-ownership-total td {
+  border-top: 2px solid #0b1220;
+  font-weight: 750;
+}
+.trade-in-score-ownership-total th {
+  color: #0b1220;
+}
+/* Legacy stacked list removed; keep rule inert if any remnant markup appears */
+.trade-in-score-ownership-breakdown {
+  display: none;
 }
 .trade-in-score-group th {
   font-weight: 750;
@@ -5283,27 +5328,74 @@ img { max-width: 100%; display: block; }
   font-weight: 700;
   color: #0b1220;
 }
-.trade-in-score-formula-sources-list {
-  list-style: none;
-  margin: 0;
-  padding: 0;
-  display: grid;
-  gap: 8px;
-}
-.trade-in-score-formula-sources-list li {
-  display: grid;
-  gap: 2px;
+.trade-in-score-formula-sources-table {
+  width: 100%;
+  border-collapse: collapse;
   font-size: 0.72rem;
-  line-height: 1.35;
+  table-layout: fixed;
+}
+.trade-in-score-formula-sources-table th,
+.trade-in-score-formula-sources-table td {
+  border-top: 1px solid var(--line, #d8dee6);
+  padding: 6px 4px;
+  vertical-align: top;
+  text-align: left;
+  word-break: break-word;
+}
+.trade-in-score-formula-sources-table thead th {
+  border-top: 0;
+  font-size: 0.68rem;
+  font-weight: 700;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
   color: var(--text-dim, #666);
 }
-.trade-in-score-formula-sources-meta {
+.trade-in-score-formula-sources-table tbody th {
   font-weight: 650;
+  width: 28%;
   color: #0b1220;
 }
 .trade-in-score-formula-sources-text {
+  margin: 0;
   font-weight: 500;
+  line-height: 1.35;
+  color: var(--text-dim, #666);
   word-break: break-word;
+}
+/* Factor table: always three columns side by side (never stack trade-in over replacement) */
+.trade-in-score-table {
+  table-layout: fixed;
+}
+.trade-in-score-table thead th:nth-child(1),
+.trade-in-score-table tbody th,
+.trade-in-score-table tfoot th {
+  width: 28%;
+}
+.trade-in-score-table thead th:nth-child(2),
+.trade-in-score-table thead th:nth-child(3),
+.trade-in-score-table td {
+  width: 36%;
+}
+@media (max-width: 480px) {
+  .trade-in-score-table,
+  .trade-in-score-ownership-table,
+  .trade-in-score-formula-sources-table {
+    display: table;
+    width: 100%;
+  }
+  .trade-in-score-table tr,
+  .trade-in-score-ownership-table tr,
+  .trade-in-score-formula-sources-table tr {
+    display: table-row;
+  }
+  .trade-in-score-table th,
+  .trade-in-score-table td,
+  .trade-in-score-ownership-table th,
+  .trade-in-score-ownership-table td,
+  .trade-in-score-formula-sources-table th,
+  .trade-in-score-formula-sources-table td {
+    display: table-cell;
+  }
 }
 .trade-in-score-assumption-list {
   list-style: none;

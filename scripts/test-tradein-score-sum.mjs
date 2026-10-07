@@ -222,6 +222,49 @@ test('cost of ownership total equals energy + maintenance + depreciation', () =>
   )
 })
 
+test('ownership Total per year equals header totals for both sides on every pair', () => {
+  // Ted: two-column ownership table Total row must match the header amounts.
+  for (let i = 0; i < rows.length; i += 1) {
+    const score = scoreTradeInRow(rows[i], pairedUnits[i], {
+      pkg,
+      job: pkg.jobDefaults,
+      assumptions,
+      intake: { job: pkg.jobDefaults },
+    })
+    const both = costOfOwnershipBoth(score, assumptions, pkg.jobDefaults)
+    for (const side of ['tradeIn', 'replacement']) {
+      const o = both[side]
+      const headerTotal = o.totalUsdPerYear
+      const rowSum =
+        o.energyUsdPerYear + o.maintUsdPerYear + o.depreciationUsdPerYear
+      assert.equal(
+        headerTotal,
+        rowSum,
+        `pair ${i} ${side}: Total per year ${headerTotal} != row sum ${rowSum}`,
+      )
+      assert.ok(
+        headerTotal > 0,
+        `pair ${i} ${side}: ownership header total must be positive`,
+      )
+    }
+    // Known electrical defaults (Argonne 10.1 / 6.1 maint)
+    if (i === 0) {
+      assert.equal(both.tradeIn.totalUsdPerYear, 12050)
+      assert.equal(both.replacement.totalUsdPerYear, 5713)
+    }
+    if (i === 1) {
+      assert.equal(both.tradeIn.totalUsdPerYear, 9991)
+      assert.equal(both.replacement.totalUsdPerYear, 5170)
+    }
+    console.log(
+      'OWNERSHIP_HEADER',
+      rows[i].model,
+      both.tradeIn.totalUsdPerYear,
+      both.replacement.totalUsdPerYear,
+    )
+  }
+})
+
 test('Duty fit group total equals sum of its parts; presentation points match score totals', () => {
   const score = scoreTradeInRow(rows[0], pairedUnits[0], {
     pkg,

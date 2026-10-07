@@ -21,7 +21,7 @@ import {
   formulaSourceLines,
 } from './tradeInScoreNotes'
 
-export const TRADE_IN_SCORE_BUILD = 'trade-in-score-20261007-h'
+export const TRADE_IN_SCORE_BUILD = 'trade-in-score-20261007-i'
 export {
   scrubSheetReasonImpl as scrubSheetReason,
   hasBrokenSheetPunctuation,
