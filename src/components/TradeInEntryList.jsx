@@ -1,3 +1,4 @@
+import { useMemo } from 'react'
 import {
   ADD_SOURCE_AND_DATE,
   CONDITION_OPTIONS,
@@ -11,12 +12,13 @@ import {
   parseTradeInDollar,
   rowNeedsSourceDate,
 } from '../lib/tradeInEntry'
+import { pairTradeInsToUnits } from '../lib/tradeInScore'
 import TradeInScoreBadge from './TradeInScoreBadge'
 
 /**
  * One typed trade-in row per current vehicle (fleet size 1 to 5).
  * No KBB figures are fetched or shown.
- * Each row shows a score vs its index-matched replacement (same engine as Current).
+ * Each row scores vs a same-body-type replacement (van with van, pickup with pickup).
  */
 export default function TradeInEntryList({
   rows,
@@ -30,6 +32,10 @@ export default function TradeInEntryList({
 }) {
   const list = Array.isArray(rows) ? rows : []
   const unitList = Array.isArray(units) ? units : []
+  const pairedUnits = useMemo(
+    () => pairTradeInsToUnits(list, unitList),
+    [list, unitList],
+  )
   const sourceNote = missingSourceDateNote(list)
   const linkProps = kbbLookupLinkProps()
 
@@ -83,7 +89,7 @@ export default function TradeInEntryList({
                   </p>
                   <TradeInScoreBadge
                     row={row}
-                    unit={unitList[index] || null}
+                    unit={pairedUnits[index] || null}
                     scoreCtx={scoreCtx}
                     job={job}
                     assumptions={

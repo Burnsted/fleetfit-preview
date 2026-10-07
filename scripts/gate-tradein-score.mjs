@@ -18,6 +18,8 @@ mkdirSync('/workspace/artifacts/tradein-score', { recursive: true })
 const BANNED = /\bBest\b|\bWorst\b|\bWorth it\b|\bSOH\b|\bBattery health\b/i
 const EM_DASH = /\u2014/
 const EN_DASH = /\u2013/
+const ARROW = /\u2192|\u27F6|->/
+const LE_GE = /\u2264|\u2265/
 const FORMSPREE = /formspree\.io/i
 
 function saveShot(pagePath, name) {
@@ -266,9 +268,29 @@ async function main() {
     await page.locator('.trade-in-entry').screenshot({ path: rowsPath })
     saveShot(rowsPath, `rows-${width}`)
 
-    await page.locator('.trade-in-score-badge').first().click()
-    await page.waitForSelector('.trade-in-score-sheet', { timeout: 5000 })
-    await page.waitForTimeout(500)
+    async function openSheetAt(badgeIndex) {
+      await page.locator('.trade-in-score-badge').nth(badgeIndex).click()
+      await page.waitForSelector('.trade-in-score-sheet', { timeout: 5000 })
+      await page.waitForTimeout(500)
+    }
+
+    async function assertSheetNotesClean(label) {
+      const notes = await page.evaluate(() =>
+        [...document.querySelectorAll('.trade-in-score-reason')]
+          .map((el) => el.textContent || '')
+          .join('\n'),
+      )
+      assert.ok(!EM_DASH.test(notes), `em dash in notes ${label}`)
+      assert.ok(!EN_DASH.test(notes), `en dash in notes ${label}`)
+      assert.ok(!ARROW.test(notes), `arrow in notes ${label}`)
+      assert.ok(!LE_GE.test(notes), `≤/≥ in notes ${label}`)
+      assert.ok(!/\(OSRM\)/i.test(notes), `OSRM in notes ${label}`)
+      assert.ok(!/\bratio\s+[\d.]+/i.test(notes), `ratio in notes ${label}`)
+      assert.ok(!/cars\.com/i.test(notes), `cars.com in notes ${label}`)
+      assert.ok(!/brochure/i.test(notes), `brochure in notes ${label}`)
+    }
+
+    await openSheetAt(0)
 
     // FAB must be hidden while sheet open
     const fabState = await page.evaluate(() => {
@@ -287,14 +309,17 @@ async function main() {
       `FAB must hide while sheet open at ${width}: ${JSON.stringify(fabState)}`,
     )
 
-    // Readable factors
+    // Readable factors + body-type pairing (Transit vs E-Transit, not Sierra seats)
     const sheetText = await page.locator('.trade-in-score-panel').innerText()
     assert.match(sheetText, /Duty fit/)
     assert.match(sheetText, /Fuel or energy cost|Age and miles|Not scored for this trade/)
     assert.match(sheetText, /Cost of ownership per year, Example/)
+    assert.match(sheetText, /E-Transit|Transit/)
+    assert.ok(!/5 seats/.test(sheetText), `Transit sheet must not show 5-seat Sierra cab at ${width}`)
     assert.ok(!EM_DASH.test(sheetText))
     assert.ok(!EN_DASH.test(sheetText))
     assert.ok(!BANNED.test(sheetText))
+    await assertSheetNotesClean(`sheet1-${width}`)
 
     const ownershipProx = await exampleNearDollars(
       page,
@@ -372,6 +397,28 @@ async function main() {
     await page.locator('.trade-in-score-close').click()
     await page.waitForTimeout(300)
     assert.equal(await page.locator('.trade-in-score-sheet').count(), 0)
+
+    // Second trade row sheet (Silverado vs Sierra) at 390
+    if (width === 390) {
+      await openSheetAt(1)
+      const sheet2Text = await page.locator('.trade-in-score-panel').innerText()
+      assert.match(sheet2Text, /Sierra|Silverado/)
+      assert.ok(!EM_DASH.test(sheet2Text) && !EN_DASH.test(sheet2Text))
+      await assertSheetNotesClean('sheet2-390')
+      const sheet2Path = join(OUT, `_tmp-sheet2-390.png`)
+      await page.locator('.trade-in-score-panel').screenshot({ path: sheet2Path })
+      saveShot(sheet2Path, 'sheet2-390')
+      await page.evaluate(() => {
+        const panel = document.querySelector('.trade-in-score-panel')
+        if (panel) panel.scrollTop = panel.scrollHeight
+      })
+      await page.waitForTimeout(300)
+      const sheet2Bottom = join(OUT, `_tmp-sheet2-bottom-390.png`)
+      await page.locator('.trade-in-score-panel').screenshot({ path: sheet2Bottom })
+      saveShot(sheet2Bottom, 'sheet2-bottom-390')
+      await page.locator('.trade-in-score-close').click()
+      await page.waitForTimeout(300)
+    }
 
     // FAB restored
     const fabBack = await page.evaluate(() => {

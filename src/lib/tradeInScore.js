@@ -14,10 +14,85 @@ import {
 import { RANGE_BUFFER, round1 } from '../data/scoreV2Rubric'
 import { scoreReplacementV2 } from './scoreV2'
 
-export const TRADE_IN_SCORE_BUILD = 'trade-in-score-20261007-b'
+export const TRADE_IN_SCORE_BUILD = 'trade-in-score-20261007-c'
 
 /** Duty-fit category keys grouped under one heading. */
 export const DUTY_FIT_KEYS = Object.freeze(['range', 'cab', 'tow'])
+
+/**
+ * Infer trade-in body type from year/make/model text.
+ * Van models: Transit, ProMaster, Sprinter, BrightDrop, EDV/RCV, etc.
+ * Everything else defaults to pickup (truck).
+ */
+export function inferTradeInBodyType(row) {
+  const text = `${row?.make || ''} ${row?.model || ''} ${row?.label || ''}`
+  if (
+    /transit|promaster|sprinter|bright\s*drop|e-?transit|\bedv\b|\brcv\b|nv200|metris|cargo\s*van/i.test(
+      text,
+    )
+  ) {
+    return 'van'
+  }
+  return 'truck'
+}
+
+export function unitBodyType(unit) {
+  if (!unit) return null
+  return unit.bodyType === 'van' ? 'van' : 'truck'
+}
+
+/**
+ * Pair each trade-in row to a unique replacement unit of the same body type.
+ * Consumes units in package order; does not reuse a unit across rows.
+ */
+export function pairTradeInsToUnits(rows, units) {
+  const list = Array.isArray(rows) ? rows : []
+  const pool = Array.isArray(units) ? [...units] : []
+  return list.map((row) => {
+    const want = inferTradeInBodyType(row)
+    const idx = pool.findIndex((u) => unitBodyType(u) === want)
+    if (idx < 0) return null
+    const [unit] = pool.splice(idx, 1)
+    return unit
+  })
+}
+
+/**
+ * Soften engine jargon for visible sheet notes.
+ * Math and sources stay in the formula / assumption panel only.
+ */
+export function scrubSheetReason(reason) {
+  if (reason == null) return ''
+  let s = String(reason)
+  s = s.replace(/\u2013|\u2014/g, '-')
+  s = s.replace(/\s*\(OSRM\)/gi, '')
+  s = s.replace(/\s*\(ratio\s+[\d.]+\)/gi, '')
+  s = s.replace(/\bratio\s+[\d.]+/gi, '')
+  s = s.replace(/\s*(?:\u2192|\u27F6|\u27A1|\u2794|->)\s*/g, ' ')
+  s = s.replace(/\u2264/g, 'up to ')
+  s = s.replace(/\u2265/g, 'at least ')
+  // Drop named source tags from row notes (formula view keeps engine detail)
+  s = s.replace(/\bcars\.com\b/gi, '')
+  s = s.replace(/\bFord\s+\d{4}\s+Transit\s+brochure\b/gi, '')
+  s = s.replace(/\broad\s+mi\b/gi, 'road miles')
+  s = s.replace(/\(\s*[;,]?\s*\)/g, '')
+  s = s.replace(/\s*;\s*;+/g, ';')
+  s = s.replace(/\s*\u00b7\s*\u00b7+/g, ' \u00b7 ')
+  s = s.replace(/\s{2,}/g, ' ')
+  s = s.replace(/\s+([.,;])/g, '$1')
+  s = s.replace(/^\s*[\u00b7;,\-]+\s*/, '')
+  s = s.replace(/\s*[\u00b7;,\-]+\s*$/, '')
+  return s.trim()
+}
+
+function scrubCellForSheet(cell) {
+  if (!cell) return cell
+  return {
+    ...cell,
+    reason: scrubSheetReason(cell.reason),
+    // Keep display numbers; scrub jargon only from reason notes
+  }
+}
 
 /** Plain Example default annual depreciation ($/yr). Not from a published source. */
 export const EXAMPLE_DEPRECIATION_USD_PER_YEAR = 2500
@@ -400,15 +475,15 @@ export function buildFactorPresentation(score) {
       notScored.push({
         key: row.key,
         label: FACTOR_LABELS[row.key] || row.label,
-        current: row.current,
-        candidate: row.candidate,
+        current: scrubCellForSheet(row.current),
+        candidate: scrubCellForSheet(row.candidate),
       })
     } else {
       dutyParts.push({
         key: row.key,
         label: FACTOR_LABELS[row.key] || row.label,
-        current: row.current,
-        candidate: row.candidate,
+        current: scrubCellForSheet(row.current),
+        candidate: scrubCellForSheet(row.candidate),
       })
     }
   }
@@ -454,16 +529,16 @@ export function buildFactorPresentation(score) {
       notScored.push({
         key: row.key,
         label: FACTOR_LABELS[row.key] || row.label,
-        current: row.current,
-        candidate: row.candidate,
+        current: scrubCellForSheet(row.current),
+        candidate: scrubCellForSheet(row.candidate),
       })
     } else {
       scoredSingles.push({
         key: row.key,
         label: FACTOR_LABELS[row.key] || row.label,
         kind: 'row',
-        current: row.current,
-        candidate: row.candidate,
+        current: scrubCellForSheet(row.current),
+        candidate: scrubCellForSheet(row.candidate),
       })
     }
   }
@@ -479,16 +554,16 @@ export function buildFactorPresentation(score) {
       notScored.push({
         key: row.key,
         label: FACTOR_LABELS[row.key] || row.label,
-        current: row.current,
-        candidate: row.candidate,
+        current: scrubCellForSheet(row.current),
+        candidate: scrubCellForSheet(row.candidate),
       })
     } else {
       scoredSingles.push({
         key: row.key,
         label: FACTOR_LABELS[row.key] || row.label,
         kind: 'row',
-        current: row.current,
-        candidate: row.candidate,
+        current: scrubCellForSheet(row.current),
+        candidate: scrubCellForSheet(row.candidate),
       })
     }
   }

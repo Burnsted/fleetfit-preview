@@ -12,10 +12,14 @@ import {
   costOfOwnershipBoth,
   costOfOwnershipForSide,
   defaultScoreAssumptions,
+  inferTradeInBodyType,
+  pairTradeInsToUnits,
   scoreTradeInRow,
+  scrubSheetReason,
   sumCountedCategoryPoints,
   sumPresentedCountedPoints,
   tradeInScoreBadgeCopy,
+  unitBodyType,
 } from '../src/lib/tradeInScore.js'
 
 let passed = 0
@@ -30,12 +34,32 @@ assert.ok(pkg, 'electrical package present')
 const composed = composeTradePackageSet(pkg, { intake: null, pkg }, 2)
 const rows = createExampleTradeInRows(2)
 const assumptions = defaultScoreAssumptions(pkg.jobDefaults)
+const activeUnits = composed.active.map((s) => s.unit)
+const pairedUnits = pairTradeInsToUnits(rows, activeUnits)
+
+test('every default trade row pairs to a same-body-type replacement', () => {
+  assert.equal(pairedUnits.length, rows.length)
+  for (let i = 0; i < rows.length; i += 1) {
+    const rowBody = inferTradeInBodyType(rows[i])
+    const unit = pairedUnits[i]
+    assert.ok(unit, `row ${i + 1} must pair to a unit`)
+    assert.equal(
+      unitBodyType(unit),
+      rowBody,
+      `row ${i + 1} ${rows[i].model} (${rowBody}) paired to ${unit.make} ${unit.model} (${unitBodyType(unit)})`,
+    )
+  }
+  assert.equal(inferTradeInBodyType(rows[0]), 'van')
+  assert.equal(inferTradeInBodyType(rows[1]), 'truck')
+  assert.equal(unitBodyType(pairedUnits[0]), 'van')
+  assert.equal(unitBodyType(pairedUnits[1]), 'truck')
+})
 
 test('category points sum equals currentTotal and candidateTotal for each trade-in row', () => {
   assert.equal(composed.active.length, 2)
   assert.equal(rows.length, 2)
   for (let i = 0; i < rows.length; i += 1) {
-    const score = scoreTradeInRow(rows[i], composed.active[i].unit, {
+    const score = scoreTradeInRow(rows[i], pairedUnits[i], {
       pkg,
       job: pkg.jobDefaults,
       assumptions,
@@ -69,7 +93,7 @@ test('category points sum equals currentTotal and candidateTotal for each trade-
 })
 
 test('badge copy uses same scale as engine pointsPossible (not a second scale)', () => {
-  const score = scoreTradeInRow(rows[0], composed.active[0].unit, {
+  const score = scoreTradeInRow(rows[0], pairedUnits[0], {
     pkg,
     job: pkg.jobDefaults,
     assumptions,
@@ -85,12 +109,12 @@ test('badge copy uses same scale as engine pointsPossible (not a second scale)',
 })
 
 test('editing an assumption changes the live score', () => {
-  const base = scoreTradeInRow(rows[0], composed.active[0].unit, {
+  const base = scoreTradeInRow(rows[0], pairedUnits[0], {
     pkg,
     job: pkg.jobDefaults,
     assumptions,
   })
-  const bumped = scoreTradeInRow(rows[0], composed.active[0].unit, {
+  const bumped = scoreTradeInRow(rows[0], pairedUnits[0], {
     pkg,
     job: pkg.jobDefaults,
     assumptions: { ...assumptions, rangeBuffer: 0.5 },
@@ -117,12 +141,12 @@ test('editing an assumption changes the live score', () => {
 })
 
 test('editing trade-in stats or gas price updates score live and keeps sum equals total', () => {
-  const base = scoreTradeInRow(rows[1], composed.active[1].unit, {
+  const base = scoreTradeInRow(rows[1], pairedUnits[1], {
     pkg,
     job: pkg.jobDefaults,
     assumptions,
   })
-  const gasBump = scoreTradeInRow(rows[1], composed.active[1].unit, {
+  const gasBump = scoreTradeInRow(rows[1], pairedUnits[1], {
     pkg,
     job: pkg.jobDefaults,
     assumptions: { ...assumptions, gasUsdPerGal: 6.5 },
@@ -143,7 +167,7 @@ test('editing trade-in stats or gas price updates score live and keeps sum equal
 
   const milesEdit = scoreTradeInRow(
     { ...rows[0], mileage: '120000' },
-    composed.active[0].unit,
+    pairedUnits[0],
     { pkg, job: pkg.jobDefaults, assumptions },
   )
   assert.ok(milesEdit)
@@ -159,7 +183,7 @@ test('editing trade-in stats or gas price updates score live and keeps sum equal
 })
 
 test('cost of ownership total equals energy + maintenance + depreciation', () => {
-  const score = scoreTradeInRow(rows[0], composed.active[0].unit, {
+  const score = scoreTradeInRow(rows[0], pairedUnits[0], {
     pkg,
     job: pkg.jobDefaults,
     assumptions,
@@ -188,7 +212,7 @@ test('cost of ownership total equals energy + maintenance + depreciation', () =>
 })
 
 test('Duty fit group total equals sum of its parts; presentation points match score totals', () => {
-  const score = scoreTradeInRow(rows[0], composed.active[0].unit, {
+  const score = scoreTradeInRow(rows[0], pairedUnits[0], {
     pkg,
     job: pkg.jobDefaults,
     assumptions,
@@ -229,6 +253,20 @@ test('Duty fit group total equals sum of its parts; presentation points match sc
     presentation.notScored.length > 0,
     'not-scored factors collapsed',
   )
+})
+
+test('visible sheet notes scrub OSRM, ratio, arrows, and ≤', () => {
+  const raw =
+    'Linus Buick GMC, 2.5 road mi from 32960 (OSRM) · EV-certified estimate → 7.0 (ratio 3.20) · ≤150k mi · cars.com · Ford 2018 Transit brochure'
+  const scrubbed = scrubSheetReason(raw)
+  assert.ok(!/\(OSRM\)/i.test(scrubbed))
+  assert.ok(!/ratio/i.test(scrubbed))
+  assert.ok(!/[→⟶]|->/.test(scrubbed))
+  assert.ok(!/[≤≥]/.test(scrubbed))
+  assert.ok(!/cars\.com/i.test(scrubbed))
+  assert.ok(!/brochure/i.test(scrubbed))
+  assert.match(scrubbed, /road miles/)
+  assert.match(scrubbed, /up to 150k/)
 })
 
 console.log(`All ${passed} trade-in score sum tests passed.`)
