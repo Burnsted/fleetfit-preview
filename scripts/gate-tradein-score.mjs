@@ -1,5 +1,5 @@
 /**
- * Publish gates for draft-tradein-score.
+ * Publish gates for draft-tradein-score (Steve FAIL fixes).
  * Formspree mock BEFORE first page load. Report real request count (must be 0).
  */
 import { chromium } from 'playwright'
@@ -9,8 +9,9 @@ import { join } from 'node:path'
 
 const BASE =
   process.env.GATE_BASE ||
-  'http://127.0.0.1:4173/fleetfit-preview/draft-tradein-score/'
+  'http://127.0.0.1:4174/fleetfit-preview/draft-tradein-score/'
 const OUT = process.env.GATE_OUT || '/opt/cursor/artifacts'
+const QA_OUT = process.env.GATE_QA_OUT || null
 mkdirSync(OUT, { recursive: true })
 mkdirSync('/workspace/artifacts/tradein-score', { recursive: true })
 
@@ -18,6 +19,18 @@ const BANNED = /\bBest\b|\bWorst\b|\bWorth it\b|\bSOH\b|\bBattery health\b/i
 const EM_DASH = /\u2014/
 const EN_DASH = /\u2013/
 const FORMSPREE = /formspree\.io/i
+
+function saveShot(pagePath, name) {
+  const dests = [
+    join(OUT, `tradein-score-${name}.png`),
+    join('/workspace/artifacts/tradein-score', `${name}.png`),
+  ]
+  if (QA_OUT) {
+    mkdirSync(QA_OUT, { recursive: true })
+    dests.push(join(QA_OUT, `${name}.png`))
+  }
+  for (const d of dests) copyFileSync(pagePath, d)
+}
 
 async function collectVisibleText(page) {
   return page.evaluate(() => {
@@ -58,11 +71,11 @@ async function exampleNearDollars(page, rootSelector = null) {
       if (!t.trim()) continue
       const el = node.parentElement
       if (!el) continue
-      // Score factor reasons cite AAA/EIA prices; Example tags apply to editable
-      // trade-in and assumption inputs, not every sourced reason string.
       if (el.closest('.trade-in-score-reason, .score-v2-reason')) continue
       const st = getComputedStyle(el)
-      if (st.display === 'none' || st.visibility === 'hidden' || st.opacity === '0') continue
+      if (st.display === 'none' || st.visibility === 'hidden' || st.opacity === '0') {
+        continue
+      }
       const r = el.getBoundingClientRect()
       if (r.width < 1 || r.height < 1) continue
       const cx = r.left + r.width / 2
@@ -70,14 +83,16 @@ async function exampleNearDollars(page, rootSelector = null) {
       if (dollarRe.test(t) || t.trim() === '$') {
         dollars.push({ text: t.trim().slice(0, 80), cx, cy })
       }
-      if (/\bExample\b/i.test(t)) examples.push({ text: t.trim().slice(0, 80), cx, cy })
+      if (/\bExample\b/i.test(t)) {
+        examples.push({ text: t.trim().slice(0, 80), cx, cy })
+      }
     }
     for (const input of root.querySelectorAll('input')) {
       const v = String(input.value || '')
       const isTradeVal = input.closest('.trade-in-entry-value-field')
       const isAssumption =
         input.closest('.trade-in-score-assumption') &&
-        /gas|diesel|FL regular|FL diesel/i.test(
+        /gas|diesel|FL regular|FL diesel|Depreciation/i.test(
           input.closest('label')?.textContent || '',
         )
       if (!dollarRe.test(v) && !(isTradeVal && /^\d+(\.\d+)?$/.test(v.trim()))) {
@@ -98,64 +113,87 @@ async function exampleNearDollars(page, rootSelector = null) {
         const dist = Math.hypot(d.cx - e.cx, d.cy - e.cy)
         if (dist < best) best = dist
       }
-      if (best > 150) misses.push({ dollar: d.text, nearestExamplePx: Math.round(best) })
+      if (best > 150) {
+        misses.push({ dollar: d.text, nearestExamplePx: Math.round(best) })
+      }
     }
     return {
       dollarCount: dollars.length,
       exampleCount: examples.length,
       misses,
       scope: sel || 'body',
-      rootClass: root.className || '',
     }
   }, rootSelector)
+}
+
+async function installConsentFixture(page, { visible = true, height = 72 } = {}) {
+  await page.evaluate(
+    ({ visible, height }) => {
+      document.getElementById('ff-consent-fixture')?.remove()
+      document.getElementById('ff-fab-fixture')?.remove()
+      if (!visible) {
+        document.documentElement.style.setProperty('--consent-clearance', '0px')
+        return
+      }
+      const bar = document.createElement('div')
+      bar.id = 'ff-consent-fixture'
+      bar.setAttribute('data-consent-bar', '1')
+      bar.style.cssText = `position:fixed;left:0;right:0;bottom:0;height:${height}px;z-index:90;background:#111;color:#fff;display:flex;align-items:center;justify-content:center;`
+      bar.textContent = `Cookie consent (${height}px)`
+      document.body.appendChild(bar)
+      document.documentElement.style.setProperty(
+        '--consent-clearance',
+        `${height + 8}px`,
+      )
+      const fab = document.createElement('button')
+      fab.id = 'ff-fab-fixture'
+      fab.className = 'fbw-fab'
+      fab.setAttribute('data-feedback-fab', '1')
+      fab.style.cssText =
+        'position:fixed;right:14px;bottom:90px;width:52px;height:52px;z-index:95;border:0;border-radius:50%;background:#0b1220;color:#fff;'
+      fab.textContent = 'FB'
+      document.body.appendChild(fab)
+    },
+    { visible, height },
+  )
 }
 
 async function sheetClearance(page) {
   return page.evaluate(() => {
     const panel = document.querySelector('.trade-in-score-panel')
-    const fab = document.querySelector('.fbw-fab, [data-feedback-fab], .feedback-fab')
+    const fab = document.querySelector(
+      '.fbw-fab:not([data-trade-in-score-hidden]), [data-feedback-fab]:not([data-trade-in-score-hidden])',
+    )
     const consent = document.querySelector('[data-consent-bar]')
     if (!panel) return { ok: false, reason: 'no panel' }
-    const pr = panel.getBoundingClientRect()
+    const totals = panel.querySelector('.trade-in-score-table-totals')
+    const closeBtn = panel.querySelector('.trade-in-score-close')
+    const contentEnd = totals
+      ? totals.getBoundingClientRect().bottom
+      : panel.getBoundingClientRect().bottom -
+        (parseFloat(getComputedStyle(panel).paddingBottom) || 0)
     const fabRect = fab?.getBoundingClientRect()
     const consentRect = consent?.getBoundingClientRect()
-    const panelBottomContent = (() => {
-      const last = panel.querySelector('tfoot, .trade-in-score-table, .trade-in-score-formula')
-      return last ? last.getBoundingClientRect().bottom : pr.bottom
-    })()
-    const blockers = []
-    if (fabRect && panelBottomContent > fabRect.top + 2) {
-      // Panel may extend under FAB visually but scrollable content padding must clear.
-      // Check that the panel's padding-bottom places scrollable end above FAB when scrolled to end.
-    }
-    const style = getComputedStyle(panel)
-    const padBottom = parseFloat(style.paddingBottom) || 0
-    const scrollEnd = panel.scrollHeight - padBottom
-    // Convert scrollEnd to viewport: when scrolled to max, content at scrollEnd sits at
-    // panel.top + (scrollEnd - scrollTop) ≈ panel.bottom - padBottom
-    const contentEndAtMaxScroll = pr.bottom - padBottom
-    const fabTop = fabRect ? fabRect.top : Infinity
+    const fabHidden =
+      !fab ||
+      getComputedStyle(fab).display === 'none' ||
+      fab.hasAttribute('data-trade-in-score-hidden')
     const consentTop = consentRect ? consentRect.top : Infinity
-    const fixedTop = Math.min(fabTop, consentTop)
-    const gap = Number.isFinite(fixedTop)
-      ? Math.round(fixedTop - contentEndAtMaxScroll)
+    const gapConsent = Number.isFinite(consentTop)
+      ? Math.round(consentTop - contentEnd)
       : null
-    const closeBtn = panel.querySelector('.trade-in-score-close')
     const closeRect = closeBtn?.getBoundingClientRect()
     return {
-      ok: gap == null || gap >= 0,
-      gap,
-      padBottom: Math.round(padBottom),
-      contentEndAtMaxScroll: Math.round(contentEndAtMaxScroll),
-      fabTop: fabRect ? Math.round(fabRect.top) : null,
+      ok: fabHidden && (gapConsent == null || gapConsent >= 8),
+      fabHidden,
+      gapConsent,
+      contentEnd: Math.round(contentEnd),
       consentTop: consentRect ? Math.round(consentRect.top) : null,
+      fabTop: fabRect ? Math.round(fabRect.top) : null,
       closeVisible: closeRect
         ? closeRect.top >= 0 && closeRect.bottom <= window.innerHeight
         : false,
-      panelInView: pr.top < window.innerHeight && pr.bottom > 0,
-      scrollHeight: panel.scrollHeight,
-      clientHeight: panel.clientHeight,
-      blockers,
+      pad: panel.getAttribute('data-sheet-bottom-pad'),
     }
   })
 }
@@ -194,50 +232,24 @@ async function main() {
       timeout: 60000,
     })
     await page.waitForTimeout(1200)
-    // Fixture consent bar + FAB so sheet clearance is measurable at 390
-    await page.evaluate(() => {
-      document.getElementById('ff-consent-fixture')?.remove()
-      document.getElementById('ff-fab-fixture')?.remove()
-      const bar = document.createElement('div')
-      bar.id = 'ff-consent-fixture'
-      bar.setAttribute('data-consent-bar', '1')
-      bar.style.cssText =
-        'position:fixed;left:0;right:0;bottom:0;height:72px;z-index:90;background:#111;color:#fff;display:flex;align-items:center;justify-content:center;'
-      bar.textContent = 'Cookie consent (72px)'
-      document.body.appendChild(bar)
-      document.documentElement.style.setProperty('--consent-clearance', '72px')
-      const fab = document.createElement('button')
-      fab.id = 'ff-fab-fixture'
-      fab.className = 'fbw-fab'
-      fab.setAttribute('data-feedback-fab', '1')
-      fab.style.cssText =
-        'position:fixed;right:14px;bottom:90px;width:52px;height:52px;z-index:95;border:0;border-radius:50%;background:#0b1220;color:#fff;'
-      fab.textContent = 'FB'
-      document.body.appendChild(fab)
-    })
+    await installConsentFixture(page, { visible: true, height: 72 })
     return page
   }
 
   for (const width of [390, 1440]) {
     const page = await openFresh(width)
-
-    // Ensure badges present
     await page.waitForSelector('.trade-in-score-badge', { timeout: 10000 })
     const badgeCount = await page.locator('.trade-in-score-badge').count()
-    assert.equal(badgeCount, 2, `expected 2 trade-in score badges at ${width}`)
+    assert.equal(badgeCount, 2, `expected 2 badges at ${width}`)
 
     const text = await collectVisibleText(page)
     assert.ok(!EM_DASH.test(text), `em dash at ${width}`)
     assert.ok(!EN_DASH.test(text), `en dash at ${width}`)
-    assert.ok(!BANNED.test(text), `banned hype at ${width}: ${text.match(BANNED)?.[0]}`)
+    assert.ok(!BANNED.test(text), `banned hype at ${width}`)
 
     const prox = await exampleNearDollars(page)
     console.log('EXAMPLE_PROX', width, JSON.stringify(prox, null, 2))
-    assert.equal(
-      prox.misses.length,
-      0,
-      `Example not within 150px of dollars at ${width}: ${JSON.stringify(prox.misses)}`,
-    )
+    assert.equal(prox.misses.length, 0, `Example not near $ at ${width}: ${JSON.stringify(prox.misses)}`)
 
     const scroll = await page.evaluate(() => ({
       scrollWidth: document.documentElement.scrollWidth,
@@ -245,66 +257,101 @@ async function main() {
     }))
     console.log('OVERFLOW', width, scroll)
     if (width === 390) {
-      assert.equal(scroll.scrollWidth, 390, `390 scrollWidth must be 390`)
+      assert.equal(scroll.scrollWidth, 390, '390 scrollWidth must be 390')
     }
 
-    // Screenshot trade rows with scores
     await page.locator('.trade-in-entry').scrollIntoViewIfNeeded()
     await page.waitForTimeout(300)
-    const rowsShot = join(OUT, `tradein-score-rows-${width}.png`)
-    await page.locator('.trade-in-entry').screenshot({ path: rowsShot })
-    copyFileSync(rowsShot, join('/workspace/artifacts/tradein-score', `rows-${width}.png`))
+    const rowsPath = join(OUT, `_tmp-rows-${width}.png`)
+    await page.locator('.trade-in-entry').screenshot({ path: rowsPath })
+    saveShot(rowsPath, `rows-${width}`)
 
-    // Open breakdown sheet
     await page.locator('.trade-in-score-badge').first().click()
     await page.waitForSelector('.trade-in-score-sheet', { timeout: 5000 })
-    await page.waitForTimeout(400)
+    await page.waitForTimeout(500)
 
-    // Close must stay usable with sticky head (check before scrolling body)
-    const closeAtTop = await page.evaluate(() => {
-      const closeBtn = document.querySelector('.trade-in-score-close')
-      const r = closeBtn?.getBoundingClientRect()
-      return r
-        ? r.top >= 0 && r.bottom <= window.innerHeight && r.width > 0
-        : false
+    // FAB must be hidden while sheet open
+    const fabState = await page.evaluate(() => {
+      const fabs = [
+        ...document.querySelectorAll(
+          '.fbw-fab, [data-feedback-fab], .feedback-fab',
+        ),
+      ]
+      return fabs.map((el) => ({
+        hidden: el.hasAttribute('data-trade-in-score-hidden'),
+        display: getComputedStyle(el).display,
+      }))
     })
-    assert.ok(closeAtTop, `close button must be usable at top at ${width}`)
+    assert.ok(
+      fabState.every((f) => f.hidden || f.display === 'none'),
+      `FAB must hide while sheet open at ${width}: ${JSON.stringify(fabState)}`,
+    )
 
-    // Scroll panel to end then check clearance vs FAB/consent
+    // Readable factors
+    const sheetText = await page.locator('.trade-in-score-panel').innerText()
+    assert.match(sheetText, /Duty fit/)
+    assert.match(sheetText, /Fuel or energy cost|Age and miles|Not scored for this trade/)
+    assert.match(sheetText, /Cost of ownership per year, Example/)
+    assert.ok(!EM_DASH.test(sheetText))
+    assert.ok(!EN_DASH.test(sheetText))
+    assert.ok(!BANNED.test(sheetText))
+
+    const ownershipProx = await exampleNearDollars(
+      page,
+      '.trade-in-score-ownership',
+    )
+    console.log('OWNERSHIP_PROX', width, JSON.stringify(ownershipProx, null, 2))
+    assert.equal(
+      ownershipProx.misses.length,
+      0,
+      `ownership Example not near $ at ${width}: ${JSON.stringify(ownershipProx.misses)}`,
+    )
+
+    const sheetPath = join(OUT, `_tmp-sheet-${width}.png`)
+    await page.locator('.trade-in-score-panel').screenshot({ path: sheetPath })
+    saveShot(sheetPath, `sheet-${width}`)
+
+    // Scroll to bottom of open sheet; confirm clear of consent (FAB hidden)
+    await page.evaluate(() => {
+      const panel = document.querySelector('.trade-in-score-panel')
+      if (panel) panel.scrollTop = panel.scrollHeight
+    })
+    await page.waitForTimeout(400)
+    const clearShown = await sheetClearance(page)
+    console.log('SHEET_CLEARANCE_CONSENT_SHOWN', width, clearShown)
+    assert.ok(clearShown.fabHidden, `FAB hidden at sheet bottom ${width}`)
+    assert.ok(
+      clearShown.gapConsent == null || clearShown.gapConsent >= 8,
+      `content under consent at ${width}: gap=${clearShown.gapConsent}`,
+    )
+    assert.ok(clearShown.closeVisible, `Close usable at ${width}`)
+
+    if (width === 390) {
+      const bottomPath = join(OUT, `_tmp-sheet-bottom-390.png`)
+      await page.locator('.trade-in-score-panel').screenshot({ path: bottomPath })
+      saveShot(bottomPath, 'sheet-bottom-390')
+    }
+
+    // Consent dismissed: pad still clears (no bar)
+    await installConsentFixture(page, { visible: false })
+    await page.waitForTimeout(300)
     await page.evaluate(() => {
       const panel = document.querySelector('.trade-in-score-panel')
       if (panel) panel.scrollTop = panel.scrollHeight
     })
     await page.waitForTimeout(300)
-    const closeAtEnd = await page.evaluate(() => {
-      const closeBtn = document.querySelector('.trade-in-score-close')
-      const r = closeBtn?.getBoundingClientRect()
-      return r
-        ? r.top >= 0 && r.bottom <= window.innerHeight && r.width > 0
-        : false
-    })
-    assert.ok(closeAtEnd, `close button must stay usable after scroll at ${width}`)
-    const clear = await sheetClearance(page)
-    console.log('SHEET_CLEARANCE', width, clear)
-    assert.ok(clear.panelInView, `panel must be in view at ${width}`)
+    const clearDismissed = await sheetClearance(page)
+    console.log('SHEET_CLEARANCE_CONSENT_DISMISSED', width, clearDismissed)
+    assert.ok(clearDismissed.fabHidden, `FAB still hidden after dismiss at ${width}`)
+    assert.ok(clearDismissed.closeVisible, `Close usable after dismiss at ${width}`)
 
-    const sheetShot = join(OUT, `tradein-score-sheet-${width}.png`)
-    await page.locator('.trade-in-score-panel').screenshot({ path: sheetShot })
-    copyFileSync(
-      sheetShot,
-      join('/workspace/artifacts/tradein-score', `sheet-${width}.png`),
-    )
+    // Restore consent for formula shots
+    await installConsentFixture(page, { visible: true, height: 72 })
+    await page.waitForTimeout(200)
 
-    // Formula view
-    await page.locator('.trade-in-score-formula-toggle').click()
+    await page.locator('.trade-in-score-formula-toggle', { hasText: /Show formula$/ }).click()
     await page.waitForSelector('.trade-in-score-formula', { timeout: 3000 })
     await page.waitForTimeout(300)
-    const formulaText = await page.locator('.trade-in-score-formula').innerText()
-    assert.match(formulaText, /Example default/i)
-    assert.ok(!EM_DASH.test(formulaText))
-    assert.ok(!EN_DASH.test(formulaText))
-    assert.ok(!BANNED.test(formulaText))
-
     const formulaProx = await exampleNearDollars(page, '.trade-in-score-formula')
     console.log('FORMULA_PROX', width, JSON.stringify(formulaProx, null, 2))
     assert.equal(
@@ -312,23 +359,41 @@ async function main() {
       0,
       `Example not near $ in formula at ${width}: ${JSON.stringify(formulaProx.misses)}`,
     )
+    const formulaText = await page.locator('.trade-in-score-formula').innerText()
+    assert.match(formulaText, /Depreciation per year/)
+    assert.match(formulaText, /Example/)
 
-    if (width === 390 || width === 1440) {
-      const formulaShot = join(OUT, `tradein-score-formula-${width}.png`)
-      await page.locator('.trade-in-score-panel').screenshot({ path: formulaShot })
-      copyFileSync(
-        formulaShot,
-        join('/workspace/artifacts/tradein-score', `formula-${width}.png`),
-      )
+    if (width === 390) {
+      const formulaPath = join(OUT, `_tmp-formula-390.png`)
+      await page.locator('.trade-in-score-panel').screenshot({ path: formulaPath })
+      saveShot(formulaPath, 'formula-390')
     }
 
-    // Close cleanly
     await page.locator('.trade-in-score-close').click()
     await page.waitForTimeout(300)
-    const stillOpen = await page.locator('.trade-in-score-sheet').count()
-    assert.equal(stillOpen, 0, `sheet must close at ${width}`)
+    assert.equal(await page.locator('.trade-in-score-sheet').count(), 0)
 
-    results.widths[width] = { badgeCount, prox, scroll, clear, formulaProx }
+    // FAB restored
+    const fabBack = await page.evaluate(() => {
+      const fab = document.querySelector('.fbw-fab, [data-feedback-fab]')
+      if (!fab) return { ok: true, note: 'no fab' }
+      return {
+        ok:
+          !fab.hasAttribute('data-trade-in-score-hidden') &&
+          getComputedStyle(fab).display !== 'none',
+      }
+    })
+    assert.ok(fabBack.ok, `FAB must restore on close at ${width}`)
+
+    results.widths[width] = {
+      badgeCount,
+      prox,
+      scroll,
+      ownershipProx,
+      clearShown,
+      clearDismissed,
+      formulaProx,
+    }
     await page.close()
   }
 

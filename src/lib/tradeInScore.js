@@ -7,10 +7,33 @@ import {
   FL_DIESEL_AAA,
   FL_GAS_REGULAR_AAA,
 } from '../data/flEnergyPrices'
+import {
+  ARGONNE_VAN_MAINT_CPM,
+  MAINT_CLASS_AAA,
+} from '../data/baselineVehicles'
 import { RANGE_BUFFER, round1 } from '../data/scoreV2Rubric'
 import { scoreReplacementV2 } from './scoreV2'
 
-export const TRADE_IN_SCORE_BUILD = 'trade-in-score-20261007'
+export const TRADE_IN_SCORE_BUILD = 'trade-in-score-20261007-b'
+
+/** Duty-fit category keys grouped under one heading. */
+export const DUTY_FIT_KEYS = Object.freeze(['range', 'cab', 'tow'])
+
+/** Plain Example default annual depreciation ($/yr). Not from a published source. */
+export const EXAMPLE_DEPRECIATION_USD_PER_YEAR = 2500
+
+const FACTOR_LABELS = Object.freeze({
+  range: 'Range fit',
+  payload: 'Payload and cargo',
+  cab: 'Cab and crew',
+  tow: 'Tow fit',
+  resale: 'Resale 3-yr',
+  reliability: 'Reliability',
+  service: 'Service network',
+  longevity: 'Age and miles',
+  energy: 'Fuel or energy cost',
+  maintenance: 'Maintenance cost, rises with age and miles',
+})
 
 /** Example-default assumption fields derived from the existing scoring engine. */
 export function defaultScoreAssumptions(job = null) {
@@ -24,6 +47,12 @@ export function defaultScoreAssumptions(job = null) {
     dieselUsdPerGal: FL_DIESEL_AAA?.value ?? null,
     electricityCentsPerKwh: FL_COMMERCIAL_ELECTRICITY?.value ?? null,
     dailyMiles: dailyFromJob,
+    depreciationUsdPerYear: EXAMPLE_DEPRECIATION_USD_PER_YEAR,
+    /** Optional overrides for ownership dollars when engine side lacks ¢/mi. */
+    energyUsdPerYearTradeIn: null,
+    energyUsdPerYearReplacement: null,
+    maintUsdPerYearTradeIn: null,
+    maintUsdPerYearReplacement: null,
   }
 }
 
@@ -109,6 +138,21 @@ export function assumptionFieldMeta(assumptions, job = null) {
         assumptions?.electricityCentsPerKwh ?? defaults.electricityCentsPerKwh,
       exampleDefault: defaults.electricityCentsPerKwh,
     },
+    {
+      key: 'depreciationUsdPerYear',
+      label: 'Depreciation per year',
+      unit: '$/yr',
+      step: '50',
+      formula:
+        'cost of ownership per year = fuel or energy + maintenance + depreciation',
+      sourced: false,
+      sourceNote: 'Example default; not from a published source',
+      value:
+        assumptions?.depreciationUsdPerYear ??
+        defaults.depreciationUsdPerYear,
+      exampleDefault: defaults.depreciationUsdPerYear,
+      isDollar: true,
+    },
   ]
 }
 
@@ -123,10 +167,7 @@ export function intakeFromTradeInRow(row, baseIntake = null, job = null) {
   const year = yearRaw ? Number(yearRaw) : null
   const miles = milesRaw ? Number(String(milesRaw).replace(/,/g, '')) : null
   const hasVehicle =
-    year != null &&
-    Number.isFinite(year) &&
-    make &&
-    model
+    year != null && Number.isFinite(year) && make && model
   const mergedJob = {
     ...(base.job && typeof base.job === 'object' ? base.job : {}),
     ...(job && typeof job === 'object' ? job : {}),
@@ -211,4 +252,289 @@ export function tradeInScoreBadgeCopy(score) {
     pointsPossible: pp,
     difference: diff,
   }
+}
+
+function cellNotScored(cell) {
+  if (!cell) return true
+  if (cell.counted) return false
+  const d = String(cell.display || cell.status || '')
+  return /not scored|not used|not entered/i.test(d) || cell.points == null
+}
+
+/** Parse ¢/mi from an energy or maintenance reason string. */
+export function parseCentsPerMile(reason) {
+  if (!reason) return null
+  const m = String(reason).match(/(\d+(?:\.\d+)?)\s*¢\s*per\s*mi/i)
+  if (!m) return null
+  const n = Number(m[1])
+  return Number.isFinite(n) ? n : null
+}
+
+function annualMilesFromAssumptions(assumptions, job) {
+  const daily =
+    assumptions?.dailyMiles != null && Number.isFinite(assumptions.dailyMiles)
+      ? Number(assumptions.dailyMiles)
+      : job?.dailyMiles != null && Number.isFinite(Number(job.dailyMiles))
+        ? Number(job.dailyMiles)
+        : 80
+  return daily * 365
+}
+
+function usdFromCpm(cpm, annualMiles) {
+  if (cpm == null || !Number.isFinite(cpm)) return null
+  return Math.round((cpm / 100) * annualMiles)
+}
+
+/** Example fallback maint ¢/mi when a side is not scored (AAA half-ton class). */
+function exampleMaintCpm() {
+  return MAINT_CLASS_AAA?.['half-ton']?.cpm ?? ARGONNE_VAN_MAINT_CPM?.cpm ?? 12
+}
+
+/**
+ * Cost of ownership per year for one side.
+ * total = energy + maintenance + depreciation (all Example-labeled dollars).
+ * OUT of the points table; does not affect score sums.
+ */
+export function costOfOwnershipForSide(score, side, assumptions = null, job = null) {
+  const defaults = defaultScoreAssumptions(job)
+  const a = { ...defaults, ...(assumptions || {}) }
+  const annualMiles = annualMilesFromAssumptions(a, job)
+  const key = side === 'candidate' || side === 'replacement' ? 'candidate' : 'current'
+  const cats = score?.categories || []
+  const energyRow = cats.find((c) => c.key === 'energy')
+  const maintRow = cats.find((c) => c.key === 'maintenance')
+  const energyCell = energyRow?.[key]
+  const maintCell = maintRow?.[key]
+
+  const overrideEnergy =
+    key === 'current' ? a.energyUsdPerYearTradeIn : a.energyUsdPerYearReplacement
+  const overrideMaint =
+    key === 'current' ? a.maintUsdPerYearTradeIn : a.maintUsdPerYearReplacement
+
+  let energyUsd = null
+  let energyFromEngine = false
+  if (overrideEnergy != null && Number.isFinite(Number(overrideEnergy))) {
+    energyUsd = Math.round(Number(overrideEnergy))
+  } else {
+    const cpm = parseCentsPerMile(energyCell?.reason)
+    if (cpm != null && energyCell?.counted) {
+      energyUsd = usdFromCpm(cpm, annualMiles)
+      energyFromEngine = true
+    } else {
+      // Example default: gas at FL regular × 15 mpg placeholder when not scored
+      const gas = a.gasUsdPerGal ?? FL_GAS_REGULAR_AAA?.value ?? 4
+      const exampleCpm = (100 * gas) / 15
+      energyUsd = usdFromCpm(exampleCpm, annualMiles)
+      energyFromEngine = false
+    }
+  }
+
+  let maintUsd = null
+  let maintFromEngine = false
+  if (overrideMaint != null && Number.isFinite(Number(overrideMaint))) {
+    maintUsd = Math.round(Number(overrideMaint))
+  } else {
+    const cpm = parseCentsPerMile(maintCell?.reason)
+    if (cpm != null && maintCell?.counted) {
+      maintUsd = usdFromCpm(cpm, annualMiles)
+      maintFromEngine = true
+    } else {
+      maintUsd = usdFromCpm(exampleMaintCpm(), annualMiles)
+      maintFromEngine = false
+    }
+  }
+
+  const depreciationUsd = Math.round(
+    Number(a.depreciationUsdPerYear ?? EXAMPLE_DEPRECIATION_USD_PER_YEAR) || 0,
+  )
+  const energy = Math.round(Number(energyUsd) || 0)
+  const maintenance = Math.round(Number(maintUsd) || 0)
+  const total = energy + maintenance + depreciationUsd
+
+  return {
+    energyUsdPerYear: energy,
+    maintUsdPerYear: maintenance,
+    depreciationUsdPerYear: depreciationUsd,
+    totalUsdPerYear: total,
+    energyFromEngine,
+    maintFromEngine,
+    annualMiles,
+    formula:
+      'cost of ownership per year = fuel or energy + maintenance + depreciation',
+  }
+}
+
+export function costOfOwnershipBoth(score, assumptions = null, job = null) {
+  return {
+    tradeIn: costOfOwnershipForSide(score, 'current', assumptions, job),
+    replacement: costOfOwnershipForSide(score, 'candidate', assumptions, job),
+  }
+}
+
+export function formatUsd(n) {
+  const v = Math.round(Number(n) || 0)
+  return `$${v.toLocaleString('en-US')}`
+}
+
+/**
+ * Build readable factor rows for the sheet:
+ * - Duty fit group (range + cab + tow counted parts)
+ * - Renamed scored factors
+ * - Collapsed not-scored into one muted bucket
+ */
+export function buildFactorPresentation(score) {
+  const cats = Array.isArray(score?.categories) ? score.categories : []
+  const byKey = Object.fromEntries(cats.map((c) => [c.key, c]))
+
+  const notScored = []
+  const scoredSingles = []
+  const dutyParts = []
+
+  for (const key of DUTY_FIT_KEYS) {
+    const row = byKey[key]
+    if (!row) continue
+    const curNs = cellNotScored(row.current)
+    const candNs = cellNotScored(row.candidate)
+    // Pair rule: if either not counted, both drop; treat as not scored for display
+    if (curNs && candNs) {
+      notScored.push({
+        key: row.key,
+        label: FACTOR_LABELS[row.key] || row.label,
+        current: row.current,
+        candidate: row.candidate,
+      })
+    } else {
+      dutyParts.push({
+        key: row.key,
+        label: FACTOR_LABELS[row.key] || row.label,
+        current: row.current,
+        candidate: row.candidate,
+      })
+    }
+  }
+
+  const dutyFit =
+    dutyParts.length > 0
+      ? {
+          key: 'duty-fit',
+          label: 'Duty fit',
+          kind: 'group',
+          parts: dutyParts,
+          currentPoints: round1(
+            dutyParts.reduce(
+              (s, p) => s + (p.current.counted ? Number(p.current.points) || 0 : 0),
+              0,
+            ),
+          ),
+          candidatePoints: round1(
+            dutyParts.reduce(
+              (s, p) =>
+                s + (p.candidate.counted ? Number(p.candidate.points) || 0 : 0),
+              0,
+            ),
+          ),
+        }
+      : null
+
+  const orderedSingles = [
+    'energy',
+    'maintenance',
+    'longevity',
+    'payload',
+    'resale',
+    'reliability',
+    'service',
+  ]
+  for (const key of orderedSingles) {
+    const row = byKey[key]
+    if (!row) continue
+    const curNs = cellNotScored(row.current)
+    const candNs = cellNotScored(row.candidate)
+    if (curNs && candNs) {
+      notScored.push({
+        key: row.key,
+        label: FACTOR_LABELS[row.key] || row.label,
+        current: row.current,
+        candidate: row.candidate,
+      })
+    } else {
+      scoredSingles.push({
+        key: row.key,
+        label: FACTOR_LABELS[row.key] || row.label,
+        kind: 'row',
+        current: row.current,
+        candidate: row.candidate,
+      })
+    }
+  }
+
+  // Any leftover keys
+  for (const row of cats) {
+    if (DUTY_FIT_KEYS.includes(row.key) || orderedSingles.includes(row.key)) {
+      continue
+    }
+    const curNs = cellNotScored(row.current)
+    const candNs = cellNotScored(row.candidate)
+    if (curNs && candNs) {
+      notScored.push({
+        key: row.key,
+        label: FACTOR_LABELS[row.key] || row.label,
+        current: row.current,
+        candidate: row.candidate,
+      })
+    } else {
+      scoredSingles.push({
+        key: row.key,
+        label: FACTOR_LABELS[row.key] || row.label,
+        kind: 'row',
+        current: row.current,
+        candidate: row.candidate,
+      })
+    }
+  }
+
+  const rows = []
+  if (dutyFit) rows.push(dutyFit)
+  rows.push(...scoredSingles)
+
+  // Assert duty group total equals sum of parts (caller also tests)
+  if (dutyFit) {
+    const partCur = round1(
+      dutyFit.parts.reduce(
+        (s, p) => s + (p.current.counted ? Number(p.current.points) || 0 : 0),
+        0,
+      ),
+    )
+    const partCand = round1(
+      dutyFit.parts.reduce(
+        (s, p) => s + (p.candidate.counted ? Number(p.candidate.points) || 0 : 0),
+        0,
+      ),
+    )
+    dutyFit.currentPoints = partCur
+    dutyFit.candidatePoints = partCand
+  }
+
+  return {
+    rows,
+    notScored,
+    factorLabels: FACTOR_LABELS,
+  }
+}
+
+/** Points shown in factor table (excludes ownership). Must still sum to score totals. */
+export function sumPresentedCountedPoints(presentation, side) {
+  const key = side === 'candidate' ? 'candidate' : 'current'
+  let sum = 0
+  for (const row of presentation.rows || []) {
+    if (row.kind === 'group') {
+      sum +=
+        key === 'candidate' ? Number(row.candidatePoints) || 0 : Number(row.currentPoints) || 0
+    } else {
+      const cell = row[key]
+      if (cell?.counted) sum += Number(cell.points) || 0
+    }
+  }
+  // notScored contribute 0
+  return round1(sum)
 }

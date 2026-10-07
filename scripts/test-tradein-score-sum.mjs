@@ -8,9 +8,13 @@ import { composeTradePackageSet } from '../src/lib/tradePackageSet.js'
 import { createExampleTradeInRows } from '../src/lib/tradeInEntry.js'
 import { round1 } from '../src/data/scoreV2Rubric.ts'
 import {
+  buildFactorPresentation,
+  costOfOwnershipBoth,
+  costOfOwnershipForSide,
   defaultScoreAssumptions,
   scoreTradeInRow,
   sumCountedCategoryPoints,
+  sumPresentedCountedPoints,
   tradeInScoreBadgeCopy,
 } from '../src/lib/tradeInScore.js'
 
@@ -151,6 +155,79 @@ test('editing trade-in stats or gas price updates score live and keeps sum equal
   assert.equal(
     sumCountedCategoryPoints(milesEdit, 'candidate'),
     milesEdit.candidateTotal,
+  )
+})
+
+test('cost of ownership total equals energy + maintenance + depreciation', () => {
+  const score = scoreTradeInRow(rows[0], composed.active[0].unit, {
+    pkg,
+    job: pkg.jobDefaults,
+    assumptions,
+  })
+  assert.ok(score)
+  const both = costOfOwnershipBoth(score, assumptions, pkg.jobDefaults)
+  for (const side of ['tradeIn', 'replacement']) {
+    const o = both[side]
+    assert.equal(
+      o.totalUsdPerYear,
+      o.energyUsdPerYear + o.maintUsdPerYear + o.depreciationUsdPerYear,
+      `${side} ownership total must equal energy + maintenance + depreciation`,
+    )
+  }
+  const withDep = costOfOwnershipForSide(
+    score,
+    'current',
+    { ...assumptions, depreciationUsdPerYear: 4000 },
+    pkg.jobDefaults,
+  )
+  assert.equal(withDep.depreciationUsdPerYear, 4000)
+  assert.equal(
+    withDep.totalUsdPerYear,
+    withDep.energyUsdPerYear + withDep.maintUsdPerYear + 4000,
+  )
+})
+
+test('Duty fit group total equals sum of its parts; presentation points match score totals', () => {
+  const score = scoreTradeInRow(rows[0], composed.active[0].unit, {
+    pkg,
+    job: pkg.jobDefaults,
+    assumptions,
+  })
+  const presentation = buildFactorPresentation(score)
+  const duty = presentation.rows.find((r) => r.key === 'duty-fit')
+  assert.ok(duty, 'Duty fit group present')
+  const partCur = duty.parts.reduce(
+    (s, p) => s + (p.current.counted ? Number(p.current.points) || 0 : 0),
+    0,
+  )
+  const partCand = duty.parts.reduce(
+    (s, p) => s + (p.candidate.counted ? Number(p.candidate.points) || 0 : 0),
+    0,
+  )
+  assert.equal(duty.currentPoints, Math.round(partCur * 10) / 10)
+  assert.equal(duty.candidatePoints, Math.round(partCand * 10) / 10)
+  assert.equal(
+    sumPresentedCountedPoints(presentation, 'current'),
+    score.currentTotal,
+  )
+  assert.equal(
+    sumPresentedCountedPoints(presentation, 'candidate'),
+    score.candidateTotal,
+  )
+  const allLabels = [
+    ...presentation.rows.map((r) => r.label),
+    ...presentation.notScored.map((n) => n.label),
+  ]
+  assert.ok(allLabels.some((l) => /Fuel or energy cost/.test(l)))
+  assert.ok(
+    allLabels.some((l) =>
+      /Maintenance cost, rises with age and miles/.test(l),
+    ),
+  )
+  assert.ok(allLabels.some((l) => l === 'Age and miles'))
+  assert.ok(
+    presentation.notScored.length > 0,
+    'not-scored factors collapsed',
   )
 })
 

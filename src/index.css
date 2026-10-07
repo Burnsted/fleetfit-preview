@@ -5082,7 +5082,7 @@ img { max-width: 100%; display: block; }
   color: #0b1220;
   border-radius: 18px 18px 0 0;
   box-shadow: 0 -8px 32px rgba(0, 0, 0, 0.28);
-  padding: 0 16px calc(28px + env(safe-area-inset-bottom, 0px) + var(--consent-clearance, 0px) + 72px);
+  padding: 0 16px var(--trade-in-score-sheet-pad, calc(28px + env(safe-area-inset-bottom, 0px) + var(--consent-clearance, 0px) + 96px));
   box-sizing: border-box;
 }
 .trade-in-score-panel-head {
@@ -5164,6 +5164,101 @@ img { max-width: 100%; display: block; }
   padding: 8px 12px;
   cursor: pointer;
   margin-bottom: 12px;
+}
+.trade-in-score-formula-toggle.is-inline {
+  margin-top: 8px;
+  margin-bottom: 8px;
+  min-height: 40px;
+  font-size: 0.82rem;
+}
+.trade-in-score-ownership {
+  margin: 0 0 14px;
+  padding: 12px;
+  border: 1px solid var(--line, #d8dee6);
+  border-radius: 4px;
+  background: #f7f9fb;
+}
+.trade-in-score-ownership-title {
+  margin: 0 0 8px;
+  font-size: 0.92rem;
+  font-weight: 700;
+  letter-spacing: -0.01em;
+}
+.trade-in-score-ownership-cols {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 10px;
+}
+.trade-in-score-ownership-side {
+  margin: 0;
+  display: grid;
+  gap: 2px;
+}
+.trade-in-score-ownership-side-label {
+  font-size: 0.72rem;
+  font-weight: 700;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  color: var(--text-dim, #666);
+}
+.trade-in-score-ownership-amount {
+  font-size: 1.05rem;
+  font-weight: 700;
+  letter-spacing: -0.015em;
+}
+.trade-in-score-ownership-formula {
+  margin-top: 8px;
+  padding-top: 8px;
+  border-top: 1px solid var(--line, #d8dee6);
+}
+.trade-in-score-ownership-breakdown {
+  margin: 8px 0 0;
+  padding: 0 0 0 1.1rem;
+  font-size: 0.78rem;
+  color: var(--text-dim, #666);
+  display: grid;
+  gap: 4px;
+}
+.trade-in-score-ownership-breakdown span {
+  font-weight: 700;
+  color: #0b1220;
+}
+.trade-in-score-group th {
+  font-weight: 750;
+}
+.trade-in-score-subrow th {
+  font-weight: 550;
+  padding-left: 14px;
+  color: var(--text-dim, #444);
+}
+.trade-in-score-not-scored th,
+.trade-in-score-not-scored td {
+  color: var(--text-dim, #666);
+  font-weight: 550;
+}
+.trade-in-score-not-scored-btn {
+  appearance: none;
+  border: 0;
+  background: transparent;
+  color: var(--text-dim, #666);
+  font: inherit;
+  font-size: 0.84rem;
+  font-weight: 650;
+  padding: 0;
+  cursor: pointer;
+  text-align: left;
+  text-decoration: underline;
+  text-underline-offset: 2px;
+}
+.trade-in-score-not-scored-muted {
+  font-size: 0.78rem;
+}
+.trade-in-score-not-scored-list {
+  margin: 6px 0 0;
+  padding: 0 0 0 1.1rem;
+  font-size: 0.72rem;
+  display: grid;
+  gap: 2px;
 }
 .trade-in-score-formula {
   margin: 0 0 14px;
