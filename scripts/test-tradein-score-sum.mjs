@@ -27,6 +27,9 @@ import {
   sumPresentedCountedPoints,
   tradeInScoreBadgeCopy,
   unitBodyType,
+  parseCentsPerMile,
+  exampleMaintCpm,
+  maintExampleKindForSide,
   VISIBLE_NOTE_MAX,
 } from '../src/lib/tradeInScore.js'
 
@@ -278,6 +281,7 @@ test('visible sheet notes scrub OSRM, ratio, arrows, and ≤', () => {
   assert.ok(scrubbed.length <= VISIBLE_NOTE_MAX)
   const longevity = scrubSheetReason('powertrain 5 yr · 60k expired; ≤150k mi, no modifier')
   assert.match(longevity, /up to 150k|150k/)
+  assert.ok(!/\bno modifier\b/i.test(longevity), longevity)
 })
 
 const SOURCE_IN_VISIBLE =
@@ -521,6 +525,191 @@ test('visible notes ban engine arithmetic (× ÷ = and bare 0.7); formula keeps 
       mathLines.length > 0,
       `pair ${i} formula view must keep calculation lines`,
     )
+  }
+})
+
+test('maintenance Example ¢/mi differ by powertrain; ownership uses those rates', () => {
+  // Steve FAIL (1): gas vs EV Example rates (Argonne 10.1 vs 6.1), both pairs.
+  assert.equal(exampleMaintCpm('ice'), 10.1)
+  assert.equal(exampleMaintCpm('ev'), 6.1)
+  assert.notEqual(exampleMaintCpm('ice'), exampleMaintCpm('ev'))
+
+  for (let i = 0; i < rows.length; i += 1) {
+    const score = scoreTradeInRow(rows[i], pairedUnits[i], {
+      pkg,
+      job: pkg.jobDefaults,
+      assumptions,
+      intake: { job: pkg.jobDefaults },
+    })
+    const presentation = buildFactorPresentation(score)
+    const maint = presentation.rows.find(
+      (r) =>
+        r.key === 'maintenance' ||
+        r.label === 'Maintenance cost, rises with age and miles',
+    )
+    assert.ok(maint, `pair ${i} must show Maintenance row`)
+    const curCpm = parseCentsPerMile(maint.current?.reason)
+    const candCpm = parseCentsPerMile(maint.candidate?.reason)
+    assert.ok(curCpm != null, `pair ${i} trade-in maint ¢/mi`)
+    assert.ok(candCpm != null, `pair ${i} replacement maint ¢/mi`)
+    assert.notEqual(
+      curCpm,
+      candCpm,
+      `pair ${i} ${rows[i].model} vs ${pairedUnits[i].model}: maint ¢/mi must differ by powertrain (got ${curCpm} and ${candCpm})`,
+    )
+    assert.equal(
+      maintExampleKindForSide(score, 'current'),
+      'ice',
+      `pair ${i} trade-in should be ice Example`,
+    )
+    assert.equal(
+      maintExampleKindForSide(score, 'candidate'),
+      'ev',
+      `pair ${i} replacement should be ev Example`,
+    )
+    assert.equal(curCpm, exampleMaintCpm('ice'))
+    assert.equal(candCpm, exampleMaintCpm('ev'))
+
+    const both = costOfOwnershipBoth(score, assumptions, pkg.jobDefaults)
+    for (const [side, o, cpm] of [
+      ['tradeIn', both.tradeIn, curCpm],
+      ['replacement', both.replacement, candCpm],
+    ]) {
+      assert.equal(
+        o.totalUsdPerYear,
+        o.energyUsdPerYear + o.maintUsdPerYear + o.depreciationUsdPerYear,
+        `pair ${i} ${side} ownership total = energy + maintenance + depreciation`,
+      )
+      const expectedMaint = Math.round((cpm / 100) * o.annualMiles)
+      assert.equal(
+        o.maintUsdPerYear,
+        expectedMaint,
+        `pair ${i} ${side} maint $ must follow ${cpm}¢/mi × ${o.annualMiles} mi`,
+      )
+    }
+    console.log(
+      'MAINT_RATES',
+      rows[i].model,
+      'vs',
+      pairedUnits[i].model,
+      '¢/mi',
+      curCpm,
+      candCpm,
+      'own',
+      both.tradeIn.totalUsdPerYear,
+      both.replacement.totalUsdPerYear,
+    )
+  }
+})
+
+test('visible notes: recall campaign wording, model year not MY, no "no modifier"', () => {
+  // Steve FAIL (2)
+  const samples = [
+    ['1 NHTSA campaigns MY', '1 recall campaign'],
+    ['1 campaigns MY', '1 recall campaign'],
+    ['14 campaigns MY', '14 recall campaigns'],
+    ['10 campaigns MY', '10 recall campaigns'],
+    ['4 campaigns MY', '4 recall campaigns'],
+    ['powertrain 5 yr · 60k expired; ≤150k mi, no modifier', null],
+  ]
+  for (const [raw, expectSub] of samples) {
+    const scrubbed = scrubSheetReason(raw)
+    assert.ok(
+      !/\bMY\b/.test(scrubbed),
+      `MY left in note: ${JSON.stringify(scrubbed)}`,
+    )
+    assert.ok(
+      !/\bno modifier\b/i.test(scrubbed),
+      `no modifier left: ${JSON.stringify(scrubbed)}`,
+    )
+    assert.ok(
+      !/\b1 campaigns\b/i.test(scrubbed),
+      `1 campaigns left: ${JSON.stringify(scrubbed)}`,
+    )
+    if (expectSub) {
+      assert.match(
+        scrubbed,
+        new RegExp(expectSub.replace(/[.*+?^${}()|[\]\\]/g, '\\$&'), 'i'),
+        `expected ${expectSub} in ${JSON.stringify(scrubbed)} from ${raw}`,
+      )
+    }
+    if (/\bmodel year\b/i.test(scrubbed) || /\bcampaign/.test(raw)) {
+      // "MY" alone becomes "model year"; campaign lines drop the orphan MY after rewrite
+      assert.ok(!/\bMY\b/.test(scrubbed))
+    }
+  }
+
+  for (let i = 0; i < rows.length; i += 1) {
+    const score = scoreTradeInRow(rows[i], pairedUnits[i], {
+      pkg,
+      job: pkg.jobDefaults,
+      assumptions,
+      intake: { job: pkg.jobDefaults },
+    })
+    const presentation = buildFactorPresentation(score)
+    const notes = []
+    for (const row of presentation.rows || []) {
+      if (row.kind === 'group') {
+        for (const part of row.parts || []) {
+          if (part.current?.reason) notes.push(part.current.reason)
+          if (part.candidate?.reason) notes.push(part.candidate.reason)
+        }
+      } else {
+        if (row.current?.reason) notes.push(row.current.reason)
+        if (row.candidate?.reason) notes.push(row.candidate.reason)
+      }
+    }
+    for (const note of notes) {
+      assert.ok(!/\sMY\b|\bMY\b/.test(note), `MY in pair ${i}: ${note}`)
+      assert.ok(!/\bno modifier\b/i.test(note), `no modifier in pair ${i}: ${note}`)
+      assert.ok(!/\b1 campaigns\b/i.test(note), `1 campaigns in pair ${i}: ${note}`)
+    }
+  }
+})
+
+test('visible About <number> has no decimal', () => {
+  // Steve FAIL (3): "About 76 mi", "About 346 mi", "About 198 mi"
+  const samples = [
+    ['108 mi × 0.7 = 75.6 mi usable vs 62 miles a day', /About 76 mi/],
+    ['494 mi tank × 0.7 = 345.8 mi usable vs 62 miles a day', /About 346 mi/],
+    ['283 mi × 0.7 = 198.1 mi usable vs 62 miles a day', /About 198 mi/],
+    ['13.6 mpg × 25 gal = 340 mi × 0.7 = 238 mi usable', /About 238 mi/],
+  ]
+  for (const [raw, expect] of samples) {
+    const scrubbed = scrubSheetReason(raw)
+    assert.match(scrubbed, expect, `${raw} → ${scrubbed}`)
+    assert.ok(
+      !/\bAbout\s+\d+\.\d+/.test(scrubbed),
+      `decimal after About: ${JSON.stringify(scrubbed)}`,
+    )
+  }
+
+  for (let i = 0; i < rows.length; i += 1) {
+    const score = scoreTradeInRow(rows[i], pairedUnits[i], {
+      pkg,
+      job: pkg.jobDefaults,
+      assumptions,
+      intake: { job: pkg.jobDefaults },
+    })
+    const presentation = buildFactorPresentation(score)
+    const notes = []
+    for (const row of presentation.rows || []) {
+      if (row.kind === 'group') {
+        for (const part of row.parts || []) {
+          if (part.current?.reason) notes.push(part.current.reason)
+          if (part.candidate?.reason) notes.push(part.candidate.reason)
+        }
+      } else {
+        if (row.current?.reason) notes.push(row.current.reason)
+        if (row.candidate?.reason) notes.push(row.candidate.reason)
+      }
+    }
+    for (const note of notes) {
+      assert.ok(
+        !/\bAbout\s+\d+\.\d+/.test(note),
+        `pair ${i} About has decimal: ${JSON.stringify(note)}`,
+      )
+    }
   }
 })
 

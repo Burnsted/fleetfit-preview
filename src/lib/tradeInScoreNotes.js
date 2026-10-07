@@ -58,9 +58,8 @@ export function hasExcessMoneyDecimals(text) {
 function formatAboutMiles(n) {
   const num = Number(n)
   if (!Number.isFinite(num)) return String(n)
-  if (Number.isInteger(num)) return String(num)
-  const t = Math.round(num * 10) / 10
-  return Number.isInteger(t) ? String(t) : t.toFixed(1)
+  // Steve: whole numbers after "About" ("About 76 mi", "About 346 mi")
+  return String(Math.round(num))
 }
 
 function formatAboutCents(n) {
@@ -269,6 +268,24 @@ export function scrubSheetReason(reason) {
   // Engine math → one short plain-English result (formula view keeps the calc)
   s = plainEnglishFromArithmetic(s)
   s = cleanupPunctuation(s)
+
+  // Recall campaigns: "1 campaigns" → "1 recall campaign"; consume trailing MY tag
+  s = s.replace(/\b(\d+)\s+(?:NHTSA\s+)?campaigns?\s*(?:MY)?\b/gi, (_, n) => {
+    const count = Number(n)
+    return count === 1 ? '1 recall campaign' : `${count} recall campaigns`
+  })
+  s = s.replace(/\brecall\s+recall\b/gi, 'recall')
+  // Any remaining MY shorthand → "model year" (Steve)
+  s = s.replace(/\bMY\b/g, 'model year')
+  s = s.replace(/\s*,?\s*no modifier\b/gi, '')
+  s = s.replace(/\bno(?:\s+sourced)?\s+failure patterns counted\b/gi, '')
+  s = cleanupPunctuation(s)
+
+  // Guarantee whole numbers after "About" (mi or other units)
+  s = s.replace(/\bAbout\s+(\d+)\.(\d+)\b/gi, (_, whole, frac) => {
+    const n = Number(`${whole}.${frac}`)
+    return Number.isFinite(n) ? `About ${Math.round(n)}` : `About ${whole}`
+  })
 
   // Prefer the first plain fact clause; hard-cap length
   if (s.length > VISIBLE_NOTE_MAX) {

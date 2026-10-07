@@ -7,10 +7,7 @@ import {
   FL_DIESEL_AAA,
   FL_GAS_REGULAR_AAA,
 } from '../data/flEnergyPrices'
-import {
-  ARGONNE_VAN_MAINT_CPM,
-  MAINT_CLASS_AAA,
-} from '../data/baselineVehicles'
+import { MAINT_CLASS_AAA } from '../data/baselineVehicles'
 import { RANGE_BUFFER, WARRANTY_MAX, round1 } from '../data/scoreV2Rubric'
 import { scoreReplacementV2 } from './scoreV2'
 import {
@@ -24,7 +21,7 @@ import {
   formulaSourceLines,
 } from './tradeInScoreNotes'
 
-export const TRADE_IN_SCORE_BUILD = 'trade-in-score-20261007-g'
+export const TRADE_IN_SCORE_BUILD = 'trade-in-score-20261007-h'
 export {
   scrubSheetReasonImpl as scrubSheetReason,
   hasBrokenSheetPunctuation,
@@ -443,37 +440,51 @@ function usdFromCpm(cpm, annualMiles) {
   return Math.round((cpm / 100) * annualMiles)
 }
 
-/** Example fallback maint ¢/mi when a side is not scored (AAA half-ton class). */
-function exampleMaintCpm(kind = 'half-ton') {
-  if (kind === 'van') {
-    return ARGONNE_VAN_MAINT_CPM?.cpm ?? MAINT_CLASS_AAA?.['half-ton']?.cpm ?? 12
+/**
+ * Engine Example maintenance ¢/mi by powertrain (Argonne scheduled-only).
+ * Gas/ICEV 10.1¢ · BEV 6.1¢ — never reuse the medium-duty 31¢ van figure for both sides.
+ */
+export function exampleMaintCpm(kind = 'ice') {
+  if (kind === 'ev' || kind === 'van-ev' || kind === 'ev-pickup') {
+    return MAINT_CLASS_AAA?.argonneEv?.cpm ?? 6.1
   }
-  if (kind === 'ev-pickup') {
-    return MAINT_CLASS_AAA?.['ev-pickup']?.cpm ?? MAINT_CLASS_AAA?.['half-ton']?.cpm ?? 12
-  }
-  return MAINT_CLASS_AAA?.['half-ton']?.cpm ?? ARGONNE_VAN_MAINT_CPM?.cpm ?? 12
+  // ice / van-ice / half-ton (gas trade-ins)
+  return MAINT_CLASS_AAA?.argonneIce?.cpm ?? 10.1
 }
 
 /** Example ¢/mi note for an unscored maintenance row (does not add points). */
-export function exampleMaintNote(kind = 'half-ton') {
+export function exampleMaintNote(kind = 'ice') {
   const cpm = exampleMaintCpm(kind)
   const n = Number(cpm)
   const shown = Number.isFinite(n) ? n.toFixed(1) : String(cpm)
   return `${shown}¢ per mi Example`
 }
 
-function maintExampleKindForSide(score, side) {
+/** True when a score side is a battery-electric unit (not "Chevrolet" false-positive). */
+export function sideIsEvPowertrain(score, side) {
   const name =
-    side === 'candidate'
+    side === 'candidate' || side === 'replacement'
       ? String(score?.candidateName || '')
       : String(score?.currentName || '')
-  if (/transit|promaster|sprinter|bright\s*drop|e-?transit|\bedv\b|\brcv\b|cargo\s*van/i.test(name)) {
-    return 'van'
+  if (
+    /\bE-?Transit\b|\bLightning\b|\bCybertruck\b|\bR1T\b|\bRCV\b|\bEDV\b|\bBrightDrop\b|\bProMaster\s+EV\b|\bSilverado\s+EV\b|\bSierra\s+EV\b|\bEV\b/i.test(
+      name,
+    )
+  ) {
+    return true
   }
-  if (/EV|Lightning|Sierra|Silverado EV|R1T|Cybertruck/i.test(name)) {
-    return 'ev-pickup'
-  }
-  return 'half-ton'
+  // Energy cell reason often says "¢ per mi" with kWh for EVs
+  const key = side === 'candidate' || side === 'replacement' ? 'candidate' : 'current'
+  const energy = (score?.categories || []).find((c) => c.key === 'energy')
+  const reason = String(energy?.[key]?.reason || '')
+  if (/kWh per 100 mi|¢ per kWh|to charge/i.test(reason)) return true
+  if (/\bBEV\b|\bbattery.electric\b|\belectric\b/i.test(reason)) return true
+  return false
+}
+
+/** Example kind for one side: ice vs ev (Argonne gas / EV rates). */
+export function maintExampleKindForSide(score, side) {
+  return sideIsEvPowertrain(score, side) ? 'ev' : 'ice'
 }
 
 function maintenanceExampleRow(score) {
@@ -546,14 +557,15 @@ export function costOfOwnershipForSide(score, side, assumptions = null, job = nu
   if (overrideMaint != null && Number.isFinite(Number(overrideMaint))) {
     maintUsd = Math.round(Number(overrideMaint))
   } else {
-    const cpm = parseCentsPerMile(maintCell?.reason)
-    if (cpm != null && maintCell?.counted) {
-      maintUsd = usdFromCpm(cpm, annualMiles)
-      maintFromEngine = true
-    } else {
-      maintUsd = usdFromCpm(exampleMaintCpm(), annualMiles)
-      maintFromEngine = false
-    }
+    // Prefer the ¢/mi shown on the sheet (scored or Example); else Argonne gas/EV by side.
+    const cpmFromCell = parseCentsPerMile(maintCell?.reason)
+    const kind = maintExampleKindForSide(score, key)
+    const cpm =
+      cpmFromCell != null && Number.isFinite(cpmFromCell)
+        ? cpmFromCell
+        : exampleMaintCpm(kind)
+    maintUsd = usdFromCpm(cpm, annualMiles)
+    maintFromEngine = Boolean(maintCell?.counted && cpmFromCell != null)
   }
 
   const depreciationUsd = Math.round(
