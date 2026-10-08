@@ -1,0 +1,62 @@
+[
+  {
+    "pair": "etransit",
+    "scores": {
+      "tradeIn": 44.4,
+      "replacement": 72.9,
+      "gap": 28.5
+    },
+    "depreciation": {
+      "tradeIn": {
+        "unit": "Transit-250",
+        "usdPerYear": 2083,
+        "price": 12500,
+        "age": 8,
+        "retainedPct": 50,
+        "source": "KBB 50% retained (published)"
+      },
+      "replacement": {
+        "unit": "E-Transit",
+        "usdPerYear": 4809,
+        "price": 25309,
+        "age": 3,
+        "retainedPct": 43,
+        "source": "KBB 43% retained (published)"
+      }
+    },
+    "ownershipTotals": {
+      "tradeIn": 11633,
+      "replacement": 8022
+    }
+  },
+  {
+    "pair": "sierra",
+    "scores": {
+      "tradeIn": 46.9,
+      "replacement": 78.3,
+      "gap": 31.4
+    },
+    "depreciation": {
+      "tradeIn": {
+        "unit": "Silverado 1500",
+        "usdPerYear": 1643,
+        "price": 14500,
+        "age": 7,
+        "retainedPct": 66,
+        "source": "Example retained 66% = min(70, 45 + 3×7); annual = price × (100−retained)% ÷ 100 ÷ 3"
+      },
+      "replacement": {
+        "unit": "Sierra EV",
+        "usdPerYear": 9932,
+        "price": 54177,
+        "age": 0,
+        "retainedPct": 45,
+        "source": "Example retained 45% = min(70, 45 + 3×0); annual = price × (100−retained)% ÷ 100 ÷ 3"
+      }
+    },
+    "ownershipTotals": {
+      "tradeIn": 9134,
+      "replacement": 12602
+    }
+  }
+]
