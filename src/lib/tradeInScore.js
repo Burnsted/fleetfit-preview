@@ -8,8 +8,17 @@ import {
   FL_GAS_REGULAR_AAA,
 } from '../data/flEnergyPrices'
 import { MAINT_CLASS_AAA } from '../data/baselineVehicles'
-import { RANGE_BUFFER, WARRANTY_MAX, round1 } from '../data/scoreV2Rubric'
+import {
+  RANGE_BUFFER,
+  WARRANTY_MAX,
+  SCORE_DATE,
+  round1,
+} from '../data/scoreV2Rubric'
 import { scoreReplacementV2 } from './scoreV2'
+import {
+  SCORE_OUT_OF,
+  normalizeScoreOutOf100,
+} from './scoreOutOf100'
 import {
   scrubSheetReason as scrubSheetReasonImpl,
   hasBrokenSheetPunctuation,
@@ -21,7 +30,8 @@ import {
   formulaSourceLines,
 } from './tradeInScoreNotes'
 
-export const TRADE_IN_SCORE_BUILD = 'trade-in-score-20261007-i'
+export const TRADE_IN_SCORE_BUILD = 'trade-in-score-20261008-100'
+export { SCORE_OUT_OF, normalizeScoreOutOf100 }
 export {
   scrubSheetReasonImpl as scrubSheetReason,
   hasBrokenSheetPunctuation,
@@ -83,8 +93,91 @@ function scrubCellForSheet(cell) {
   }
 }
 
-/** Plain Example default annual depreciation ($/yr). Not from a published source. */
+/**
+ * Legacy flat Example default ($/yr). Prefer per-unit depreciation from
+ * price and 3-yr retained (see resolveSideDepreciation).
+ */
 export const EXAMPLE_DEPRECIATION_USD_PER_YEAR = 2500
+
+/**
+ * Example 3-yr retained % when unpublished: min(70, 45 + 3 × ageYears).
+ * New units keep less; older units keep more of remaining value.
+ */
+export function exampleRetainedPctFromAge(ageYears) {
+  return Math.min(70, 45 + 3 * Math.max(0, Number(ageYears) || 0))
+}
+
+/** Annual depreciation = price × (100 − retained%) ÷ 100 ÷ 3, rounded. */
+export function annualDepreciationUsd(price, retainedPct) {
+  const p = Number(price) || 0
+  const r = Number(retainedPct)
+  if (!(p > 0) || !Number.isFinite(r)) return 0
+  return Math.round((p * (100 - r)) / 100 / 3)
+}
+
+function scoreYearFromDate() {
+  const y = Number(String(SCORE_DATE || '').slice(0, 4))
+  return Number.isFinite(y) ? y : new Date().getFullYear()
+}
+
+/**
+ * Resolve per-unit depreciation from price, age, and published 3-yr retained
+ * when the resale cell carries it; else Example curve from age.
+ */
+export function resolveSideDepreciation({
+  price,
+  year,
+  resaleCell = null,
+  overrideUsd = null,
+} = {}) {
+  if (overrideUsd != null && Number.isFinite(Number(overrideUsd))) {
+    const usd = Math.round(Number(overrideUsd))
+    return {
+      depreciationUsdPerYear: usd,
+      retainedPct: null,
+      published: false,
+      price: Number(price) || 0,
+      age: null,
+      notePlain: 'Editable Example depreciation',
+      sourceFormula: `Override ${usd} per year`,
+    }
+  }
+  const scoreYear = scoreYearFromDate()
+  const y = Number(year)
+  const age = Number.isFinite(y) ? Math.max(0, scoreYear - y) : 0
+  const p = Number(price) || 0
+  let retainedPct = null
+  let published = false
+  let sourceFormula = ''
+  const reason = String(resaleCell?.reason || resaleCell?.status || '')
+  if (resaleCell?.counted && reason) {
+    const m = reason.match(/(\d+(?:\.\d+)?)\s*%/)
+    if (m) {
+      retainedPct = Number(m[1])
+      published = true
+      const src = /KBB/i.test(reason) ? 'KBB' : 'Published'
+      sourceFormula = `${src} ${retainedPct}% retained (published) on ${p > 0 ? `$${p.toLocaleString('en-US')}` : 'price'}`
+    }
+  }
+  if (retainedPct == null) {
+    retainedPct = exampleRetainedPctFromAge(age)
+    published = false
+    sourceFormula = `Example retained ${retainedPct}% = min(70, 45 + 3×${age}); price $${p.toLocaleString('en-US')}, age ${age}`
+  }
+  const depreciationUsdPerYear = annualDepreciationUsd(p, retainedPct)
+  const notePlain = published
+    ? `${retainedPct}% kept after 3 years`
+    : `${retainedPct}% kept after 3 years (Example)`
+  return {
+    depreciationUsdPerYear,
+    retainedPct,
+    published,
+    price: p,
+    age,
+    notePlain,
+    sourceFormula,
+  }
+}
 
 const FACTOR_LABELS = Object.freeze({
   range: 'Range fit',
@@ -111,7 +204,11 @@ export function defaultScoreAssumptions(job = null) {
     dieselUsdPerGal: FL_DIESEL_AAA?.value ?? null,
     electricityCentsPerKwh: FL_COMMERCIAL_ELECTRICITY?.value ?? null,
     dailyMiles: dailyFromJob,
-    depreciationUsdPerYear: EXAMPLE_DEPRECIATION_USD_PER_YEAR,
+    /** Legacy flat fallback; per-unit price/retained is preferred. */
+    depreciationUsdPerYear: null,
+    /** Optional per-side depreciation overrides ($/yr). */
+    depreciationUsdPerYearTradeIn: null,
+    depreciationUsdPerYearReplacement: null,
     /** Optional overrides for ownership dollars when engine side lacks ¢/mi. */
     energyUsdPerYearTradeIn: null,
     energyUsdPerYearReplacement: null,
@@ -203,18 +300,37 @@ export function assumptionFieldMeta(assumptions, job = null) {
       exampleDefault: defaults.electricityCentsPerKwh,
     },
     {
-      key: 'depreciationUsdPerYear',
-      label: 'Depreciation per year',
+      key: 'depreciationUsdPerYearTradeIn',
+      label: 'Trade-in depreciation per year',
       unit: '$/yr',
       step: '50',
       formula:
-        'cost of ownership per year = fuel or energy + maintenance + depreciation',
+        'depreciation per year = price × (100 − 3-yr retained %) ÷ 100 ÷ 3',
       sourced: false,
-      sourceNote: 'Example default; not from a published source',
+      sourceNote:
+        'Per-unit from price and 3-yr retained; edit to override Example',
       value:
+        assumptions?.depreciationUsdPerYearTradeIn ??
         assumptions?.depreciationUsdPerYear ??
-        defaults.depreciationUsdPerYear,
-      exampleDefault: defaults.depreciationUsdPerYear,
+        '',
+      exampleDefault: EXAMPLE_DEPRECIATION_USD_PER_YEAR,
+      isDollar: true,
+    },
+    {
+      key: 'depreciationUsdPerYearReplacement',
+      label: 'Replacement depreciation per year',
+      unit: '$/yr',
+      step: '50',
+      formula:
+        'depreciation per year = price × (100 − 3-yr retained %) ÷ 100 ÷ 3',
+      sourced: false,
+      sourceNote:
+        'Per-unit from price and 3-yr retained; edit to override Example',
+      value:
+        assumptions?.depreciationUsdPerYearReplacement ??
+        assumptions?.depreciationUsdPerYear ??
+        '',
+      exampleDefault: EXAMPLE_DEPRECIATION_USD_PER_YEAR,
       isDollar: true,
     },
   ]
@@ -265,6 +381,7 @@ export function intakeFromTradeInRow(row, baseIntake = null, job = null) {
  */
 export function scoreUnitCard(unit, opts = {}) {
   if (!unit) return null
+  // scoreReplacementV2 defaults to out-of-100 display scale.
   return scoreReplacementV2(unit, {
     intake: opts.intake || null,
     pkg: opts.pkg || null,
@@ -354,18 +471,37 @@ export function scoreTradeInRow(row, unit, opts = {}) {
   const model = String(row?.model ?? '').trim()
   if (!year || !make || !model) return null
   const intake = intakeFromTradeInRow(row, opts.intake, opts.job)
+  // Raw engine scores — normalize once after align so card and sheet share scale.
   const tradeScore = scoreReplacementV2(unit, {
     intake,
     pkg: opts.pkg || null,
     assumptions: opts.assumptions || null,
+    scaleOutOf100: false,
   })
-  // Card uses package intake as-is (baseline current), not the trade-in row.
-  const cardScore = scoreUnitCard(unit, {
+  const cardScoreRaw = scoreReplacementV2(unit, {
     intake: opts.intake || null,
     pkg: opts.pkg || null,
     assumptions: opts.assumptions || null,
+    scaleOutOf100: false,
   })
-  return alignTradeSheetToCard(tradeScore, cardScore)
+  const aligned = alignTradeSheetToCard(tradeScore, cardScoreRaw)
+  const tradePrice = Number(row?.value)
+  const unitPrice = Number(unit?.askPrice ?? unit?.price)
+  return normalizeScoreOutOf100({
+    ...aligned,
+    ownershipContext: {
+      current: {
+        price: Number.isFinite(tradePrice) ? tradePrice : 0,
+        year: Number(year) || null,
+        name: `${year} ${make} ${model}`.trim(),
+      },
+      candidate: {
+        price: Number.isFinite(unitPrice) ? unitPrice : 0,
+        year: Number(unit?.year) || null,
+        name: `${unit?.year || ''} ${unit?.make || ''} ${unit?.model || ''}`.trim(),
+      },
+    },
+  })
 }
 
 /** Sum counted category points for one side; must equal that side's total. */
@@ -491,24 +627,26 @@ function maintenanceExampleRow(score) {
   const label = FACTOR_LABELS.maintenance
   const curNote = exampleMaintNote(maintExampleKindForSide(score, 'current'))
   const candNote = exampleMaintNote(maintExampleKindForSide(score, 'candidate'))
+  // Ted: Maintenance is not scored; counted in cost of ownership dollars only.
+  const display = 'Counted in cost of ownership'
   return {
     key: 'maintenance',
     label,
     kind: 'row',
     unscoredExample: true,
     current: {
-      display: 'Not scored',
+      display,
       reason: curNote,
       counted: false,
       points: null,
-      status: 'Not scored: Example cents per mile',
+      status: display,
     },
     candidate: {
-      display: 'Not scored',
+      display,
       reason: candNote,
       counted: false,
       points: null,
-      status: 'Not scored: Example cents per mile',
+      status: display,
     },
   }
 }
@@ -568,9 +706,29 @@ export function costOfOwnershipForSide(score, side, assumptions = null, job = nu
     maintFromEngine = Boolean(maintCell?.counted && cpmFromCell != null)
   }
 
-  const depreciationUsd = Math.round(
-    Number(a.depreciationUsdPerYear ?? EXAMPLE_DEPRECIATION_USD_PER_YEAR) || 0,
-  )
+  const ctxKey = key === 'candidate' ? 'candidate' : 'current'
+  const ctx = score?.ownershipContext?.[ctxKey] || null
+  const resaleRow = cats.find((c) => c.key === 'resale')
+  const resaleCell = resaleRow?.[key] || null
+  const sideOverride =
+    key === 'current'
+      ? a.depreciationUsdPerYearTradeIn ?? a.depreciationUsdPerYear
+      : a.depreciationUsdPerYearReplacement ?? a.depreciationUsdPerYear
+  const dep = resolveSideDepreciation({
+    price: ctx?.price,
+    year: ctx?.year,
+    resaleCell,
+    overrideUsd:
+      sideOverride != null && sideOverride !== ''
+        ? sideOverride
+        : null,
+  })
+  // Fallback when no price/context: legacy flat Example (should be rare).
+  const depreciationUsd =
+    dep.depreciationUsdPerYear > 0 ||
+    (sideOverride != null && sideOverride !== '')
+      ? dep.depreciationUsdPerYear
+      : Math.round(Number(EXAMPLE_DEPRECIATION_USD_PER_YEAR) || 0)
   const energy = Math.round(Number(energyUsd) || 0)
   const maintenance = Math.round(Number(maintUsd) || 0)
   const total = energy + maintenance + depreciationUsd
@@ -583,8 +741,18 @@ export function costOfOwnershipForSide(score, side, assumptions = null, job = nu
     energyFromEngine,
     maintFromEngine,
     annualMiles,
+    depreciationNote: dep.notePlain,
+    depreciationSource: dep.sourceFormula,
+    depreciationPublished: dep.published,
+    depreciationRetainedPct: dep.retainedPct,
+    depreciationPrice: dep.price,
+    depreciationAge: dep.age,
     formula:
       'cost of ownership per year = fuel or energy + maintenance + depreciation',
+    depreciationFormula:
+      'depreciation per year = price × (100 − 3-yr retained %) ÷ 100 ÷ 3',
+    depreciationExampleCurve:
+      'when 3-yr retained is not published: Example retained % = min(70, 45 + 3 × age in years)',
   }
 }
 

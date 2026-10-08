@@ -32,6 +32,7 @@ import {
   type BaselineVehicle,
 } from '../data/baselineVehicles'
 import { lookupCandidate, type CandidateVehicle } from '../data/candidateVehicles'
+import { normalizeScoreOutOf100 } from './scoreOutOf100'
 import {
   FL_COMMERCIAL_ELECTRICITY,
   FL_GAS_REGULAR_AAA,
@@ -1009,6 +1010,11 @@ export function scoreReplacementV2(
     scoringDate?: string
     /** Editable Example defaults threaded into range and energy formulas. */
     assumptions?: ScoreAssumptions | null
+    /**
+     * When false, return raw engine pointsPossible (80/70/…).
+     * Default true: rescale to out of 100 for display (Ted).
+     */
+    scaleOutOf100?: boolean
   } = {},
 ): ScoreV2Result {
   const intake = opts.intake || null
@@ -1537,7 +1543,7 @@ export function scoreReplacementV2(
   const dialCurrent =
     incomplete || missingCurrent ? null : `Current ${currentTotal.toFixed(1)}`
 
-  return {
+  const raw: ScoreV2Result = {
     build: SCORE_V2_BUILD,
     version: 2,
     currentName,
@@ -1562,6 +1568,8 @@ export function scoreReplacementV2(
     helps: [],
     watchOuts: [],
   }
+  if (opts.scaleOutOf100 === false) return raw
+  return normalizeScoreOutOf100(raw) as ScoreV2Result
 }
 
 function hf3Title(unit: Record<string, unknown>) {
@@ -1584,6 +1592,8 @@ export function rankUnitsByScoreV2(
       currentVehicle?: Record<string, unknown> | null
       jobDefaults?: Record<string, unknown> | null
     } | null
+    /** Pass false for CLEARED §6 raw-scale validation. Default true (out of 100). */
+    scaleOutOf100?: boolean
   },
 ) {
   return [...units]

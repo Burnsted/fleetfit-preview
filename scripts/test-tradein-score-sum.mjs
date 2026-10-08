@@ -212,7 +212,7 @@ test('cost of ownership total equals energy + maintenance + depreciation', () =>
   const withDep = costOfOwnershipForSide(
     score,
     'current',
-    { ...assumptions, depreciationUsdPerYear: 4000 },
+    { ...assumptions, depreciationUsdPerYearTradeIn: 4000 },
     pkg.jobDefaults,
   )
   assert.equal(withDep.depreciationUsdPerYear, 4000)
@@ -247,14 +247,18 @@ test('ownership Total per year equals header totals for both sides on every pair
         `pair ${i} ${side}: ownership header total must be positive`,
       )
     }
-    // Known electrical defaults (Argonne 10.1 / 6.1 maint)
+    // Per-unit depreciation (Ted sample): Transit/E-Transit and Silverado/Sierra
     if (i === 0) {
-      assert.equal(both.tradeIn.totalUsdPerYear, 12050)
-      assert.equal(both.replacement.totalUsdPerYear, 5713)
+      assert.equal(both.tradeIn.depreciationUsdPerYear, 2083)
+      assert.equal(both.replacement.depreciationUsdPerYear, 4809)
+      assert.equal(both.tradeIn.totalUsdPerYear, 11633)
+      assert.equal(both.replacement.totalUsdPerYear, 8022)
     }
     if (i === 1) {
-      assert.equal(both.tradeIn.totalUsdPerYear, 9991)
-      assert.equal(both.replacement.totalUsdPerYear, 5170)
+      assert.equal(both.tradeIn.depreciationUsdPerYear, 1643)
+      assert.equal(both.replacement.depreciationUsdPerYear, 9932)
+      assert.equal(both.tradeIn.totalUsdPerYear, 9134)
+      assert.equal(both.replacement.totalUsdPerYear, 12602)
     }
     console.log(
       'OWNERSHIP_HEADER',
@@ -423,7 +427,11 @@ test('E-Transit cab scores 2 seats vs crew 2 (not cars.com 1)', () => {
   assert.ok(cab)
   assert.match(cab.candidate.reason, /2 seats/)
   assert.ok(!/1 seat\b/.test(cab.candidate.reason))
-  assert.equal(cab.candidate.points, 10)
+  // Out of 100: 10 raw of 80 → 12.5
+  assert.equal(cab.candidate.points, 12.5)
+  assert.equal(score.pointsPossible, 100)
+  assert.equal(score.candidateTotal, 72.9)
+  assert.equal(score.currentTotal, 44.4)
   assert.equal(
     sumCountedCategoryPoints(score, 'candidate'),
     score.candidateTotal,
@@ -591,6 +599,18 @@ test('maintenance Example ¢/mi differ by powertrain; ownership uses those rates
         r.label === 'Maintenance cost, rises with age and miles',
     )
     assert.ok(maint, `pair ${i} must show Maintenance row`)
+    assert.equal(
+      maint.current?.display,
+      'Counted in cost of ownership',
+      `pair ${i} maintenance display`,
+    )
+    assert.equal(
+      maint.candidate?.display,
+      'Counted in cost of ownership',
+      `pair ${i} maintenance display cand`,
+    )
+    assert.equal(maint.current?.counted, false)
+    assert.equal(maint.candidate?.counted, false)
     const curCpm = parseCentsPerMile(maint.current?.reason)
     const candCpm = parseCentsPerMile(maint.candidate?.reason)
     assert.ok(curCpm != null, `pair ${i} trade-in maint ¢/mi`)
