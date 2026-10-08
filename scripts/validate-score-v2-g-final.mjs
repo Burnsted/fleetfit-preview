@@ -19,7 +19,12 @@ const EXPECTED = [
 
 // Score fixture uses the full seed pool (including dead listings) so totals stay locked.
 const pkg = getPackageAllUnits('pkg-tc-electrical-4')
-const ranked = rankUnitsByScoreV2(pkg.units, { pkg, intake: null })
+// CLEARED §6 locks raw engine totals (of 80/90). Live UI rescales to out of 100.
+const ranked = rankUnitsByScoreV2(pkg.units, {
+  pkg,
+  intake: null,
+  scaleOutOf100: false,
+})
 
 console.log('BUILD', ranked[0]?.score?.build)
 console.log('CURRENT', ranked[0]?.score?.currentName)

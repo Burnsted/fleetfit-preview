@@ -257,9 +257,28 @@ export default function TradeInScoreSheet({
                 className="trade-in-score-ownership-formula"
                 data-ownership-formula="1"
               >
-                <p className="trade-in-score-assumption-formula">
-                  {ownership.tradeIn.formula}
-                </p>
+                <div
+                  className="trade-in-score-assumption-formula"
+                  data-ownership-formula-text="1"
+                >
+                  <div>{ownership.tradeIn.formula}</div>
+                  {ownership.tradeIn.depreciationFormula ? (
+                    <div>{ownership.tradeIn.depreciationFormula}</div>
+                  ) : null}
+                  {ownership.tradeIn.depreciationExampleCurve ? (
+                    <div>{ownership.tradeIn.depreciationExampleCurve}</div>
+                  ) : null}
+                  {ownership.tradeIn.depreciationSource ? (
+                    <div>
+                      Trade-in: {ownership.tradeIn.depreciationSource}
+                    </div>
+                  ) : null}
+                  {ownership.replacement.depreciationSource ? (
+                    <div>
+                      Replacement: {ownership.replacement.depreciationSource}
+                    </div>
+                  ) : null}
+                </div>
                 <table
                   className="trade-in-score-ownership-table"
                   data-ownership-table="1"
@@ -344,6 +363,11 @@ export default function TradeInScoreSheet({
                             Example
                           </span>
                         </span>
+                        {ownership.tradeIn.depreciationNote ? (
+                          <span className="trade-in-score-ownership-sub">
+                            {ownership.tradeIn.depreciationNote}
+                          </span>
+                        ) : null}
                       </td>
                       <td>
                         <span className="trade-in-score-ownership-cell">
@@ -354,6 +378,11 @@ export default function TradeInScoreSheet({
                             Example
                           </span>
                         </span>
+                        {ownership.replacement.depreciationNote ? (
+                          <span className="trade-in-score-ownership-sub">
+                            {ownership.replacement.depreciationNote}
+                          </span>
+                        ) : null}
                       </td>
                     </tr>
                   </tbody>

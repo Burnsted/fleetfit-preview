@@ -29,7 +29,33 @@ import {
   resizeTradeInRows,
   writeStoredTradeInRows,
 } from '../lib/tradeInEntry'
-import { defaultScoreAssumptions } from '../lib/tradeInScore'
+import {
+  defaultScoreAssumptions,
+  pairTradeInsToUnits,
+  scoreTradeInRow,
+} from '../lib/tradeInScore'
+import { round1 } from '../data/scoreV2Rubric'
+
+/**
+ * Overlay trade-in current onto the package card dial so Current / gap match
+ * the trade-in sheet (sample frames: Sierra Current 46.9 not package baseline).
+ */
+function cardScoreWithTradeInCurrent(cardScore, tradeScore) {
+  if (!cardScore || !tradeScore || tradeScore.currentTotal == null) {
+    return cardScore
+  }
+  if (cardScore.incomplete || cardScore.candidateTotal == null) return cardScore
+  const cur = Number(tradeScore.currentTotal)
+  const cand = Number(cardScore.candidateTotal)
+  const diff = round1(cand - cur)
+  return {
+    ...cardScore,
+    currentTotal: cur,
+    difference: diff,
+    dialCurrent: `Current ${cur.toFixed(1)}`,
+    dialDiff: `${diff > 0 ? '+' : ''}${diff.toFixed(1)} vs current`,
+  }
+}
 import {
   addUnitToPackage,
   composeTradePackageSet,
@@ -256,6 +282,31 @@ export default function TradePackageResults({ pkg }) {
   const selectedInPackage = activeUnits.filter((unit) =>
     fleet.has(fleetUnitKey(pkg.id, unit.id)),
   ).length
+
+  // Pair trade-ins → units; overlay trade-in Current on matching card dials.
+  const tradePairedScoresByUnitId = useMemo(() => {
+    const paired = pairTradeInsToUnits(tradeInRows, activeUnits)
+    const map = new Map()
+    const scoreCtx = {
+      intake: {
+        ...(intake || {}),
+        job: { ...(intake?.job || {}), ...job },
+      },
+      pkg,
+    }
+    for (let i = 0; i < tradeInRows.length; i += 1) {
+      const unit = paired[i]
+      if (!unit) continue
+      const tradeScore = scoreTradeInRow(tradeInRows[i], unit, {
+        intake: scoreCtx.intake,
+        pkg,
+        job,
+        assumptions: tradeInAssumptions?.[i] || defaultScoreAssumptions(job),
+      })
+      if (tradeScore) map.set(unit.id, tradeScore)
+    }
+    return map
+  }, [tradeInRows, activeUnits, tradeInAssumptions, job, pkg, intake])
 
   function onSizeChange(n) {
     setRemovedRow(null)
@@ -507,12 +558,17 @@ export default function TradePackageResults({ pkg }) {
               ) : null}
               {active.map((slot) => {
                 const spec = displayWorkSpec(slot.unit)
+                const tradeScore = tradePairedScoresByUnitId.get(slot.unit.id)
+                const dialScore = cardScoreWithTradeInCurrent(
+                  slot.score,
+                  tradeScore,
+                )
                 return (
                   <li key={slot.unit.id}>
                     <TradeUnitCard
                       unit={slot.unit}
                       packageId={pkg.id}
-                      score={slot.score}
+                      score={dialScore}
                       rank={slot.rank}
                       spec={spec}
                       newlyAdded={Boolean(slot.newlyAdded)}
