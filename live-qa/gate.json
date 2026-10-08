@@ -15,23 +15,23 @@
         "clientWidth": 390
       },
       "eTransit": {
-        "card": 58.3,
-        "sheet": 58.3,
-        "pp": 80
+        "card": 72.9,
+        "sheet": 72.9,
+        "pp": 100
       },
       "sierra": {
-        "card": 54.8,
-        "sheet": 54.8,
-        "pp": 70
+        "card": 78.3,
+        "sheet": 78.3,
+        "pp": 100
       },
       "ownership": {
         "eTransit": {
-          "tradeIn": 12050,
-          "replacement": 5713
+          "tradeIn": 11633,
+          "replacement": 8022
         },
         "sierra": {
-          "tradeIn": 9991,
-          "replacement": 5170
+          "tradeIn": 9134,
+          "replacement": 12602
         }
       },
       "clearShown": {
@@ -69,23 +69,23 @@
         "clientWidth": 1440
       },
       "eTransit": {
-        "card": 58.3,
-        "sheet": 58.3,
-        "pp": 80
+        "card": 72.9,
+        "sheet": 72.9,
+        "pp": 100
       },
       "sierra": {
-        "card": 54.8,
-        "sheet": 54.8,
-        "pp": 70
+        "card": 78.3,
+        "sheet": 78.3,
+        "pp": 100
       },
       "ownership": {
         "eTransit": {
-          "tradeIn": 12050,
-          "replacement": 5713
+          "tradeIn": 11633,
+          "replacement": 8022
         },
         "sierra": {
-          "tradeIn": 9991,
-          "replacement": 5170
+          "tradeIn": 9134,
+          "replacement": 12602
         }
       },
       "clearShown": {
@@ -114,8 +114,8 @@
     "twoVehicleDefault": 2,
     "bodyTypePairing": "E-Transit van + Sierra EV truck (2 badges, 2 cards)",
     "cardEqualsSheet": {
-      "eTransit": "58.3/80",
-      "sierra": "54.8/70"
+      "eTransit": "72.9/100",
+      "sierra": "78.3/100"
     }
   }
 }
