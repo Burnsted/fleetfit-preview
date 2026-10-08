@@ -609,6 +609,17 @@ async function main() {
     assert.equal(sierraCard.cardPp, 100)
     assert.equal(sierraCard.sheetCand, 78.3)
     assert.equal(sierraCard.sheetPp, 100)
+    const sierraDialCur = await page.evaluate(() => {
+      const cards = [...document.querySelectorAll('.trade-unit-card')]
+      const card = cards.find((el) => /Sierra EV/i.test(el.innerText))
+      const cur = card?.querySelector('.score-dial-current')?.textContent || ''
+      const diff = card?.querySelector('.score-dial-diff')?.textContent || ''
+      return { cur, diff }
+    })
+    console.log('SIERRA_DIAL_CURRENT', width, sierraDialCur)
+    assert.match(sierraDialCur.cur, /Current 46\.9/)
+    assert.match(sierraDialCur.diff, /\+31\.4/)
+
 
     await page.locator('.trade-in-score-close').click()
     await page.waitForTimeout(200)
