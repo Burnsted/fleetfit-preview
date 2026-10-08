@@ -1,10 +1,51 @@
 [
   {
     "pair": "etransit",
+    "cardIndex": 1,
+    "cardLabel": "2023 Ford E-Transit",
+    "sheetReplacement": "2023 Ford E-Transit Base",
     "scores": {
       "tradeIn": 44.4,
       "replacement": 72.9,
       "gap": 28.5
+    },
+    "factors": {
+      "duty-fit": {
+        "cur": "25.0",
+        "cand": "22.9"
+      },
+      "range": {
+        "cur": "12.5",
+        "cand": "10.4"
+      },
+      "cab": {
+        "cur": "12.5",
+        "cand": "12.5"
+      },
+      "energy": {
+        "cur": "0.0",
+        "cand": "10.1"
+      },
+      "longevity": {
+        "cur": "0.0",
+        "cand": "13.4"
+      },
+      "resale": {
+        "cur": "6.9",
+        "cand": "4.0"
+      },
+      "reliability": {
+        "cur": "0.0",
+        "cand": "10.0"
+      },
+      "service": {
+        "cur": "12.5",
+        "cand": "12.5"
+      },
+      "maintenance": {
+        "cur": "Counted in cost of ownership",
+        "cand": "Counted in cost of ownership"
+      }
     },
     "depreciation": {
       "tradeIn": {
@@ -13,7 +54,8 @@
         "price": 12500,
         "age": 8,
         "retainedPct": 50,
-        "source": "KBB 50% retained (published)"
+        "notePlain": "50% kept after 3 years",
+        "source": "KBB 50% retained (published) on trade-in value $12,500"
       },
       "replacement": {
         "unit": "E-Transit",
@@ -21,7 +63,8 @@
         "price": 25309,
         "age": 3,
         "retainedPct": 43,
-        "source": "KBB 43% retained (published)"
+        "notePlain": "43% kept after 3 years",
+        "source": "KBB 43% retained (published) on listing price $25,309"
       }
     },
     "ownershipTotals": {
@@ -31,10 +74,47 @@
   },
   {
     "pair": "sierra",
+    "cardIndex": 0,
+    "cardLabel": "2026 GMC Sierra EV",
+    "sheetReplacement": "2026 GMC Sierra EV Standard Range Elevation",
     "scores": {
       "tradeIn": 46.9,
       "replacement": 78.3,
       "gap": 31.4
+    },
+    "factors": {
+      "duty-fit": {
+        "cur": "28.6",
+        "cand": "28.6"
+      },
+      "range": {
+        "cur": "14.3",
+        "cand": "14.3"
+      },
+      "cab": {
+        "cur": "14.3",
+        "cand": "14.3"
+      },
+      "energy": {
+        "cur": "4.0",
+        "cand": "13.7"
+      },
+      "longevity": {
+        "cur": "0.0",
+        "cand": "23.1"
+      },
+      "reliability": {
+        "cur": "0.0",
+        "cand": "2.9"
+      },
+      "service": {
+        "cur": "14.3",
+        "cand": "10.0"
+      },
+      "maintenance": {
+        "cur": "Counted in cost of ownership",
+        "cand": "Counted in cost of ownership"
+      }
     },
     "depreciation": {
       "tradeIn": {
@@ -43,7 +123,8 @@
         "price": 14500,
         "age": 7,
         "retainedPct": 66,
-        "source": "Example retained 66% = min(70, 45 + 3×7); annual = price × (100−retained)% ÷ 100 ÷ 3"
+        "notePlain": "66% kept after 3 years (Example)",
+        "source": "Example retained 66% = min(70, 45 + 3×7); price $14,500, age 7"
       },
       "replacement": {
         "unit": "Sierra EV",
@@ -51,7 +132,8 @@
         "price": 54177,
         "age": 0,
         "retainedPct": 45,
-        "source": "Example retained 45% = min(70, 45 + 3×0); annual = price × (100−retained)% ÷ 100 ÷ 3"
+        "notePlain": "45% kept after 3 years (Example)",
+        "source": "Example retained 45% = min(70, 45 + 3×0); price $54,177, age 0"
       }
     },
     "ownershipTotals": {
