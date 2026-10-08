@@ -1,0 +1,121 @@
+{
+  "formspreeRealRequests": 0,
+  "widths": {
+    "390": {
+      "badgeCount": 2,
+      "unitCount": 2,
+      "prox": {
+        "dollarCount": 6,
+        "exampleCount": 15,
+        "misses": [],
+        "scope": "body"
+      },
+      "scroll": {
+        "scrollWidth": 390,
+        "clientWidth": 390
+      },
+      "eTransit": {
+        "card": 72.9,
+        "sheet": 72.9,
+        "pp": 100
+      },
+      "sierra": {
+        "card": 78.3,
+        "sheet": 78.3,
+        "pp": 100
+      },
+      "ownership": {
+        "eTransit": {
+          "tradeIn": 11633,
+          "replacement": 8022
+        },
+        "sierra": {
+          "tradeIn": 9134,
+          "replacement": 12602
+        }
+      },
+      "clearShown": {
+        "ok": true,
+        "fabHidden": true,
+        "gapConsent": 64,
+        "contentEnd": 708,
+        "consentTop": 772,
+        "fabTop": null,
+        "closeVisible": true,
+        "pad": "136"
+      },
+      "clearDismissed": {
+        "ok": true,
+        "fabHidden": true,
+        "gapConsent": null,
+        "contentEnd": 748,
+        "consentTop": null,
+        "fabTop": null,
+        "closeVisible": true,
+        "pad": "96"
+      }
+    },
+    "1440": {
+      "badgeCount": 2,
+      "unitCount": 2,
+      "prox": {
+        "dollarCount": 6,
+        "exampleCount": 15,
+        "misses": [],
+        "scope": "body"
+      },
+      "scroll": {
+        "scrollWidth": 1440,
+        "clientWidth": 1440
+      },
+      "eTransit": {
+        "card": 72.9,
+        "sheet": 72.9,
+        "pp": 100
+      },
+      "sierra": {
+        "card": 78.3,
+        "sheet": 78.3,
+        "pp": 100
+      },
+      "ownership": {
+        "eTransit": {
+          "tradeIn": 11633,
+          "replacement": 8022
+        },
+        "sierra": {
+          "tradeIn": 9134,
+          "replacement": 12602
+        }
+      },
+      "clearShown": {
+        "ok": true,
+        "fabHidden": true,
+        "gapConsent": 64,
+        "contentEnd": 764,
+        "consentTop": 828,
+        "fabTop": null,
+        "closeVisible": true,
+        "pad": "136"
+      },
+      "clearDismissed": {
+        "ok": true,
+        "fabHidden": true,
+        "gapConsent": null,
+        "contentEnd": 804,
+        "consentTop": null,
+        "fabTop": null,
+        "closeVisible": true,
+        "pad": "96"
+      }
+    }
+  },
+  "checks": {
+    "twoVehicleDefault": 2,
+    "bodyTypePairing": "E-Transit van + Sierra EV truck (2 badges, 2 cards)",
+    "cardEqualsSheet": {
+      "eTransit": "72.9/100",
+      "sierra": "78.3/100"
+    }
+  }
+}

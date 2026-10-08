@@ -1,0 +1,126 @@
+INDEX_OK 89R9-2L8 https://burnsted.github.io/fleetfit-preview/
+TWO_VEHICLE_DEFAULT 2
+EXAMPLE_PROX 390 {
+  "dollarCount": 6,
+  "exampleCount": 15,
+  "misses": [],
+  "scope": "body"
+}
+OVERFLOW 390 { scrollWidth: 390, clientWidth: 390 }
+PAGE_CLEARANCE 390 {
+  docH: 4368,
+  last: 4298,
+  fabOverlaps: false,
+  consentGap: -72,
+  fabHidden: true
+}
+CARD_VS_SHEET 390 {
+  "byModel": {
+    "sierra": {
+      "dial": {
+        "total": 78.3,
+        "pp": 100
+      },
+      "text": "EV TRUCK\n#1\n2026 GMC Sierra EV\n\nCrew · 5 ft 11 in · example unit\n\n$54,177 example price\n\nView at Jimmy Britt Chevrolet ↗\n\nRemove\n78.3\nout of 100\n+31.4 vs current\nCurrent 46.9\n#1"
+    },
+    "eTransit": {
+      "dial": {
+        "total": 72.9,
+        "pp": 100
+      },
+      "text": "EV VAN\n#2\n2023 Ford E-Transit\n\nCargo van · 358.7 cu ft · example unit\n\n$25,309 example price\n\nView at Zeigler Chrysler Dodge Jeep RAM of Plain ↗\n\nRemove\n72.9\nout of 100\n+28.5 vs current\nCurrent 44.4\n#2"
+    }
+  },
+  "sheetCand": 72.9,
+  "sheetPp": 100,
+  "headSlice": "TRADE-IN SCORE\n\nExample\n\nClose\n\n44.4 out of 100 vs Replacement 72.9 · +28.5\n\nTrade-in: Example current vehicle · 2018 Ford Transit-250 3.7L V6\nReplacement: 2023 Ford E-Transit Base\n\nCost of ownership per year, Example\n\nTRADE-IN\n$11,633 Example\n\nREPLACEMENT\n$8,022 Example\n\nShow ow"
+}
+CARD_NAME_EQ_SHEET 390 {"repl":"2023 Ford E-Transit Base","cardYmm":"2023 Ford E-Transit\n\nCargo van ","ok":true}
+OWNERSHIP_TABLE 390 {"headerTrade":11633,"headerRepl":8022,"totalTrade":11633,"totalRepl":8022,"heads":["Item","Trade-in","Replacement"],"rows":["energy","maintenance","depreciation"],"hasStackedList":false}
+OWNERSHIP_ETRANSIT 390 11633/8022 OK
+SHEET_CLEARANCE_CONSENT_SHOWN 390 {
+  ok: true,
+  fabHidden: true,
+  gapConsent: 64,
+  contentEnd: 708,
+  consentTop: 772,
+  fabTop: null,
+  closeVisible: true,
+  pad: '136'
+}
+SHEET_CLEARANCE_CONSENT_DISMISSED 390 {
+  ok: true,
+  fabHidden: true,
+  gapConsent: null,
+  contentEnd: 748,
+  consentTop: null,
+  fabTop: null,
+  closeVisible: true,
+  pad: '96'
+}
+OWNERSHIP_SIERRA 390 9134/12602 OK
+SIERRA_CARD_VS_SHEET 390 { cardTotal: 78.3, cardPp: 100, sheetCand: 78.3, sheetPp: 100 }
+SIERRA_DIAL_CURRENT 390 { cur: 'Current 46.9', diff: '+31.4 vs current' }
+EXAMPLE_PROX 1440 {
+  "dollarCount": 6,
+  "exampleCount": 15,
+  "misses": [],
+  "scope": "body"
+}
+OVERFLOW 1440 { scrollWidth: 1440, clientWidth: 1440 }
+PAGE_CLEARANCE 1440 {
+  docH: 2472,
+  last: 2402,
+  fabOverlaps: false,
+  consentGap: -72,
+  fabHidden: true
+}
+CARD_VS_SHEET 1440 {
+  "byModel": {
+    "sierra": {
+      "dial": {
+        "total": 78.3,
+        "pp": 100
+      },
+      "text": "EV TRUCK\n#1\n2026 GMC Sierra EV\n\nCrew · 5 ft 11 in · example unit\n\n$54,177 example price\n\nView at Jimmy Britt Chevrolet ↗\n\nRemove\n78.3\nout of 100\n+31.4 vs current\nCurrent 46.9\n#1"
+    },
+    "eTransit": {
+      "dial": {
+        "total": 72.9,
+        "pp": 100
+      },
+      "text": "EV VAN\n#2\n2023 Ford E-Transit\n\nCargo van · 358.7 cu ft · example unit\n\n$25,309 example price\n\nView at Zeigler Chrysler Dodge Jeep RAM of Plain ↗\n\nRemove\n72.9\nout of 100\n+28.5 vs current\nCurrent 44.4\n#2"
+    }
+  },
+  "sheetCand": 72.9,
+  "sheetPp": 100,
+  "headSlice": "TRADE-IN SCORE\n\nExample\n\nClose\n\n44.4 out of 100 vs Replacement 72.9 · +28.5\n\nTrade-in: Example current vehicle · 2018 Ford Transit-250 3.7L V6\nReplacement: 2023 Ford E-Transit Base\n\nCost of ownership per year, Example\n\nTRADE-IN\n$11,633 Example\n\nREPLACEMENT\n$8,022 Example\n\nShow ow"
+}
+CARD_NAME_EQ_SHEET 1440 {"repl":"2023 Ford E-Transit Base","cardYmm":"2023 Ford E-Transit\n\nCargo van ","ok":true}
+OWNERSHIP_TABLE 1440 {"headerTrade":11633,"headerRepl":8022,"totalTrade":11633,"totalRepl":8022,"heads":["Item","Trade-in","Replacement"],"rows":["energy","maintenance","depreciation"],"hasStackedList":false}
+OWNERSHIP_ETRANSIT 1440 11633/8022 OK
+SHEET_CLEARANCE_CONSENT_SHOWN 1440 {
+  ok: true,
+  fabHidden: true,
+  gapConsent: 64,
+  contentEnd: 764,
+  consentTop: 828,
+  fabTop: null,
+  closeVisible: true,
+  pad: '136'
+}
+SHEET_CLEARANCE_CONSENT_DISMISSED 1440 {
+  ok: true,
+  fabHidden: true,
+  gapConsent: null,
+  contentEnd: 804,
+  consentTop: null,
+  fabTop: null,
+  closeVisible: true,
+  pad: '96'
+}
+OWNERSHIP_SIERRA 1440 9134/12602 OK
+SIERRA_CARD_VS_SHEET 1440 { cardTotal: 78.3, cardPp: 100, sheetCand: 78.3, sheetPp: 100 }
+SIERRA_DIAL_CURRENT 1440 { cur: 'Current 46.9', diff: '+31.4 vs current' }
+FORMSPREE_REAL 0
+GATE PASS LIVE ROOT
